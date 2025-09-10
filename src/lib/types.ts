@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -156,9 +157,9 @@ export type Transaction = {
 
 export type AppData = {
   loading: boolean;
-  currentUser: User;
+  currentUser: User | null;
   users: User[];
-  setCurrentUser: (user: User) => void;
+  setCurrentUser: (user: User | null) => void;
   harvests: Harvest[];
   collectors: Collector[];
   agronomistLogs: AgronomistLog[];

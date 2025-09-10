@@ -1,13 +1,11 @@
 
 import React from 'react';
-import type { AppData, ProducerLog, Transaction } from '@/lib/types';
+import type { AppData, ProducerLog, Transaction, User } from '@/lib/types';
 import { users } from '@/lib/data';
-
-const defaultUser = users.find(u => u.role === 'Productor')!;
 
 export const AppDataContext = React.createContext<AppData>({
   loading: true,
-  currentUser: defaultUser,
+  currentUser: null,
   users: users,
   setCurrentUser: () => {},
   harvests: [],

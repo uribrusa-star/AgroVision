@@ -1,9 +1,10 @@
 
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   collection,
@@ -18,6 +19,7 @@ import {
   addDoc,
   getDoc,
 } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 import {
   SidebarProvider,
@@ -44,7 +46,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -52,7 +54,7 @@ import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const allNavItems = [
-  { href: '/', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
+  { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/establishment', label: 'Establecimiento', icon: Building, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/producer-log', label: 'Bitácora del Productor', icon: NotebookPen, roles: ['Productor'] },
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
@@ -87,7 +89,7 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
 
 const useAppData = () => {
     const { toast } = useToast();
-    const [currentUser, setCurrentUser] = usePersistentState<User>('currentUser', availableUsers.find(u => u.role === 'Productor')!);
+    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser', null);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
@@ -114,7 +116,6 @@ const useAppData = () => {
         if (establishmentDocSnap.exists()) {
           estData = { id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData;
         } else {
-          // If the document doesn't exist, create it with initial data
           await setDoc(establishmentDocRef, initialEstablishmentData);
           estData = { id: 'main', ...initialEstablishmentData } as EstablishmentData;
         }
@@ -346,8 +347,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const appData = useAppData();
   const { currentUser, setCurrentUser, isClient, loading } = appData;
+  const router = useRouter();
 
-  if (!isClient) {
+  useEffect(() => {
+    if (isClient && !currentUser) {
+      router.replace('/');
+    }
+  }, [isClient, currentUser, router]);
+
+  if (!isClient || !currentUser) {
     return (
         <div className="flex items-center justify-center h-screen">
           <div className="flex flex-col items-center gap-4">
@@ -356,6 +364,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
     );
+  }
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    router.push('/');
   }
 
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
@@ -367,7 +380,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <Sidebar collapsible='offcanvas'>
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
-                <Link href="/" className="flex items-center gap-2">
+                <Link href="/dashboard" className="flex items-center gap-2">
                   <AgroVisionLogo className="w-8 h-8 text-primary" />
                   <span className="text-xl font-headline text-sidebar-foreground">AgroVision</span>
                 </Link>
@@ -428,7 +441,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                       ))}
                     </DropdownMenuRadioGroup>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem disabled>Cerrar Sesión</DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Cerrar Sesión</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarFooter>
