@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useContext, useTransition, useMemo } from 'react';
+import React, { useContext, useTransition, useMemo, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
@@ -48,6 +48,10 @@ export function HarvestSummary() {
   const { harvests, collectorPaymentLogs, agronomistLogs, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+
+  const logoRef = useRef<HTMLDivElement>(null);
+  const monthlyChartRef = useRef<HTMLDivElement>(null);
+  const costChartRef = useRef<HTMLDivElement>(null);
 
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
   const laborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
@@ -117,9 +121,8 @@ export function HarvestSummary() {
         let logoPngDataUri = '';
 
         // --- Logo Conversion ---
-        const logoSvgElement = document.getElementById('ag-logo-svg-for-pdf');
-        if (logoSvgElement) {
-            const canvas = await html2canvas(logoSvgElement, {backgroundColor: null});
+        if (logoRef.current) {
+            const canvas = await html2canvas(logoRef.current, {backgroundColor: null, scale: 3});
             logoPngDataUri = canvas.toDataURL('image/png');
         }
         
@@ -198,10 +201,7 @@ export function HarvestSummary() {
         }
 
         const addCharts = async () => {
-             const monthlyChartElement = document.getElementById('monthly-harvest-chart-for-pdf');
-             const costChartElement = document.getElementById('cost-distribution-chart-for-pdf');
-
-             if (!monthlyChartElement || !costChartElement) return;
+             if (!monthlyChartRef.current || !costChartRef.current) return;
 
              if (yPos > pageHeight - 110) { // Need space for charts
                 addPageFooter(doc);
@@ -216,8 +216,8 @@ export function HarvestSummary() {
             doc.text("Análisis Gráfico", 15, yPos);
             yPos += 10;
 
-            const monthlyCanvas = await html2canvas(monthlyChartElement, { scale: 2, backgroundColor: null });
-            const costCanvas = await html2canvas(costChartElement, { scale: 2, backgroundColor: null });
+            const monthlyCanvas = await html2canvas(monthlyChartRef.current, { scale: 2, backgroundColor: null });
+            const costCanvas = await html2canvas(costChartRef.current, { scale: 2, backgroundColor: null });
             const monthlyImgData = monthlyCanvas.toDataURL('image/png');
             const costImgData = costCanvas.toDataURL('image/png');
             
@@ -305,9 +305,11 @@ export function HarvestSummary() {
                 El informe se compilará en un documento PDF formal, ideal para análisis y archivo.
             </p>
             {/* Hidden elements for rendering and capturing */}
-            <div className="absolute -z-50 -left-[9999px] top-0" aria-hidden="true">
-              <AgroVisionLogo id="ag-logo-svg-for-pdf" className="w-16 h-16"/>
-              <div id="cost-distribution-chart-for-pdf" className='p-4 bg-card w-[450px]'>
+            <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: '100%', height: 'auto' }} aria-hidden="true">
+              <div ref={logoRef} style={{width: '64px', height: '64px'}}>
+                 <AgroVisionLogo className="w-16 h-16"/>
+              </div>
+              <div ref={costChartRef} className='p-4 bg-card w-[450px]'>
                 <Card>
                   <CardHeader>
                       <CardTitle>Distribución de Costos</CardTitle>
@@ -326,7 +328,7 @@ export function HarvestSummary() {
                   </CardContent>
                 </Card>
               </div>
-               <div id="monthly-harvest-chart-for-pdf" className="p-4 bg-card w-[450px]">
+               <div ref={monthlyChartRef} className="p-4 bg-card w-[450px]">
                    <MonthlyHarvestChart harvests={harvests} />
                </div>
             </div>
@@ -340,5 +342,7 @@ export function HarvestSummary() {
     </>
   )
 }
+
+    
 
     
