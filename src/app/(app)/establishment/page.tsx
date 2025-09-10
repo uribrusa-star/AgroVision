@@ -228,7 +228,20 @@ export default function EstablishmentPage() {
                <InfoItem label="Productor" value={establishmentData.producer} icon={User} />
                <InfoItem label="Responsable Técnico" value={establishmentData.technicalManager} icon={User} />
                <InfoItem label="Localidad" value={`${establishmentData.location.locality}, ${establishmentData.location.province}`} icon={MapPin}/>
-               <InfoItem label="Coordenadas" value={establishmentData.location.coordinates} icon={MapPin} />
+                <InfoItem
+                  label="Coordenadas"
+                  icon={MapPin}
+                  value={
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${establishmentData.location.coordinates}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline"
+                    >
+                      {establishmentData.location.coordinates}
+                    </a>
+                  }
+                />
             </InfoCard>
 
              <InfoCard title="Superficie y Sistema" icon={Ruler} onEdit={() => handleEdit('area')} editableBy={producerAccess}>
