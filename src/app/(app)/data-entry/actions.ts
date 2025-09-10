@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { validateProductionData } from '@/ai/flows/validate-production-data';
 import { collectors, harvests } from '@/lib/data';
+import type { Harvest } from '@/lib/types';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, 'El ID del lote es requerido'),
@@ -13,6 +14,7 @@ const ProductionSchema = z.object({
 type State = {
   message: string;
   success: boolean;
+  newHarvest?: Harvest;
 };
 
 export async function handleProductionUpload(prevState: State, formData: FormData): Promise<State> {
@@ -55,13 +57,21 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
       };
     }
 
-    // Aquí normalmente guardarías los datos en tu base de datos
-    console.log('Datos validados y guardados:', validatedFields.data);
-    // También agregarías la nueva cosecha a la matriz/base de datos `harvests` aquí.
-
+    const newHarvest: Harvest = {
+        id: `H${Date.now()}`,
+        date: new Date().toISOString(),
+        batchNumber: batchId,
+        kilograms: kilosPerBatch,
+        collector: {
+            id: farmerId,
+            name: farmer.name,
+        }
+    };
+    
     return {
       message: `Lote ${batchId} con ${kilosPerBatch}kg cargado y validado exitosamente.`,
       success: true,
+      newHarvest
     };
   } catch (error) {
     console.error(error);

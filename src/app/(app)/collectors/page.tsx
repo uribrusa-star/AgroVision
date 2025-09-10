@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { MoreHorizontal } from 'lucide-react';
+import React from 'react';
 
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,12 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { collectors, harvests } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AppDataContext } from '@/context/app-data-context';
 
 
 export default function CollectorsPage() {
+  const { collectors, harvests } = React.useContext(AppDataContext);
+
   const getCollectorHistory = (collectorId: string) => {
     return harvests.filter(h => h.collector.id === collectorId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   };

@@ -1,7 +1,8 @@
 'use server';
 
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
-import { harvests } from '@/lib/data';
+import type { Harvest } from '@/lib/types';
+
 
 type State = {
   summary: string;
@@ -17,7 +18,8 @@ export async function handleSummarizeHarvest(prevState: State, formData: FormDat
   
   // This is a placeholder to show loading state. In a real app, you might use optimistic UI.
   // For this simple example, we'll just toggle loading, but it will be very fast.
-  
+  const harvests: Harvest[] = JSON.parse(formData.get('harvests') as string || '[]');
+
   try {
     const harvestDataString = JSON.stringify(harvests, null, 2);
     const result = await summarizeHarvestData({ harvestData: harvestDataString });

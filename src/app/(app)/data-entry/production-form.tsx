@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useContext } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,8 +10,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { collectors } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { AppDataContext } from '@/context/app-data-context';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, "El ID del lote es requerido."),
@@ -24,11 +24,13 @@ type ProductionFormValues = z.infer<typeof ProductionSchema>;
 const initialState = {
   message: '',
   success: false,
+  newHarvest: undefined,
 };
 
 export function ProductionForm() {
   const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
+  const { collectors, addHarvest } = useContext(AppDataContext);
 
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),
@@ -47,10 +49,13 @@ export function ProductionForm() {
         variant: state.success ? 'default' : 'destructive',
       });
       if (state.success) {
+        if(state.newHarvest) {
+          addHarvest(state.newHarvest);
+        }
         form.reset();
       }
     }
-  }, [state, toast, form]);
+  }, [state, toast, form, addHarvest]);
 
   return (
     <Card>
@@ -59,7 +64,16 @@ export function ProductionForm() {
         <CardDescription>Ingrese los detalles de un nuevo lote de producción. Los datos serán validados por nuestro asistente de IA.</CardDescription>
       </CardHeader>
       <Form {...form}>
-        <form action={formAction}>
+        <form action={(formData) => {
+            const valid = form.trigger();
+            if(valid) {
+              const data = new FormData();
+              data.set('batchId', form.getValues('batchId'));
+              data.set('kilosPerBatch', form.getValues('kilosPerBatch').toString());
+              data.set('farmerId', form.getValues('farmerId'));
+              formAction(data);
+            }
+        }}>
           <CardContent className="space-y-4">
             <div className="grid md:grid-cols-2 gap-4">
               <FormField
@@ -95,7 +109,7 @@ export function ProductionForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Agricultor / Recolector</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione un agricultor" />

@@ -1,15 +1,16 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import React, { useActionState, useState, useContext } from 'react';
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
 import { DollarSign, HardHat, Tractor, Weight } from 'lucide-react';
-import { collectors, engineerLogStats, harvests } from '@/lib/data';
+import { engineerLogStats } from '@/lib/data';
 import { handleSummarizeHarvest } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AppDataContext } from '@/context/app-data-context';
 
 const initialState = {
   summary: '',
@@ -19,11 +20,13 @@ const initialState = {
 function HarvestSummary() {
   const [state, formAction] = useActionState(handleSummarizeHarvest, initialState);
   const [showSummary, setShowSummary] = useState(false);
+  const { harvests } = useContext(AppDataContext);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setShowSummary(true);
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData();
+    formData.set('harvests', JSON.stringify(harvests));
     formAction(formData);
   };
 
@@ -62,6 +65,7 @@ function HarvestSummary() {
 }
 
 export default function EngineerLogPage() {
+  const { collectors } = useContext(AppDataContext);
   return (
     <>
       <PageHeader
@@ -106,7 +110,7 @@ export default function EngineerLogPage() {
             <HardHat className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{engineerLogStats.collectorCount}</div>
+            <div className="text-2xl font-bold">{collectors.length}</div>
             <p className="text-xs text-muted-foreground">Activos esta temporada</p>
           </CardContent>
         </Card>

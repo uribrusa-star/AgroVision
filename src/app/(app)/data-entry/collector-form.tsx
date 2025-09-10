@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -9,9 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { collectors } from '@/lib/data';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DollarSign } from 'lucide-react';
+import { AppDataContext } from '@/context/app-data-context';
 
 const CollectorSchema = z.object({
   collectorId: z.string().min(1, "El recolector es requerido."),
@@ -24,6 +24,7 @@ type CollectorFormValues = z.infer<typeof CollectorSchema>;
 
 export function CollectorForm() {
   const [payment, setPayment] = useState<number | null>(null);
+  const { collectors } = React.useContext(AppDataContext);
 
   const form = useForm<CollectorFormValues>({
     resolver: zodResolver(CollectorSchema),

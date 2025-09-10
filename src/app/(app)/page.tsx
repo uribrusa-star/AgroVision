@@ -1,15 +1,18 @@
 'use client';
 
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { harvests, dashboardStats } from "@/lib/data";
+import { dashboardStats } from "@/lib/data";
 import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-react";
 import { MonthlyHarvestChart } from "./monthly-harvest-chart";
+import { AppDataContext } from '@/context/app-data-context';
 
 
 export default function DashboardPage() {
+  const { harvests } = React.useContext(AppDataContext);
   return (
     <>
       <PageHeader title="Panel de Control" description="Estadísticas clave y actividad reciente." />

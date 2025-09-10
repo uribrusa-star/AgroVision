@@ -30,3 +30,9 @@ export type EngineerLogStats = {
   averagePrice: number;
   collectorCount: number;
 };
+
+export type AppData = {
+  harvests: Harvest[];
+  collectors: Collector[];
+  addHarvest: (harvest: Harvest) => void;
+};
