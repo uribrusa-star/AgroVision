@@ -14,10 +14,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { DollarSign } from 'lucide-react';
 
 const CollectorSchema = z.object({
-  collectorId: z.string().min(1, "Collector is required."),
-  kilograms: z.coerce.number().min(0.1, "Kilograms must be a positive number."),
-  hours: z.coerce.number().min(0.1, "Hours must be a positive number."),
-  ratePerKg: z.coerce.number().min(0.01, "Rate per kg is required."),
+  collectorId: z.string().min(1, "El recolector es requerido."),
+  kilograms: z.coerce.number().min(0.1, "Los kilogramos deben ser un número positivo."),
+  hours: z.coerce.number().min(0.1, "Las horas deben ser un número positivo."),
+  ratePerKg: z.coerce.number().min(0.01, "La tarifa por kg es requerida."),
 });
 
 type CollectorFormValues = z.infer<typeof CollectorSchema>;
@@ -43,8 +43,8 @@ export function CollectorForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Register Collector Work</CardTitle>
-        <CardDescription>Log kilograms harvested and hours worked by a collector to calculate their payment.</CardDescription>
+        <CardTitle>Registrar Trabajo del Recolector</CardTitle>
+        <CardDescription>Registre los kilogramos cosechados y las horas trabajadas por un recolector para calcular su pago.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -54,11 +54,11 @@ export function CollectorForm() {
               name="collectorId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Collector</FormLabel>
+                  <FormLabel>Recolector</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a collector" />
+                        <SelectValue placeholder="Seleccione un recolector" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -77,9 +77,9 @@ export function CollectorForm() {
                 name="kilograms"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kilograms Harvested</FormLabel>
+                    <FormLabel>Kilogramos Cosechados</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g., 85" {...field} />
+                      <Input type="number" placeholder="ej., 85" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -90,9 +90,9 @@ export function CollectorForm() {
                 name="hours"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Hours Worked</FormLabel>
+                    <FormLabel>Horas Trabajadas</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g., 8" {...field} />
+                      <Input type="number" placeholder="ej., 8" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -103,7 +103,7 @@ export function CollectorForm() {
                 name="ratePerKg"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Rate per kg ($)</FormLabel>
+                    <FormLabel>Tarifa por kg ($)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" {...field} />
                     </FormControl>
@@ -115,15 +115,15 @@ export function CollectorForm() {
             {payment !== null && (
               <Alert>
                 <DollarSign className="h-4 w-4" />
-                <AlertTitle>Calculated Payment</AlertTitle>
+                <AlertTitle>Pago Calculado</AlertTitle>
                 <AlertDescription>
-                  The total payment for this entry is <strong>${payment.toFixed(2)}</strong>.
+                  El pago total para esta entrada es <strong>${payment.toFixed(2)}</strong>.
                 </AlertDescription>
               </Alert>
             )}
           </CardContent>
           <CardFooter className="flex-col items-start gap-4">
-            <Button type="submit">Calculate Payment</Button>
+            <Button type="submit">Calcular Pago</Button>
           </CardFooter>
         </form>
       </Form>

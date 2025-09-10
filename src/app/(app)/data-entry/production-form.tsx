@@ -14,9 +14,9 @@ import { collectors } from '@/lib/data';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const ProductionSchema = z.object({
-  batchId: z.string().min(1, "Batch ID is required."),
-  kilosPerBatch: z.coerce.number().min(1, "Kilos must be a positive number."),
-  farmerId: z.string().min(1, "Farmer is required."),
+  batchId: z.string().min(1, "El ID del lote es requerido."),
+  kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
+  farmerId: z.string().min(1, "El agricultor es requerido."),
 });
 
 type ProductionFormValues = z.infer<typeof ProductionSchema>;
@@ -42,7 +42,7 @@ export function ProductionForm() {
   useEffect(() => {
     if (state.message) {
       toast({
-        title: state.success ? 'Success!' : 'Error!',
+        title: state.success ? '¡Éxito!' : '¡Error!',
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
@@ -55,8 +55,8 @@ export function ProductionForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Log Production</CardTitle>
-        <CardDescription>Enter the details for a new production batch. The data will be validated by our AI assistant.</CardDescription>
+        <CardTitle>Registrar Producción</CardTitle>
+        <CardDescription>Ingrese los detalles de un nuevo lote de producción. Los datos serán validados por nuestro asistente de IA.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form action={formAction}>
@@ -67,9 +67,9 @@ export function ProductionForm() {
                 name="batchId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Batch ID</FormLabel>
+                    <FormLabel>ID del Lote</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., B014" {...field} />
+                      <Input placeholder="ej., L014" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -80,9 +80,9 @@ export function ProductionForm() {
                 name="kilosPerBatch"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Kilos per Batch</FormLabel>
+                    <FormLabel>Kilos por Lote</FormLabel>
                     <FormControl>
-                      <Input type="number" placeholder="e.g., 125.5" {...field} />
+                      <Input type="number" placeholder="ej., 125.5" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -94,11 +94,11 @@ export function ProductionForm() {
               name="farmerId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Farmer / Collector</FormLabel>
+                  <FormLabel>Agricultor / Recolector</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a farmer" />
+                        <SelectValue placeholder="Seleccione un agricultor" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -113,7 +113,7 @@ export function ProductionForm() {
             />
           </CardContent>
           <CardFooter>
-            <Button type="submit">Submit Batch</Button>
+            <Button type="submit">Enviar Lote</Button>
           </CardFooter>
         </form>
       </Form>

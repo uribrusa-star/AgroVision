@@ -8,18 +8,18 @@ export default function DataEntryPage() {
   return (
     <>
       <PageHeader
-        title="Data Entry"
-        description="Log new production data and register collector work."
+        title="Entrada de Datos"
+        description="Registre nuevos datos de producción y el trabajo de los recolectores."
       />
       <Tabs defaultValue="production">
         <TabsList className="grid w-full grid-cols-2 md:w-[400px]">
           <TabsTrigger value="production">
             <Weight className="mr-2" />
-            Production Upload
+            Carga de Producción
           </TabsTrigger>
           <TabsTrigger value="collector">
             <HardHat className="mr-2" />
-            Collector Registration
+            Registro de Recolector
           </TabsTrigger>
         </TabsList>
         <TabsContent value="production">

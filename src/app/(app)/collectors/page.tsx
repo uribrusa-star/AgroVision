@@ -22,25 +22,25 @@ export default function CollectorsPage() {
   return (
     <>
       <PageHeader
-        title="Collector Management"
-        description="View, manage, and track the productivity of your collectors."
+        title="Gestión de Recolectores"
+        description="Vea, gestione y siga la productividad de sus recolectores."
       >
-        <Button>Add New Collector</Button>
+        <Button>Agregar Nuevo Recolector</Button>
       </PageHeader>
       <Card>
         <CardHeader>
-          <CardTitle>All Collectors</CardTitle>
-          <CardDescription>A list of all collectors in your organization.</CardDescription>
+          <CardTitle>Todos los Recolectores</CardTitle>
+          <CardDescription>Una lista de todos los recolectores en su organización.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden md:table-cell">Total Harvested</TableHead>
-                <TableHead className="hidden md:table-cell">Productivity (kg/hr)</TableHead>
-                <TableHead className="hidden sm:table-cell">Joined</TableHead>
-                <TableHead><span className="sr-only">Actions</span></TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead className="hidden md:table-cell">Total Cosechado</TableHead>
+                <TableHead className="hidden md:table-cell">Productividad (kg/hr)</TableHead>
+                <TableHead className="hidden sm:table-cell">Se unió</TableHead>
+                <TableHead><span className="sr-only">Acciones</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -68,28 +68,28 @@ export default function CollectorsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>View History</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Ver Historial</DropdownMenuItem>
                           </DialogTrigger>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <DialogContent className="sm:max-w-2xl">
                         <DialogHeader>
-                          <DialogTitle>Harvest History: {collector.name}</DialogTitle>
+                          <DialogTitle>Historial de Cosecha: {collector.name}</DialogTitle>
                           <DialogDescription>
-                            Review all harvest entries for this collector.
+                            Revise todas las entradas de cosecha para este recolector.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="max-h-[60vh] overflow-auto">
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Date</TableHead>
-                                <TableHead>Batch</TableHead>
-                                <TableHead className="text-right">Kilograms</TableHead>
+                                <TableHead>Fecha</TableHead>
+                                <TableHead>Lote</TableHead>
+                                <TableHead className="text-right">Kilogramos</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -106,7 +106,7 @@ export default function CollectorsPage() {
                                 }
                                 return (
                                   <TableRow>
-                                    <TableCell colSpan={3} className="text-center">No harvest history found.</TableCell>
+                                    <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
                                   </TableRow>
                                 );
                               })()}

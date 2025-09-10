@@ -5,9 +5,9 @@ import { validateProductionData } from '@/ai/flows/validate-production-data';
 import { collectors, harvests } from '@/lib/data';
 
 const ProductionSchema = z.object({
-  batchId: z.string().min(1, 'Batch ID is required'),
-  kilosPerBatch: z.coerce.number().min(0.1, 'Kilos must be a positive number'),
-  farmerId: z.string().min(1, 'Farmer is required'),
+  batchId: z.string().min(1, 'El ID del lote es requerido'),
+  kilosPerBatch: z.coerce.number().min(0.1, 'Los kilos deben ser un número positivo'),
+  farmerId: z.string().min(1, 'El agricultor es requerido'),
 });
 
 type State = {
@@ -20,7 +20,7 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
 
   if (!validatedFields.success) {
     return {
-      message: 'Invalid form data. Please check your inputs.',
+      message: 'Datos de formulario no válidos. Por favor, revise sus entradas.',
       success: false,
     };
   }
@@ -29,7 +29,7 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
   
   const farmer = collectors.find(c => c.id === farmerId);
   if (!farmer) {
-    return { message: 'Farmer not found.', success: false };
+    return { message: 'Agricultor no encontrado.', success: false };
   }
 
   const farmerHarvests = harvests.filter(h => h.collector.id === farmerId);
@@ -50,23 +50,23 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
 
     if (!validationResult.isValid) {
       return {
-        message: `AI Validation Failed: ${validationResult.reason}`,
+        message: `Falló la validación de IA: ${validationResult.reason}`,
         success: false,
       };
     }
 
-    // Here you would typically save the data to your database
-    console.log('Data validated and saved:', validatedFields.data);
-    // You would also add the new harvest to the `harvests` array/database here.
+    // Aquí normalmente guardarías los datos en tu base de datos
+    console.log('Datos validados y guardados:', validatedFields.data);
+    // También agregarías la nueva cosecha a la matriz/base de datos `harvests` aquí.
 
     return {
-      message: `Batch ${batchId} with ${kilosPerBatch}kg successfully uploaded and validated.`,
+      message: `Lote ${batchId} con ${kilosPerBatch}kg cargado y validado exitosamente.`,
       success: true,
     };
   } catch (error) {
     console.error(error);
     return {
-      message: 'An unexpected error occurred during AI validation.',
+      message: 'Ocurrió un error inesperado durante la validación de IA.',
       success: false,
     };
   }

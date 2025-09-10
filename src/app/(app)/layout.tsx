@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LineChart, LayoutDashboard } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard } from 'lucide-react';
 
 import {
   SidebarProvider,
@@ -19,7 +19,6 @@ import {
 import { AgroVisionLogo, StrawberryIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,10 +29,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 const navItems = [
-  { href: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/data-entry', label: 'Data Entry', icon: StrawberryIcon },
-  { href: '/engineer-log', label: 'Engineer Log', icon: Leaf },
-  { href: '/collectors', label: 'Collectors', icon: HardHat },
+  { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
+  { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon },
+  { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf },
+  { href: '/collectors', label: 'Recolectores', icon: HardHat },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -83,12 +82,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="start" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Perfil</DropdownMenuItem>
+                <DropdownMenuItem>Configuración</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
         </SidebarFooter>

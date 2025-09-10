@@ -9,19 +9,19 @@ export const collectors: Collector[] = [
 ];
 
 export const harvests: Harvest[] = [
-  { id: 'H001', date: '2024-07-22', batchNumber: 'B012', kilograms: 120, collector: { id: '1', name: 'Ana García' } },
-  { id: 'H002', date: '2024-07-22', batchNumber: 'B013', kilograms: 95, collector: { id: '2', name: 'Carlos Martinez' } },
-  { id: 'H003', date: '2024-07-21', batchNumber: 'B010', kilograms: 150, collector: { id: '3', name: 'Sofía Rodríguez' } },
-  { id: 'H004', date: '2024-07-21', batchNumber: 'B011', kilograms: 88, collector: { id: '4', name: 'Javier Hernandez' } },
-  { id: 'H005', date: '2024-07-20', batchNumber: 'B009', kilograms: 130, collector: { id: '5', name: 'Isabel Lopez' } },
-  { id: 'H006', date: '2024-07-20', batchNumber: 'B008', kilograms: 110, collector: { id: '1', name: 'Ana García' } },
+  { id: 'H001', date: '2024-07-22', batchNumber: 'L012', kilograms: 120, collector: { id: '1', name: 'Ana García' } },
+  { id: 'H002', date: '2024-07-22', batchNumber: 'L013', kilograms: 95, collector: { id: '2', name: 'Carlos Martinez' } },
+  { id: 'H003', date: '2024-07-21', batchNumber: 'L010', kilograms: 150, collector: { id: '3', name: 'Sofía Rodríguez' } },
+  { id: 'H004', date: '2024-07-21', batchNumber: 'L011', kilograms: 88, collector: { id: '4', name: 'Javier Hernandez' } },
+  { id: 'H005', date: '2024-07-20', batchNumber: 'L009', kilograms: 130, collector: { id: '5', name: 'Isabel Lopez' } },
+  { id: 'H006', date: '2024-07-20', batchNumber: 'L008', kilograms: 110, collector: { id: '1', name: 'Ana García' } },
 ];
 
 export const monthlyData: MonthlyData[] = [
-  { month: 'Jan', total: 1200 },
+  { month: 'Ene', total: 1200 },
   { month: 'Feb', total: 1800 },
   { month: 'Mar', total: 2200 },
-  { month: 'Apr', total: 2780 },
+  { month: 'Abr', total: 2780 },
   { month: 'May', total: 3200 },
   { month: 'Jun', total: 3100 },
   { month: 'Jul', total: 2900 },

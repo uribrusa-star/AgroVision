@@ -26,8 +26,8 @@ export function MonthlyHarvestChart() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Monthly Harvest</CardTitle>
-        <CardDescription>Total kilograms harvested per month.</CardDescription>
+        <CardTitle>Cosecha Mensual</CardTitle>
+        <CardDescription>Total de kilogramos cosechados por mes.</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">

@@ -24,6 +24,6 @@ export async function handleSummarizeHarvest(prevState: State, formData: FormDat
     return { summary: result.summary, loading: false };
   } catch (error) {
     console.error(error);
-    return { summary: 'Failed to generate summary.', loading: false };
+    return { summary: 'No se pudo generar el resumen.', loading: false };
   }
 }
