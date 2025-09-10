@@ -1,10 +1,9 @@
 'use client';
 
-import { useFormState } from 'react-dom';
+import { useActionState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { handleProductionUpload } from './actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +27,7 @@ const initialState = {
 };
 
 export function ProductionForm() {
-  const [state, formAction] = useFormState(handleProductionUpload, initialState);
+  const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
 
   const form = useForm<ProductionFormValues>({
