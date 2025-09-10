@@ -8,7 +8,7 @@ import html2canvas from 'html2canvas';
 import { Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from '@/components/ui/button';
 import { AppDataContext } from '@/context/app-data-context';
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
@@ -132,6 +132,10 @@ export function HarvestSummary() {
             docInstance.text("Informe de Producción de Frutilla", pageWidth / 2, 22, { align: 'center' });
             docInstance.setDrawColor(180);
             docInstance.line(15, 30, pageWidth - 15, 30);
+            // Reset font for content
+            docInstance.setFont('helvetica', 'normal');
+            docInstance.setFontSize(10);
+            docInstance.setTextColor(80);
         };
         
         const checkAndAddPage = () => {
@@ -171,7 +175,10 @@ export function HarvestSummary() {
             doc.text(title, 15, yPos);
             yPos += 8;
             
-            doc.setFontSize(10); // Reset font size before table
+            // Reset font immediately after title
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(80);
 
             doc.autoTable({
                 head,
@@ -200,7 +207,10 @@ export function HarvestSummary() {
             doc.text("Análisis Gráfico", 15, yPos);
             yPos += 10;
 
-            doc.setFontSize(10); // Reset font size
+            // Reset font immediately after title
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(80);
 
             const monthlyCanvas = await html2canvas(monthlyChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
             const costCanvas = await html2canvas(costChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
@@ -270,19 +280,19 @@ export function HarvestSummary() {
         addTable("Resumen de Costos Operativos (Estimado)",
             [['Costo Mano de Obra', 'Costo Insumos', 'Costo Riego', 'Costo Total']],
             [[
-                `$${laborCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
-                `$${estimatedSupplyCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
-                `$${estimatedIrrigationCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
-                `$${totalCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`
+                `$${laborCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${estimatedSupplyCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${estimatedIrrigationCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${totalCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`
             ]]
         );
         
         addTable("Proyección Financiera (Estimada)",
             [['Ingresos Totales', 'Costos Totales', 'Margen Bruto']],
             [[
-                `$${estimatedRevenue.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
-                `$${totalCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
-                `$${(estimatedRevenue - totalCost).toLocaleString('es-ES', {maximumFractionDigits: 2})}`
+                `$${estimatedRevenue.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${totalCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${(estimatedRevenue - totalCost).toLocaleString('es-AR', {maximumFractionDigits: 2})}`
             ]]
         );
 
