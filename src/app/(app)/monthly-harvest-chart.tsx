@@ -13,7 +13,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { monthlyData } from "@/lib/data";
+import type { Harvest } from "@/lib/types";
 
 const chartConfig = {
   total: {
@@ -22,7 +22,43 @@ const chartConfig = {
   },
 };
 
-export function MonthlyHarvestChart() {
+const processHarvestsForChart = (harvests: Harvest[]) => {
+    const monthlyData: { [key: string]: number } = {};
+    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+
+    harvests.forEach(harvest => {
+        const monthIndex = new Date(harvest.date).getMonth();
+        const monthName = monthNames[monthIndex];
+        if (!monthlyData[monthName]) {
+            monthlyData[monthName] = 0;
+        }
+        monthlyData[monthName] += harvest.kilograms;
+    });
+
+    return monthNames.map(month => ({
+        month,
+        total: monthlyData[month] || 0,
+    })).filter(d => d.total > 0);
+};
+
+
+export function MonthlyHarvestChart({ harvests }: { harvests: Harvest[] }) {
+  const chartData = processHarvestsForChart(harvests);
+  
+  if(chartData.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Cosecha Mensual</CardTitle>
+          <CardDescription>Total de kilogramos cosechados por mes.</CardDescription>
+        </CardHeader>
+        <CardContent className="flex h-[300px] w-full items-center justify-center">
+            <p className="text-muted-foreground">No hay datos de cosecha para mostrar.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -31,7 +67,7 @@ export function MonthlyHarvestChart() {
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className="h-[300px] w-full">
-          <BarChart data={monthlyData} accessibilityLayer>
+          <BarChart data={chartData} accessibilityLayer>
             <CartesianGrid vertical={false} />
             <XAxis
               dataKey="month"
