@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useContext, useEffect } from 'react';
@@ -42,7 +43,6 @@ export function ApplicationHistory() {
 
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
-    disabled: !canManage,
   });
 
   useEffect(() => {
@@ -224,7 +224,7 @@ export function ApplicationHistory() {
                     <FormItem>
                         <FormLabel>Producto Utilizado (Opcional)</FormLabel>
                         <FormControl>
-                        <Input placeholder="ej., Nitrato de Calcio" {...field} />
+                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -242,6 +242,7 @@ export function ApplicationHistory() {
                       placeholder="Describa la aplicación, dosis, observaciones, etc."
                       className="resize-none"
                       {...field}
+                      disabled={!canManage}
                     />
                   </FormControl>
                   <FormMessage />
@@ -261,3 +262,5 @@ export function ApplicationHistory() {
     </Dialog>
   )
 }
+
+    
