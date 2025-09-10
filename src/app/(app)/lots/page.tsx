@@ -66,12 +66,12 @@ const exampleLots = [
 
 export default function LotsPage() {
   const [filterProductor, setFilterProductor] = useState("");
-  const [filterEstado, setFilterEstado] = useState("");
+  const [filterEstado, setFilterEstado] = useState("all");
 
   const filteredLots = exampleLots.filter(
     (lot) =>
       (filterProductor === "" || lot.productor.toLowerCase().includes(filterProductor.toLowerCase())) &&
-      (filterEstado === "" || lot.estado === filterEstado)
+      (filterEstado === "all" || lot.estado === filterEstado)
   );
 
   const getProductivityColor = (productivity: number) => {
@@ -102,7 +102,7 @@ export default function LotsPage() {
                     <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">Todos los estados</SelectItem>
+                    <SelectItem value="all">Todos los estados</SelectItem>
                     <SelectItem value="activo">Activo</SelectItem>
                     <SelectItem value="inactivo">Inactivo</SelectItem>
                 </SelectContent>
