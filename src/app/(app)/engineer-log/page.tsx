@@ -90,8 +90,8 @@ export default function EngineerLogPage() {
           </div>
         </div>
       
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mb-8">
-        <div id="batch-yield-chart-pdf" className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-8">
+        <div id="batch-yield-chart" className="lg:col-span-1">
            <BatchYieldChart />
         </div>
         <div>

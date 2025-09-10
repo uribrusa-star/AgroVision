@@ -139,7 +139,7 @@ export default function CollectorsPage() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead className="hidden md:table-cell">Total Cosechado</TableHead>
-                <TableHead className="hidden md:table-cell">Productividad (kg/hr)</TableHead>
+                <TableHead className="hidden lg:table-cell">Productividad (kg/hr)</TableHead>
                 <TableHead className="hidden sm:table-cell">Se unió</TableHead>
                 {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
               </TableRow>
@@ -158,7 +158,7 @@ export default function CollectorsPage() {
                   <TableCell className="hidden md:table-cell">
                     <Skeleton className="h-4 w-[50px]" />
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="hidden lg:table-cell">
                     <Skeleton className="h-4 w-[50px]" />
                   </TableCell>
                   <TableCell className="hidden sm:table-cell">
@@ -183,7 +183,7 @@ export default function CollectorsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">{collector.totalHarvested.toLocaleString('es-ES')} kg</TableCell>
-                  <TableCell className="hidden md:table-cell">{collector.productivity.toFixed(2)}</TableCell>
+                  <TableCell className="hidden lg:table-cell">{collector.productivity.toFixed(2)}</TableCell>
                   <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString('es-ES')}</TableCell>
                   {canManage && (
                     <TableCell>
@@ -307,5 +307,3 @@ export default function CollectorsPage() {
     </>
   );
 }
-
-    
