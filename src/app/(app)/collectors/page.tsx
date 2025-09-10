@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { MoreHorizontal } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { PageHeader } from '@/components/page-header';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,11 @@ import { AppDataContext } from '@/context/app-data-context';
 
 export default function CollectorsPage() {
   const { collectors, harvests } = React.useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const getCollectorHistory = (collectorId: string) => {
     return harvests.filter(h => h.collector.id === collectorId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -58,9 +63,9 @@ export default function CollectorsPage() {
                       <span className="font-medium">{collector.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{collector.totalHarvested.toLocaleString()} kg</TableCell>
-                  <TableCell className="hidden md:table-cell">{collector.productivity.toFixed(2)}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString()}</TableCell>
+                  <TableCell className="hidden md:table-cell">{isClient ? collector.totalHarvested.toLocaleString('es-ES') : '...'} kg</TableCell>
+                  <TableCell className="hidden md:table-cell">{isClient ? collector.productivity.toFixed(2) : '...'}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{isClient ? new Date(collector.joinDate).toLocaleDateString('es-ES') : '...'}</TableCell>
                   <TableCell>
                     <Dialog>
                       <DropdownMenu>
@@ -101,7 +106,7 @@ export default function CollectorsPage() {
                                 if (history.length > 0) {
                                   return history.map(h => (
                                     <TableRow key={h.id}>
-                                      <TableCell>{new Date(h.date).toLocaleDateString()}</TableCell>
+                                      <TableCell>{isClient ? new Date(h.date).toLocaleDateString('es-ES') : '...'}</TableCell>
                                       <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
                                       <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
                                     </TableRow>

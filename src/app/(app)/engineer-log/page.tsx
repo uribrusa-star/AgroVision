@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useActionState, useState, useContext } from 'react';
+import React, { useActionState, useState, useContext, useEffect } from 'react';
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -66,6 +66,12 @@ function HarvestSummary() {
 
 export default function EngineerLogPage() {
   const { collectors } = useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   return (
     <>
       <PageHeader
@@ -80,7 +86,7 @@ export default function EngineerLogPage() {
             <Weight className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{engineerLogStats.totalProduction.toLocaleString()} kg</div>
+            <div className="text-2xl font-bold">{isClient ? engineerLogStats.totalProduction.toLocaleString('es-ES') : 'Cargando...'} kg</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>
@@ -90,7 +96,7 @@ export default function EngineerLogPage() {
             <Tractor className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${engineerLogStats.totalInputs.toLocaleString()}</div>
+            <div className="text-2xl font-bold">${isClient ? engineerLogStats.totalInputs.toLocaleString('es-ES') : 'Cargando...'}</div>
             <p className="text-xs text-muted-foreground">Fertilizantes, agua, etc.</p>
           </CardContent>
         </Card>
@@ -100,7 +106,7 @@ export default function EngineerLogPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${engineerLogStats.averagePrice.toFixed(2)}</div>
+            <div className="text-2xl font-bold">${isClient ? engineerLogStats.averagePrice.toFixed(2) : '...'}</div>
             <p className="text-xs text-muted-foreground">Promedio de mercado</p>
           </CardContent>
         </Card>
@@ -137,9 +143,9 @@ export default function EngineerLogPage() {
                         {collectors.map((collector) => (
                             <TableRow key={collector.id}>
                             <TableCell className="font-medium">{collector.name}</TableCell>
-                            <TableCell className="text-right">{collector.totalHarvested.toLocaleString()}</TableCell>
+                            <TableCell className="text-right">{isClient ? collector.totalHarvested.toLocaleString('es-ES') : '...'}</TableCell>
                             <TableCell className="text-right">{collector.hoursWorked}</TableCell>
-                            <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-bold">{isClient ? collector.productivity.toFixed(2) : '...'}</TableCell>
                             </TableRow>
                         ))}
                         </TableBody>

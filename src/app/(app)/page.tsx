@@ -1,18 +1,30 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { dashboardStats } from "@/lib/data";
+import { dashboardStats as initialDashboardStats } from "@/lib/data";
 import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-react";
 import { MonthlyHarvestChart } from "./monthly-harvest-chart";
 import { AppDataContext } from '@/context/app-data-context';
 
 
 export default function DashboardPage() {
-  const { harvests } = React.useContext(AppDataContext);
+  const { harvests, collectors } = React.useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const dashboardStats = {
+    ...initialDashboardStats,
+    totalHarvest: harvests.reduce((acc, h) => acc + h.kilograms, 0),
+    activeCollectors: collectors.length,
+  };
+  
   return (
     <>
       <PageHeader title="Panel de Control" description="Estadísticas clave y actividad reciente." />
@@ -23,7 +35,7 @@ export default function DashboardPage() {
             <Weight className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardStats.totalHarvest.toLocaleString()} kg</div>
+            <div className="text-2xl font-bold">{isClient ? dashboardStats.totalHarvest.toLocaleString('es-ES') : 'Cargando...'} kg</div>
             <p className="text-xs text-muted-foreground">+15.2% desde el mes pasado</p>
           </CardContent>
         </Card>
@@ -33,7 +45,7 @@ export default function DashboardPage() {
             <BarChartIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardStats.averageYield.toLocaleString()} kg/lote</div>
+            <div className="text-2xl font-bold">{isClient ? dashboardStats.averageYield.toLocaleString('es-ES') : 'Cargando...'} kg/lote</div>
             <p className="text-xs text-muted-foreground">+2.1% desde el mes pasado</p>
           </CardContent>
         </Card>
@@ -43,7 +55,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{dashboardStats.activeCollectors}</div>
+            <div className="text-2xl font-bold">+{isClient ? dashboardStats.activeCollectors.toLocaleString('es-ES') : 'Cargando...'}</div>
             <p className="text-xs text-muted-foreground">Actualmente en el campo</p>
           </CardContent>
         </Card>
@@ -53,7 +65,7 @@ export default function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{new Date(dashboardStats.peakDay).toLocaleDateString()}</div>
+            <div className="text-2xl font-bold">{isClient ? new Date(dashboardStats.peakDay).toLocaleDateString('es-ES') : 'Cargando...'}</div>
             <p className="text-xs text-muted-foreground">Cosecha más alta esta temporada</p>
           </CardContent>
         </Card>
@@ -84,8 +96,8 @@ export default function DashboardPage() {
                       <Badge variant="outline">{harvest.batchNumber}</Badge>
                     </TableCell>
                     <TableCell>{harvest.collector.name}</TableCell>
-                    <TableCell className="text-right font-medium">{harvest.kilograms} kg</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{new Date(harvest.date).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right font-medium">{isClient ? harvest.kilograms.toLocaleString('es-ES') : '...'} kg</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{isClient ? new Date(harvest.date).toLocaleDateString('es-ES') : '...'}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
