@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import { validateProductionData } from '@/ai/flows/validate-production-data';
+// import { validateProductionData } from '@/ai/flows/validate-production-data';
 import { collectors, harvests } from '@/lib/data';
 import type { Harvest } from '@/lib/types';
 
@@ -34,28 +34,28 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
     return { message: 'Agricultor no encontrado.', success: false };
   }
 
-  const farmerHarvests = harvests.filter(h => h.collector.id === farmerId);
-  const historicalData = JSON.stringify(farmerHarvests);
-  const totalKilos = farmerHarvests.reduce((sum, h) => sum + h.kilograms, 0);
-  const averageKilosPerBatch = farmerHarvests.length > 0 ? totalKilos / farmerHarvests.length : 0;
+  // const farmerHarvests = harvests.filter(h => h.collector.id === farmerId);
+  // const historicalData = JSON.stringify(farmerHarvests);
+  // const totalKilos = farmerHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+  // const averageKilosPerBatch = farmerHarvests.length > 0 ? totalKilos / farmerHarvests.length : 0;
 
 
   try {
-    const validationResult = await validateProductionData({
-      batchId,
-      kilosPerBatch,
-      farmerId,
-      timestamp: new Date().toISOString(),
-      averageKilosPerBatch,
-      historicalData,
-    });
+    // const validationResult = await validateProductionData({
+    //   batchId,
+    //   kilosPerBatch,
+    //   farmerId,
+    //   timestamp: new Date().toISOString(),
+    //   averageKilosPerBatch,
+    //   historicalData,
+    // });
 
-    if (!validationResult.isValid) {
-      return {
-        message: `Falló la validación de IA: ${validationResult.reason}`,
-        success: false,
-      };
-    }
+    // if (!validationResult.isValid) {
+    //   return {
+    //     message: `Falló la validación de IA: ${validationResult.reason}`,
+    //     success: false,
+    //   };
+    // }
 
     const newHarvest: Harvest = {
         id: `H${Date.now()}`,

@@ -61,7 +61,7 @@ export function ProductionForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registrar Producción</CardTitle>
-        <CardDescription>Ingrese los detalles de un nuevo lote de producción. Los datos serán validados por nuestro asistente de IA.</CardDescription>
+        <CardDescription>Ingrese los detalles de un nuevo lote de producción.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form action={(formData) => {
