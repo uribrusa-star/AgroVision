@@ -33,6 +33,7 @@ export function HarvestSummary() {
         const svgData = new XMLSerializer().serializeToString(logoSvg);
         const img = new Image();
         img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+        // This is a synchronous operation with data URI
         doc.addImage(img, 'PNG', 14, 15, 30, 30);
     }
     
@@ -71,8 +72,18 @@ export function HarvestSummary() {
             const svgData = new XMLSerializer().serializeToString(logoSvg);
             const img = new Image();
             img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-            await new Promise(resolve => img.onload = resolve);
-            doc.addImage(img, 'PNG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
+            await new Promise(resolve => {
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 800; // Increased resolution
+                    canvas.height = 800;
+                    const ctx = canvas.getContext('2d');
+                    ctx!.drawImage(img, 0, 0, 800, 800);
+                    const pngDataUri = canvas.toDataURL('image/png');
+                    doc.addImage(pngDataUri, 'PNG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
+                    resolve(true);
+                }
+            });
         }
         doc.setFontSize(22);
         doc.setTextColor(40);
@@ -168,10 +179,15 @@ export function HarvestSummary() {
             }
 
             if (monthlyChartImage) {
-               if (chartYPos + 300 > pageHeight - 60) {
+               if (chartYPos + (chartWidth * (300/600)) > pageHeight - 60) {
+                  addPageFooter(doc);
                   doc.addPage();
                   addPageHeader(doc);
-                  chartYPos = 80;
+                  doc.setFontSize(18);
+                  doc.setTextColor(40);
+                  doc.setFont('helvetica', 'bold');
+                  doc.text("Análisis Gráfico (cont.)", 40, 80);
+                  chartYPos = 100;
                }
               const aspect = 300/600; // approximation of aspect ratio
               const chartHeight = chartWidth * aspect;
@@ -193,9 +209,10 @@ export function HarvestSummary() {
         };
 
         const addTableWithHeader = (title: string, head: any, body: any, startYOffset = 0) => {
-            let startY = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : 0) + 40 + startYOffset;
+            let startY = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : 0) + 20 + startYOffset;
             
-            if (startY > pageHeight - 100 || startYOffset > 0) { // check for space or force new page
+            if (startY > pageHeight - 60 || startYOffset > 0) { // check for space or force new page
+                addPageFooter(doc);
                 doc.addPage();
                 startY = 80; // Start of content area
             }
@@ -287,3 +304,5 @@ export function HarvestSummary() {
     </Card>
   )
 }
+
+    
