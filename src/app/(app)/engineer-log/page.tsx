@@ -172,14 +172,21 @@ function ApplicationHistory() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {agronomistLogs.length === 0 && (
+                {!isClient && (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">
+                      Cargando registros...
+                    </TableCell>
+                  </TableRow>
+                )}
+                {isClient && agronomistLogs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center">No hay registros de aplicaciones.</TableCell>
                   </TableRow>
                 )}
-                {agronomistLogs.map((log) => (
+                {isClient && agronomistLogs.map((log) => (
                     <TableRow key={log.id}>
-                        <TableCell>{isClient ? new Date(log.date).toLocaleDateString('es-ES') : '...'}</TableCell>
+                        <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                         <TableCell><Badge variant={getTypeVariant(log.type)}>{log.type}</Badge></TableCell>
                         <TableCell>
                           <p className="font-medium">{log.product || '-'}</p>
@@ -415,3 +422,5 @@ export default function EngineerLogPage() {
     </>
   );
 }
+
+    
