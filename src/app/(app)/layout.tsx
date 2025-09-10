@@ -43,7 +43,7 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { users as availableUsers, harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs } from '@/lib/data';
+import { users as availableUsers } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
@@ -286,7 +286,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <AppContextProvider value={appData}>
       <SidebarProvider open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <Sidebar>
+        <Sidebar collapsible="none">
           <SidebarHeader className="p-4">
             <div className="flex items-center gap-2">
               <Link href="/" className="flex items-center gap-2">
