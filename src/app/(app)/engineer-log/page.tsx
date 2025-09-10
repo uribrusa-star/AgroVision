@@ -99,7 +99,7 @@ export default function EngineerLogPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="applications">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-4">
+          <div className="grid grid-cols-1 gap-8 mt-4">
             {canManageApplications ? <ApplicationLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
             <ApplicationHistory />
           </div>
