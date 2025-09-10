@@ -95,11 +95,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
       return c;
     }));
-    setBatches(prevBatches => prevBatches.map(b => 
-      b.id === harvest.batchNumber 
-        ? { ...b, status: 'completed', completionDate: new Date().toISOString() } 
-        : b
-    ));
   };
 
   const editCollector = (updatedCollector: Collector) => {
