@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -45,7 +46,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
-import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData } from '@/lib/types';
+import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -89,6 +90,7 @@ const useAppData = () => {
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
+    const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
     const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
     const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
@@ -119,12 +121,14 @@ const useAppData = () => {
           collectorsSnapshot,
           harvestsSnapshot,
           agronomistLogsSnapshot,
+          phenologyLogsSnapshot,
           batchesSnapshot,
           collectorPaymentsSnapshot,
         ] = await Promise.all([
           getDocs(collection(db, 'collectors')),
           getDocs(collection(db, 'harvests')),
           getDocs(collection(db, 'agronomistLogs')),
+          getDocs(collection(db, 'phenologyLogs')),
           getDocs(collection(db, 'batches')),
           getDocs(collection(db, 'collectorPaymentLogs')),
         ]);
@@ -132,6 +136,7 @@ const useAppData = () => {
         setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
         setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
         setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
+        setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
         setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
         setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
 
@@ -225,6 +230,23 @@ const useAppData = () => {
         await fetchData();
     };
 
+    const addPhenologyLog = async (log: Omit<PhenologyLog, 'id'>) => {
+        await addDoc(collection(db, 'phenologyLogs'), log);
+        await fetchData();
+    };
+
+    const editPhenologyLog = async (updatedLog: PhenologyLog) => {
+        const logRef = doc(db, 'phenologyLogs', updatedLog.id);
+        const { id, ...data } = updatedLog;
+        await setDoc(logRef, data, { merge: true });
+        await fetchData();
+    };
+
+    const deletePhenologyLog = async (logId: string) => {
+        await deleteDoc(doc(db, 'phenologyLogs', logId));
+        await fetchData();
+    };
+
     const addBatch = async (batchData: Omit<Batch, 'id'>) => {
         const newBatchRef = doc(db, 'batches', batchData.id);
         await setDoc(newBatchRef, batchData);
@@ -273,6 +295,7 @@ const useAppData = () => {
         harvests,
         collectors,
         agronomistLogs,
+        phenologyLogs,
         batches,
         collectorPaymentLogs,
         establishmentData,
@@ -282,6 +305,9 @@ const useAppData = () => {
         addAgronomistLog,
         editAgronomistLog,
         deleteAgronomistLog,
+        addPhenologyLog,
+        editPhenologyLog,
+        deletePhenologyLog,
         addCollector,
         addBatch,
         deleteBatch,

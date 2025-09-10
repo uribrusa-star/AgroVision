@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { AppData } from '@/lib/types';
 import { users } from '@/lib/data';
@@ -12,6 +13,7 @@ export const AppDataContext = React.createContext<AppData>({
   harvests: [],
   collectors: [],
   agronomistLogs: [],
+  phenologyLogs: [],
   batches: [],
   collectorPaymentLogs: [],
   establishmentData: null,
@@ -21,6 +23,9 @@ export const AppDataContext = React.createContext<AppData>({
   addAgronomistLog: async () => {},
   editAgronomistLog: async () => {},
   deleteAgronomistLog: async () => {},
+  addPhenologyLog: async () => {},
+  editPhenologyLog: async () => {},
+  deletePhenologyLog: async () => {},
   addCollector: async () => {},
   addBatch: async () => {},
   deleteBatch: async () => {},
@@ -31,3 +36,4 @@ export const AppDataContext = React.createContext<AppData>({
 });
 
 export const AppContextProvider = AppDataContext.Provider;
+

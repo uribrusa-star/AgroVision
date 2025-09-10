@@ -13,6 +13,8 @@ import { HarvestSummary } from './harvest-summary';
 import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
 import { MonthlyHarvestChart } from '../monthly-harvest-chart';
+import { PhenologyLogForm } from './phenology-log-form';
+import { PhenologyHistory } from './phenology-history';
 
 
 export default function EngineerLogPage() {
@@ -20,8 +22,6 @@ export default function EngineerLogPage() {
   
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
   
-  // We need to calculate the average yield based on harvested batches, not all completed batches.
-  // A batch is considered "harvested" if there's at least one harvest record for it.
   const harvestedBatchIds = [...new Set(harvests.map(h => h.batchNumber))];
   const totalKgInHarvestedBatches = harvestedBatchIds.reduce((total, batchId) => {
     const batchKilos = harvests.filter(h => h.batchNumber === batchId).reduce((sum, h) => sum + h.kilograms, 0);
@@ -37,7 +37,7 @@ export default function EngineerLogPage() {
     <>
       <PageHeader
         title="Bitácora del Agrónomo"
-        description="Gestión de aplicaciones y visión general de la producción."
+        description="Gestión de aplicaciones, fenología y visión general de la producción."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
@@ -74,9 +74,15 @@ export default function EngineerLogPage() {
       </div>
 
        <div className="mb-8">
-          <div className="grid grid-cols-1 gap-8 mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
             {canManageApplications ? <ApplicationLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
-            <ApplicationHistory />
+            {canManageApplications ? <PhenologyLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar el estado fenológico.</p></CardContent></CardHeader></Card>}
+            <div className="lg:col-span-2">
+              <ApplicationHistory />
+            </div>
+            <div className="lg:col-span-2">
+              <PhenologyHistory />
+            </div>
           </div>
         </div>
       

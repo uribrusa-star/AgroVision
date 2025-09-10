@@ -59,6 +59,17 @@ export type AgronomistLog = {
     imageHint?: string;
 }
 
+export type PhenologyLog = {
+    id: string;
+    date: string;
+    developmentState: 'Floración' | 'Fructificación' | 'Maduración';
+    flowerCount?: number;
+    fruitCount?: number;
+    notes: string;
+    imageUrl?: string;
+    imageHint?: string;
+}
+
 export type CollectorPaymentLog = {
   id: string;
   date: string;
@@ -125,6 +136,7 @@ export type AppData = {
   harvests: Harvest[];
   collectors: Collector[];
   agronomistLogs: AgronomistLog[];
+  phenologyLogs: PhenologyLog[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
   establishmentData: EstablishmentData | null;
@@ -134,6 +146,9 @@ export type AppData = {
   addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => Promise<void>;
   editAgronomistLog: (log: AgronomistLog) => Promise<void>;
   deleteAgronomistLog: (logId: string) => Promise<void>;
+  addPhenologyLog: (log: Omit<PhenologyLog, 'id'>) => Promise<void>;
+  editPhenologyLog: (log: PhenologyLog) => Promise<void>;
+  deletePhenologyLog: (logId: string) => Promise<void>;
   addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
   deleteBatch: (batchId: string) => Promise<void>;
