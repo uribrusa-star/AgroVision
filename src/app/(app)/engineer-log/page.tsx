@@ -1,8 +1,9 @@
+
 'use client';
 
 import React, { useContext } from 'react';
 import { PageHeader } from "@/components/page-header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DollarSign, HardHat, Package, Sprout, BarChart, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
