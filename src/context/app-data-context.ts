@@ -10,6 +10,8 @@ export const AppDataContext = React.createContext<AppData>({
   editCollector: () => {},
   deleteCollector: () => {},
   addAgronomistLog: () => {},
+  editAgronomistLog: () => {},
+  deleteAgronomistLog: () => {},
   addCollector: () => {},
 });
 

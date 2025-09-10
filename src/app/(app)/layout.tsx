@@ -106,6 +106,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setAgronomistLogs(prevLogs => [log, ...prevLogs]);
   };
 
+  const editAgronomistLog = (updatedLog: AgronomistLog) => {
+    setAgronomistLogs(prevLogs => prevLogs.map(l => l.id === updatedLog.id ? updatedLog : l));
+  };
+
+  const deleteAgronomistLog = (logId: string) => {
+    setAgronomistLogs(prevLogs => prevLogs.filter(l => l.id !== logId));
+  };
+
   const addCollector = (collector: Collector) => {
     setCollectors(prevCollectors => [collector, ...prevCollectors]);
   };
@@ -118,6 +126,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     editCollector,
     deleteCollector,
     addAgronomistLog,
+    editAgronomistLog,
+    deleteAgronomistLog,
     addCollector,
   };
 
