@@ -1,4 +1,4 @@
-import type { Collector, Harvest, MonthlyData, EngineerLogStats, AgronomistLog, Batch } from './types';
+import type { Collector, Harvest, MonthlyData, EngineerLogStats, AgronomistLog, Batch, CollectorPaymentLog } from './types';
 
 export const collectors: Collector[] = [
   { id: '1', name: 'Ana García', avatar: '1', totalHarvested: 1250, hoursWorked: 160, productivity: 7.8, joinDate: '2023-01-15' },
@@ -34,6 +34,8 @@ export const batches: Batch[] = [
     { id: 'L009', preloadedDate: '2024-07-19', status: 'completed', completionDate: '2024-07-20' },
     { id: 'L008', preloadedDate: '2024-07-19', status: 'completed', completionDate: '2024-07-20' },
 ];
+
+export const collectorPaymentLogs: CollectorPaymentLog[] = [];
 
 export const monthlyData: MonthlyData[] = [
   { month: 'Ene', total: 1200 },

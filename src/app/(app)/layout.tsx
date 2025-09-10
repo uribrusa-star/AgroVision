@@ -29,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches } from '@/lib/data';
-import type { Harvest, AppData, Collector, AgronomistLog, Batch } from '@/lib/types';
+import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs } from '@/lib/data';
+import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog } from '@/lib/types';
 
 
 const navItems = [
@@ -73,6 +73,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
   const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
   const [batches, setBatches] = usePersistentState<Batch[]>('batches', initialBatches);
+  const [collectorPaymentLogs, setCollectorPaymentLogs] = usePersistentState<CollectorPaymentLog[]>('collectorPaymentLogs', initialCollectorPaymentLogs);
 
 
   const addHarvest = (harvest: Harvest) => {
@@ -128,11 +129,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setBatches(prevBatches => [batch, ...prevBatches]);
   };
 
+  const addCollectorPaymentLog = (log: CollectorPaymentLog) => {
+    setCollectorPaymentLogs(prevLogs => [log, ...prevLogs]);
+  }
+
   const appData: AppData = {
     harvests,
     collectors,
     agronomistLogs,
     batches,
+    collectorPaymentLogs,
     addHarvest,
     editCollector,
     deleteCollector,
@@ -141,6 +147,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     deleteAgronomistLog,
     addCollector,
     addBatch,
+    addCollectorPaymentLog,
   };
 
   return (

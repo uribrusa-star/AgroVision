@@ -48,11 +48,23 @@ export type AgronomistLog = {
     imageHint?: string;
 }
 
+export type CollectorPaymentLog = {
+  id: string;
+  date: string;
+  collectorId: string;
+  collectorName: string;
+  kilograms: number;
+  hours: number;
+  ratePerKg: number;
+  payment: number;
+}
+
 export type AppData = {
   harvests: Harvest[];
   collectors: Collector[];
   agronomistLogs: AgronomistLog[];
   batches: Batch[];
+  collectorPaymentLogs: CollectorPaymentLog[];
   addHarvest: (harvest: Harvest) => void;
   editCollector: (collector: Collector) => void;
   deleteCollector: (collectorId: string) => void;
@@ -61,4 +73,5 @@ export type AppData = {
   deleteAgronomistLog: (logId: string) => void;
   addCollector: (collector: Collector) => void;
   addBatch: (batch: Batch) => void;
+  addCollectorPaymentLog: (log: CollectorPaymentLog) => void;
 };
