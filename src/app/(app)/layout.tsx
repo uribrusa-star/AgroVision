@@ -120,7 +120,7 @@ const useAppData = () => {
         console.error("Error fetching data from Firestore:", error);
         toast({
           title: "Error de Conexión",
-          description: "No se pudieron cargar los datos de la base de datos. Asegúrese de que Firestore esté configurado correctamente.",
+          description: "No se pudieron cargar los datos. Asegúrese de que Firestore esté configurado y con las reglas de seguridad correctas.",
           variant: "destructive",
         })
       } finally {
