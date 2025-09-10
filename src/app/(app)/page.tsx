@@ -1,18 +1,13 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { monthlyData, harvests, dashboardStats } from "@/lib/data";
+import { harvests, dashboardStats } from "@/lib/data";
 import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-react";
-import { ChartContainer, ChartTooltip, ChartTooltipContent, Bar, XAxis, YAxis, CartesianGrid } from '@/components/ui/chart';
-import { BarChart } from 'recharts';
+import { MonthlyHarvestChart } from "./monthly-harvest-chart";
 
-const chartConfig = {
-  total: {
-    label: "Total (kg)",
-    color: "hsl(var(--chart-1))",
-  },
-};
 
 export default function DashboardPage() {
   return (
@@ -62,36 +57,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 mt-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Monthly Harvest</CardTitle>
-            <CardDescription>Total kilograms harvested per month.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={monthlyData} accessibilityLayer>
-                <CartesianGrid vertical={false} />
-                <XAxis
-                  dataKey="month"
-                  tickLine={false}
-                  tickMargin={10}
-                  axisLine={false}
-                />
-                <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={10}
-                    tickFormatter={(value) => `${value / 1000}k`}
-                />
-                <ChartTooltip
-                  cursor={false}
-                  content={<ChartTooltipContent indicator="dot" />}
-                />
-                <Bar dataKey="total" fill="var(--color-total)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+        <MonthlyHarvestChart />
 
         <Card>
           <CardHeader>
