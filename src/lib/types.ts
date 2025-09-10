@@ -80,7 +80,7 @@ export type AppData = {
   agronomistLogs: AgronomistLog[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
-  addHarvest: (harvest: Omit<Harvest, 'id'>) => Promise<void>;
+  addHarvest: (harvest: Omit<Harvest, 'id'>) => Promise<string | undefined>;
   editCollector: (collector: Collector) => Promise<void>;
   deleteCollector: (collectorId: string) => Promise<void>;
   addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => Promise<void>;

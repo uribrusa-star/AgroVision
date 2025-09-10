@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect, useContext, useMemo, useState, useTransition } from 'react';
@@ -69,13 +70,16 @@ export function ProductionForm() {
                 }
             };
             
-            // In a real app, you would get the new harvest ID from the addHarvest call
-            const tempHarvestId = `H${Date.now()}`;
+            const newHarvestId = await addHarvest(newHarvestData);
+            if(!newHarvestId) {
+                throw new Error("Failed to get new harvest ID");
+            }
+            
             const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
             const hoursWorked = 4; // For simplicity, we assume fixed hours
 
             const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
-              harvestId: tempHarvestId, 
+              harvestId: newHarvestId, 
               date: new Date().toISOString(),
               collectorId: values.farmerId,
               collectorName: farmer.name,
@@ -85,9 +89,7 @@ export function ProductionForm() {
               payment: calculatedPayment,
             };
 
-            // Not awaiting these is fine as the context will refetch and update UI
-            addHarvest(newHarvestData);
-            addCollectorPaymentLog(newPaymentLogData);
+            await addCollectorPaymentLog(newPaymentLogData);
 
             toast({
                 title: '¡Éxito!',
