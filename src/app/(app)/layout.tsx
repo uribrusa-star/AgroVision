@@ -46,7 +46,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
