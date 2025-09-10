@@ -111,57 +111,57 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5 mt-8">
-        <div id="monthly-harvest-chart-container" className="lg:col-span-3">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-8">
+        <div id="monthly-harvest-chart-container">
           <MonthlyHarvestChart harvests={harvests} />
         </div>
-        <div className="lg:col-span-2">
-            <Card>
-            <CardHeader>
-                <CardTitle>Cosechas Recientes</CardTitle>
-                <CardDescription>Una lista de las entradas de cosecha más recientes.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="max-h-[300px] overflow-auto">
-                <Table>
-                <TableHeader>
-                    <TableRow>
-                    <TableHead>Lote</TableHead>
-                    <TableHead>Recolector</TableHead>
-                    <TableHead className="text-right">Kilogramos</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {loading && (
-                    <TableRow>
-                        <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
-                    </TableRow>
-                    )}
-                    {!loading && sortedHarvests.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
-                        </TableRow>
-                    )}
-                    {!loading && sortedHarvests.slice(0, 5).map((harvest) => (
-                    <TableRow key={harvest.id}>
-                        <TableCell>
-                        <Badge variant="outline">{harvest.batchNumber}</Badge>
-                        </TableCell>
-                        <TableCell>{harvest.collector.name}</TableCell>
-                        <TableCell className="text-right font-medium">{harvest.kilograms.toLocaleString('es-ES')} kg</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{new Date(harvest.date).toLocaleDateString('es-ES')}</TableCell>
-                    </TableRow>
-                    ))}
-                </TableBody>
-                </Table>
-                </div>
-            </CardContent>
-            </Card>
+        <div id="batch-yield-chart">
+            <BatchYieldChart />
         </div>
       </div>
-      <div id="batch-yield-chart" className="mt-8">
-        <BatchYieldChart />
+      <div className="mt-8">
+        <Card>
+        <CardHeader>
+            <CardTitle>Cosechas Recientes</CardTitle>
+            <CardDescription>Una lista de las entradas de cosecha más recientes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="max-h-[300px] overflow-auto">
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead>Lote</TableHead>
+                <TableHead>Recolector</TableHead>
+                <TableHead className="text-right">Kilogramos</TableHead>
+                <TableHead>Fecha</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {loading && (
+                <TableRow>
+                    <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
+                </TableRow>
+                )}
+                {!loading && sortedHarvests.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
+                    </TableRow>
+                )}
+                {!loading && sortedHarvests.slice(0, 5).map((harvest) => (
+                <TableRow key={harvest.id}>
+                    <TableCell>
+                    <Badge variant="outline">{harvest.batchNumber}</Badge>
+                    </TableCell>
+                    <TableCell>{harvest.collector.name}</TableCell>
+                    <TableCell className="text-right font-medium">{harvest.kilograms.toLocaleString('es-ES')} kg</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{new Date(harvest.date).toLocaleDateString('es-ES')}</TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+            </div>
+        </CardContent>
+        </Card>
       </div>
     </>
   );
