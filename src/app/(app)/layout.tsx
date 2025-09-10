@@ -15,6 +15,7 @@ import {
   where,
   documentId,
   addDoc,
+  getDoc,
 } from 'firebase/firestore';
 
 import {
@@ -43,8 +44,8 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { users as availableUsers } from '@/lib/data';
-import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User } from '@/lib/types';
+import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
+import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -90,6 +91,7 @@ const useAppData = () => {
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
     const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
+    const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
 
@@ -100,6 +102,19 @@ const useAppData = () => {
     const fetchData = useCallback(async () => {
       setLoading(true);
       try {
+        const establishmentDocRef = doc(db, 'establishment', 'main');
+        const establishmentDocSnap = await getDoc(establishmentDocRef);
+
+        let estData;
+        if (establishmentDocSnap.exists()) {
+          estData = { id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData;
+        } else {
+          // If the document doesn't exist, create it with initial data
+          await setDoc(establishmentDocRef, initialEstablishmentData);
+          estData = { id: 'main', ...initialEstablishmentData } as EstablishmentData;
+        }
+        setEstablishmentData(estData);
+        
         const [
           collectorsSnapshot,
           harvestsSnapshot,
@@ -243,6 +258,13 @@ const useAppData = () => {
       await fetchData();
     };
 
+    const updateEstablishmentData = async (data: Partial<EstablishmentData>) => {
+        const { id, ...updateData } = data;
+        const establishmentRef = doc(db, 'establishment', 'main');
+        await setDoc(establishmentRef, updateData, { merge: true });
+        await fetchData();
+    };
+
     return {
         loading,
         currentUser,
@@ -253,6 +275,7 @@ const useAppData = () => {
         agronomistLogs,
         batches,
         collectorPaymentLogs,
+        establishmentData,
         addHarvest,
         editCollector,
         deleteCollector,
@@ -264,6 +287,7 @@ const useAppData = () => {
         deleteBatch,
         addCollectorPaymentLog,
         deleteCollectorPaymentLog,
+        updateEstablishmentData,
         isClient
     };
 };

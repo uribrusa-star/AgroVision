@@ -1,3 +1,4 @@
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -70,6 +71,52 @@ export type CollectorPaymentLog = {
   payment: number;
 }
 
+export type EstablishmentData = {
+  id: string;
+  producer: string;
+  technicalManager: string;
+  location: {
+    coordinates: string;
+    locality: string;
+    province: string;
+  };
+  area: {
+    total: number;
+    strawberry: number;
+  };
+  system: string;
+  planting: {
+    variety: string;
+    date: string;
+    origin: string;
+    density: string;
+    mulching: string;
+  };
+  soil: {
+    type: string;
+    analysis: boolean;
+  };
+  irrigation: {
+    system: string;
+    flowRate: string;
+    frequency: string;
+    waterAnalysis: boolean;
+  };
+  management: {
+    weeds: string;
+    sanitaryPlan: string;
+  };
+  harvest: {
+    period: string;
+    frequency: string;
+    destination: string;
+  };
+  economics: {
+    objective: string;
+  };
+};
+
+
 export type AppData = {
   loading: boolean;
   currentUser: User;
@@ -80,6 +127,7 @@ export type AppData = {
   agronomistLogs: AgronomistLog[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
+  establishmentData: EstablishmentData | null;
   addHarvest: (harvest: Omit<Harvest, 'id'>) => Promise<string | undefined>;
   editCollector: (collector: Collector) => Promise<void>;
   deleteCollector: (collectorId: string) => Promise<void>;
@@ -91,5 +139,7 @@ export type AppData = {
   deleteBatch: (batchId: string) => Promise<void>;
   addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
   deleteCollectorPaymentLog: (logId: string) => Promise<void>;
+  updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
   isClient: boolean;
 };
+

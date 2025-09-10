@@ -14,6 +14,7 @@ export const AppDataContext = React.createContext<AppData>({
   agronomistLogs: [],
   batches: [],
   collectorPaymentLogs: [],
+  establishmentData: null,
   addHarvest: async () => {},
   editCollector: async () => {},
   deleteCollector: async () => {},
@@ -25,6 +26,7 @@ export const AppDataContext = React.createContext<AppData>({
   deleteBatch: async () => {},
   addCollectorPaymentLog: async () => {},
   deleteCollectorPaymentLog: async () => {},
+  updateEstablishmentData: async () => {},
   isClient: false,
 });
 
