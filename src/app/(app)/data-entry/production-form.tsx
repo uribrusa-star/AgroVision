@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect, useContext } from 'react';
@@ -9,12 +10,12 @@ import { handleProductionUpload } from './actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescriptionComponent } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
 
 const ProductionSchema = z.object({
-  batchId: z.string().min(1, "El ID del lote es requerido."),
+  batchId: z.string().regex(/^L\d{3}$/, "El ID del lote debe tener el formato L000 (ej., L014)."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
   farmerId: z.string().min(1, "El agricultor es requerido."),
 });
@@ -87,6 +88,9 @@ export function ProductionForm() {
                     <FormControl>
                       <Input placeholder="ej., L014" {...field} />
                     </FormControl>
+                    <FormDescriptionComponent>
+                      El formato debe ser 'L' seguido de 3 números.
+                    </FormDescriptionComponent>
                     <FormMessage />
                   </FormItem>
                 )}
