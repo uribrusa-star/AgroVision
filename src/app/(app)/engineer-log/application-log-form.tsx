@@ -61,12 +61,17 @@ export function ApplicationLogForm() {
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
+      // If an image was selected, generate a placeholder URL for it.
+      // In a real app, you would upload the file to a service like Firebase Storage
+      // and get a downloadable URL.
+      const imageUrl = imagePreview ? `https://picsum.photos/seed/${new Date().getTime()}/400/300` : undefined;
+
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: data.type,
         product: data.product,
         notes: data.notes,
-        imageUrl: imagePreview || undefined,
+        imageUrl: imageUrl,
         imageHint: imagePreview ? 'field application' : undefined,
       };
       await addAgronomistLog(newLog);
@@ -186,7 +191,7 @@ export function ApplicationLogForm() {
           </CardContent>
           {canManage && (
             <CardFooter>
-                <Button type="submit" disabled={isPending || !canManage}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
             </CardFooter>
           )}
         </form>
