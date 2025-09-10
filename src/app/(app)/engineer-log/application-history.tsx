@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind } from 'lucide-react';
+import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import type { AgronomistLog, AgronomistLogType } from '@/lib/types';
@@ -24,7 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 const LogSchema = z.object({
-  type: z.enum(['Fertilización', 'Fumigación', 'Control', 'Sanidad', 'Labor Cultural', 'Riego']),
+  type: z.enum(['Fertilización', 'Fumigación', 'Control', 'Sanidad', 'Labor Cultural', 'Riego', 'Condiciones Ambientales']),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
 });
@@ -91,6 +91,7 @@ export function ApplicationHistory() {
       case 'Sanidad': return { variant: 'destructive', icon: Bug, label: 'Sanidad'};
       case 'Labor Cultural': return { variant: 'secondary', icon: Hand, label: 'Labor Cultural'};
       case 'Riego': return { variant: 'default', icon: Wind, label: 'Riego'};
+      case 'Condiciones Ambientales': return { variant: 'outline', icon: Thermometer, label: 'Clima'};
       default: return { variant: 'outline', icon: MoreHorizontal, label: type};
     }
   }
@@ -100,7 +101,7 @@ export function ApplicationHistory() {
       <Card>
         <CardHeader>
             <CardTitle>Historial de Actividades</CardTitle>
-            <CardDescription>Registro de todas las aplicaciones, labores y controles realizados en el campo.</CardDescription>
+            <CardDescription>Registro de todas las aplicaciones, labores, controles y observaciones realizadas en el campo.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
@@ -108,7 +109,7 @@ export function ApplicationHistory() {
                 <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Producto/Notas</TableHead>
+                    <TableHead>Detalle</TableHead>
                     <TableHead>Imagen</TableHead>
                     {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
                 </TableRow>
@@ -126,7 +127,7 @@ export function ApplicationHistory() {
                     <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de actividades.</TableCell>
                   </TableRow>
                 )}
-                {!loading && agronomistLogs.map((log) => {
+                {!loading && [...agronomistLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const typeInfo = getTypeInfo(log.type);
                     return (
                     <TableRow key={log.id}>
@@ -216,10 +217,11 @@ export function ApplicationHistory() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                            <SelectItem value="Condiciones Ambientales">Condiciones Ambientales</SelectItem>
+                            <SelectItem value="Riego">Riego</SelectItem>
+                            <SelectItem value="Fertilización">Fertilización</SelectItem>
                             <SelectItem value="Sanidad">Sanidad</SelectItem>
                             <SelectItem value="Labor Cultural">Labor Cultural</SelectItem>
-                            <SelectItem value="Fertilización">Fertilización</SelectItem>
-                            <SelectItem value="Riego">Riego</SelectItem>
                             <SelectItem value="Control">Control</SelectItem>
                         </SelectContent>
                     </Select>
@@ -232,7 +234,7 @@ export function ApplicationHistory() {
                     name="product"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Producto/Labor (Opcional)</FormLabel>
+                        <FormLabel>Producto/Labor/Detalle (Opcional)</FormLabel>
                         <FormControl>
                         <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
                         </FormControl>

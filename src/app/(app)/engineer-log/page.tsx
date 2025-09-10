@@ -15,6 +15,8 @@ import { PhenologyLogForm } from './phenology-log-form';
 import { PhenologyHistory } from './phenology-history';
 import { HealthLogForm } from './health-log-form';
 import { CulturalPracticesLogForm } from './cultural-practices-log-form';
+import { EnvironmentalLogForm } from './environmental-log-form';
+import { IrrigationLogForm } from './irrigation-log-form';
 
 
 export default function EngineerLogPage() {
@@ -40,7 +42,7 @@ export default function EngineerLogPage() {
         description="Gestión de aplicaciones, fenología y visión general de la producción."
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Producción Total</CardTitle>
@@ -75,9 +77,11 @@ export default function EngineerLogPage() {
 
        <div className="mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-            {canManageApplications ? <HealthLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
-            {canManageApplications ? <CulturalPracticesLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar labores.</p></CardContent></CardHeader></Card>}
-            {canManageApplications ? <PhenologyLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar el estado fenológico.</p></CardContent></CardHeader></Card>}
+             {canManageApplications ? <EnvironmentalLogForm /> : null}
+             {canManageApplications ? <IrrigationLogForm /> : null}
+             {canManageApplications ? <HealthLogForm /> : null}
+             {canManageApplications ? <CulturalPracticesLogForm /> : null}
+             {canManageApplications ? <PhenologyLogForm /> : null}
 
             <div className="lg:col-span-2">
               <ApplicationHistory />

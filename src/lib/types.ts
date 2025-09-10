@@ -56,7 +56,8 @@ export type AgronomistLogType =
     | 'Control' 
     | 'Sanidad'
     | 'Labor Cultural'
-    | 'Riego';
+    | 'Riego'
+    | 'Condiciones Ambientales';
 
 
 export type AgronomistLog = {
