@@ -170,6 +170,8 @@ export function HarvestSummary() {
             doc.setTextColor(40);
             doc.text(title, 15, yPos);
             yPos += 8;
+            
+            doc.setFontSize(10); // Reset font size before table
 
             doc.autoTable({
                 head,
@@ -197,6 +199,8 @@ export function HarvestSummary() {
             doc.setTextColor(40);
             doc.text("Análisis Gráfico", 15, yPos);
             yPos += 10;
+
+            doc.setFontSize(10); // Reset font size
 
             const monthlyCanvas = await html2canvas(monthlyChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
             const costCanvas = await html2canvas(costChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
