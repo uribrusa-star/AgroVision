@@ -128,6 +128,7 @@ export default function CollectorsPage() {
             </Dialog>
         )}
       </PageHeader>
+      <div className="w-full max-w-7xl mx-auto">
         <Card>
         <CardHeader>
             <CardTitle>Todos los Recolectores</CardTitle>
@@ -270,6 +271,7 @@ export default function CollectorsPage() {
             </Table>
         </CardContent>
         </Card>
+      </div>
       
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
