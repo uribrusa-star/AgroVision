@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useTransition } from 'react';
@@ -14,7 +15,6 @@ import { AppDataContext } from '@/context/app-data-context';
 import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Upload } from 'lucide-react';
 
 
 const LogSchema = z.object({
@@ -23,7 +23,7 @@ const LogSchema = z.object({
   }),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
-  image: z.any().optional(),
+  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -31,9 +31,7 @@ type LogFormValues = z.infer<typeof LogSchema>;
 export function ApplicationLogForm() {
   const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
   const { toast } = useToast();
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
@@ -43,36 +41,21 @@ export function ApplicationLogForm() {
       type: undefined,
       product: '',
       notes: '',
+      image: '',
     },
   });
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setImagePreview(null);
-    }
-  };
+  
+  const imageUrl = form.watch('image');
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
-      // If an image was selected, generate a placeholder URL for it.
-      // In a real app, you would upload the file to a service like Firebase Storage
-      // and get a downloadable URL.
-      const imageUrl = imagePreview ? `https://picsum.photos/seed/${new Date().getTime()}/400/300` : undefined;
-
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: data.type,
         product: data.product,
         notes: data.notes,
-        imageUrl: imageUrl,
-        imageHint: imagePreview ? 'field application' : undefined,
+        imageUrl: data.image || undefined,
+        imageHint: data.image ? 'field application' : undefined,
       };
       await addAgronomistLog(newLog);
       toast({
@@ -80,10 +63,6 @@ export function ApplicationLogForm() {
         description: `Se ha agregado una nueva entrada de tipo "${data.type}".`,
       });
       form.reset();
-      setImagePreview(null);
-      if(fileInputRef.current) {
-          fileInputRef.current.value = '';
-      }
     });
   };
 
@@ -156,31 +135,23 @@ export function ApplicationLogForm() {
               name="image"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Imagen (Opcional)</FormLabel>
+                  <FormLabel>URL de Imagen (Opcional)</FormLabel>
                   <FormControl>
-                    <div className="flex items-center gap-4">
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        className="w-full"
-                        ref={fileInputRef}
-                        onChange={(e) => {
-                          field.onChange(e.target.files);
-                          handleImageChange(e);
-                        }}
+                     <Input 
+                        placeholder="https://ejemplo.com/imagen.jpg" 
+                        {...field} 
                         disabled={!canManage || isPending}
                       />
-                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            {imagePreview && (
+            {imageUrl && (
                 <div className="flex justify-center p-4 border-dashed border-2 border-muted rounded-md">
                     <div className="relative w-full max-w-xs aspect-video">
                         <Image
-                        src={imagePreview}
+                        src={imageUrl}
                         alt="Vista previa de la imagen"
                         fill
                         className="object-contain rounded-md"
