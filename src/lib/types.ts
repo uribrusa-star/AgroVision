@@ -31,10 +31,20 @@ export type EngineerLogStats = {
   collectorCount: number;
 };
 
+export type AgronomistLog = {
+    id: string;
+    date: string;
+    type: 'Fertilización' | 'Fumigación' | 'Control';
+    product?: string;
+    notes: string;
+}
+
 export type AppData = {
   harvests: Harvest[];
   collectors: Collector[];
+  agronomistLogs: AgronomistLog[];
   addHarvest: (harvest: Harvest) => void;
   editCollector: (collector: Collector) => void;
   deleteCollector: (collectorId: string) => void;
+  addAgronomistLog: (log: AgronomistLog) => void;
 };

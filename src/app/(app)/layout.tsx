@@ -29,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { harvests as initialHarvests, collectors as initialCollectors } from '@/lib/data';
-import type { Harvest, AppData, Collector } from '@/lib/types';
+import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs } from '@/lib/data';
+import type { Harvest, AppData, Collector, AgronomistLog } from '@/lib/types';
 
 
 const navItems = [
@@ -44,6 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [harvests, setHarvests] = React.useState(initialHarvests);
   const [collectors, setCollectors] = React.useState(initialCollectors);
+  const [agronomistLogs, setAgronomistLogs] = React.useState(initialAgronomistLogs);
 
   const addHarvest = (harvest: Harvest) => {
     setHarvests(prevHarvests => [harvest, ...prevHarvests]);
@@ -72,13 +73,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // Optional: also remove harvests associated with the deleted collector
     setHarvests(prevHarvests => prevHarvests.filter(h => h.collector.id !== collectorId));
   };
+
+  const addAgronomistLog = (log: AgronomistLog) => {
+    setAgronomistLogs(prevLogs => [log, ...prevLogs]);
+  };
   
   const appData: AppData = {
     harvests,
     collectors,
+    agronomistLogs,
     addHarvest,
     editCollector,
-    deleteCollector
+    deleteCollector,
+    addAgronomistLog
   };
 
   return (

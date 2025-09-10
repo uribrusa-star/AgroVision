@@ -1,4 +1,4 @@
-import type { Collector, Harvest, MonthlyData, EngineerLogStats } from './types';
+import type { Collector, Harvest, MonthlyData, EngineerLogStats, AgronomistLog } from './types';
 
 export const collectors: Collector[] = [
   { id: '1', name: 'Ana García', avatar: '1', totalHarvested: 1250, hoursWorked: 160, productivity: 7.8, joinDate: '2023-01-15' },
@@ -16,6 +16,12 @@ export const harvests: Harvest[] = [
   { id: 'H005', date: '2024-07-20', batchNumber: 'L009', kilograms: 130, collector: { id: '5', name: 'Isabel Lopez' } },
   { id: 'H006', date: '2024-07-20', batchNumber: 'L008', kilograms: 110, collector: { id: '1', name: 'Ana García' } },
 ];
+
+export const agronomistLogs: AgronomistLog[] = [
+    { id: 'LOG001', date: '2024-07-21', type: 'Fertilización', product: 'Nitrato de potasio', notes: 'Aplicación foliar en dosis de 2kg/ha.' },
+    { id: 'LOG002', date: '2024-07-19', type: 'Fumigación', product: 'Abamectina', notes: 'Control de araña roja, se observa baja incidencia.' },
+    { id: 'LOG003', date: '2024-07-18', type: 'Control', notes: 'Monitoreo de trampas de esporas. Sin presencia de Botrytis.' },
+]
 
 export const monthlyData: MonthlyData[] = [
   { month: 'Ene', total: 1200 },

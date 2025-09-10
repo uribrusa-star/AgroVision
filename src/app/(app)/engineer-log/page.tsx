@@ -5,12 +5,15 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { DollarSign, HardHat, Tractor, Weight } from 'lucide-react';
+import { DollarSign, HardHat, Sprout, Tractor, Weight } from 'lucide-react';
 import { engineerLogStats } from '@/lib/data';
 import { handleSummarizeHarvest } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AppDataContext } from '@/context/app-data-context';
+import { ApplicationLogForm } from './application-log-form';
+import type { AgronomistLog } from '@/lib/types';
+import { Badge } from '@/components/ui/badge';
 
 const initialState = {
   summary: '',
@@ -61,6 +64,61 @@ function HarvestSummary() {
         </CardFooter>
       </form>
     </Card>
+  )
+}
+
+function ApplicationHistory() {
+  const { agronomistLogs } = useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const getTypeVariant = (type: AgronomistLog['type']) => {
+    switch (type) {
+      case 'Fertilización': return 'default';
+      case 'Fumigación': return 'destructive';
+      case 'Control': return 'secondary';
+      default: return 'outline';
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+          <CardTitle>Historial de Aplicaciones</CardTitle>
+          <CardDescription>Registro de todas las aplicaciones de productos y controles realizados.</CardDescription>
+      </CardHeader>
+      <CardContent>
+          <Table>
+              <TableHeader>
+              <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Producto/Notas</TableHead>
+              </TableRow>
+              </TableHeader>
+              <TableBody>
+              {agronomistLogs.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center">No hay registros de aplicaciones.</TableCell>
+                </TableRow>
+              )}
+              {agronomistLogs.map((log) => (
+                  <TableRow key={log.id}>
+                      <TableCell>{isClient ? new Date(log.date).toLocaleDateString('es-ES') : '...'}</TableCell>
+                      <TableCell><Badge variant={getTypeVariant(log.type)}>{log.type}</Badge></TableCell>
+                      <TableCell>
+                        <p className="font-medium">{log.product}</p>
+                        <p className="text-sm text-muted-foreground">{log.notes}</p>
+                      </TableCell>
+                  </TableRow>
+              ))}
+              </TableBody>
+          </Table>
+      </CardContent>
+  </Card>
   )
 }
 
@@ -120,6 +178,11 @@ export default function EngineerLogPage() {
             <p className="text-xs text-muted-foreground">Activos esta temporada</p>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-2 mb-8">
+        <ApplicationLogForm />
+        <ApplicationHistory />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
