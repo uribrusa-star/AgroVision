@@ -4,8 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
-
 import {
   SidebarProvider,
   Sidebar,
@@ -32,9 +30,8 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { users as availableUsers } from '@/lib/data';
+import { users as availableUsers, harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User } from '@/lib/types';
-import { db } from '@/lib/firebase';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const allNavItems = [
@@ -73,186 +70,125 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
   }, [key, state, isInitialized]);
 
   return [state, setState];
-}
+};
 
+const useAppData = () => {
+    const [currentUser, setCurrentUser] = usePersistentState<User>('currentUser', availableUsers.find(u => u.role === 'Productor')!);
+    const [harvests, setHarvests] = usePersistentState<Harvest[]>('harvests', initialHarvests);
+    const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
+    const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
+    const [batches, setBatches] = usePersistentState<Batch[]>('batches', initialBatches);
+    const [collectorPaymentLogs, setCollectorPaymentLogs] = usePersistentState<CollectorPaymentLog[]>('collectorPaymentLogs', initialCollectorPaymentLogs);
+    const [loading, setLoading] = useState(true);
+    const [isClient, setIsClient] = useState(false);
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const [currentUser, setCurrentUser] = usePersistentState<User>('currentUser', availableUsers.find(u => u.role === 'Productor')!);
-  const [harvests, setHarvests] = useState<Harvest[]>([]);
-  const [collectors, setCollectors] = useState<Collector[]>([]);
-  const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [collectorsSnapshot, harvestsSnapshot, agronomistLogsSnapshot, batchesSnapshot, paymentLogsSnapshot] = await Promise.all([
-        getDocs(query(collection(db, "collectors"), orderBy("joinDate", "desc"))),
-        getDocs(query(collection(db, "harvests"), orderBy("date", "desc"))),
-        getDocs(query(collection(db, "agronomistLogs"), orderBy("date", "desc"))),
-        getDocs(query(collection(db, "batches"), orderBy("preloadedDate", "desc"))),
-        getDocs(query(collection(db, "collectorPaymentLogs"), orderBy("date", "desc"))),
-      ]);
-
-      setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Collector)));
-      setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Harvest)));
-      setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AgronomistLog)));
-      setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Batch)));
-      setCollectorPaymentLogs(paymentLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CollectorPaymentLog)));
-
-    } catch (error) {
-      console.error("Error fetching data from Firestore:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
+    useEffect(() => {
+        setIsClient(true);
+        setLoading(false);
+    }, []);
 
   const addHarvest = async (harvest: Omit<Harvest, 'id'>) => {
-    const docRef = await addDoc(collection(db, "harvests"), harvest);
-    const newHarvest = { id: docRef.id, ...harvest } as Harvest;
-    setHarvests(prev => [newHarvest, ...prev]);
-
-    const collectorRef = doc(db, "collectors", harvest.collector.id);
-    const collector = collectors.find(c => c.id === harvest.collector.id);
-    if(collector) {
-      const newTotalHarvested = collector.totalHarvested + harvest.kilograms;
-      const newHoursWorked = collector.hoursWorked + 4; // Assuming 4 hours per harvest
-      const newProductivity = newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0;
-      await updateDoc(collectorRef, { 
-          totalHarvested: newTotalHarvested,
-          hoursWorked: newHoursWorked,
-          productivity: newProductivity,
-      });
-      fetchData(); // Re-fetch to get updated state
-    }
+    setHarvests(prev => {
+      const newHarvest = { ...harvest, id: `H${prev.length + 1}` } as Harvest;
+      return [newHarvest, ...prev];
+    });
+    setCollectors(prev => prev.map(c => {
+        if (c.id === harvest.collector.id) {
+            const newTotalHarvested = c.totalHarvested + harvest.kilograms;
+            const newHoursWorked = c.hoursWorked + 4; // Assuming 4 hours
+            return {
+                ...c,
+                totalHarvested: newTotalHarvested,
+                hoursWorked: newHoursWorked,
+                productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
+            };
+        }
+        return c;
+    }));
   };
-  
+
   const editCollector = async (updatedCollector: Collector) => {
-    const { id, ...dataToUpdate } = updatedCollector;
-    await updateDoc(doc(db, "collectors", id), dataToUpdate);
-    fetchData();
+    setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
   };
 
   const deleteCollector = async (collectorId: string) => {
-    const batch = writeBatch(db);
-
-    // Delete the collector
-    const collectorRef = doc(db, "collectors", collectorId);
-    batch.delete(collectorRef);
-
-    // Find and delete associated harvests
-    const associatedHarvests = harvests.filter(h => h.collector.id === collectorId);
-    associatedHarvests.forEach(h => {
-        const harvestRef = doc(db, "harvests", h.id);
-        batch.delete(harvestRef);
-    });
-
-    // Find and delete associated payment logs
-    const associatedPayments = collectorPaymentLogs.filter(p => p.collectorId === collectorId);
-    associatedPayments.forEach(p => {
-        const paymentRef = doc(db, "collectorPaymentLogs", p.id);
-        batch.delete(paymentRef);
-    });
-
-    await batch.commit();
-    fetchData();
+     setCollectors(prev => prev.filter(c => c.id !== collectorId));
+     setHarvests(prev => prev.filter(h => h.collector.id !== collectorId));
+     setCollectorPaymentLogs(prev => prev.filter(p => p.collectorId !== collectorId));
   };
 
   const addCollector = async (collector: Omit<Collector, 'id'>) => {
-    await addDoc(collection(db, "collectors"), collector);
-    fetchData();
+    setCollectors(prev => [{ ...collector, id: `C${prev.length + 1}` } as Collector, ...prev]);
   };
   
   const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
-    await addDoc(collection(db, "agronomistLogs"), log);
-    fetchData();
+    setAgronomistLogs(prev => [{ ...log, id: `LOG${prev.length + 1}` } as AgronomistLog, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
   };
 
   const editAgronomistLog = async (updatedLog: AgronomistLog) => {
-    const { id, ...dataToUpdate } = updatedLog;
-    await updateDoc(doc(db, "agronomistLogs", id), dataToUpdate);
-    fetchData();
+    setAgronomistLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
   };
 
   const deleteAgronomistLog = async (logId: string) => {
-    await deleteDoc(doc(db, "agronomistLogs", logId));
-    fetchData();
+    setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
   };
 
   const addBatch = async (batch: Omit<Batch, 'id'>) => {
-    await addDoc(collection(db, "batches"), batch);
-    fetchData();
+     setBatches(prev => [{...batch} as Batch, ...prev].sort((a,b) => new Date(b.preloadedDate).getTime() - new Date(a.preloadedDate).getTime()))
   };
-  
+
   const deleteBatch = async (batchId: string) => {
-    await deleteDoc(doc(db, "batches", batchId));
-    fetchData();
+    setBatches(prev => prev.filter(b => b.id !== batchId));
   };
 
   const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
-    await addDoc(collection(db, "collectorPaymentLogs"), log);
-    fetchData();
+    setCollectorPaymentLogs(prev => [{ ...log, id: `PAY${prev.length + 1}` } as CollectorPaymentLog, ...prev]);
   };
 
   const deleteCollectorPaymentLog = async (logId: string) => {
     const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
     if (!logToDelete) return;
-
-    const batch = writeBatch(db);
-
-    // Delete payment log
-    const paymentLogRef = doc(db, "collectorPaymentLogs", logId);
-    batch.delete(paymentLogRef);
     
-    // Delete associated harvest
-    const harvestRef = doc(db, "harvests", logToDelete.harvestId);
-    batch.delete(harvestRef);
-
-    await batch.commit();
-    fetchData();
+    setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
+    setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
   };
 
-  const handleSetCurrentUser = (user: User) => {
-    setCurrentUser(user);
-  };
-  
+    return {
+        loading,
+        currentUser,
+        users: availableUsers,
+        setCurrentUser,
+        harvests,
+        collectors,
+        agronomistLogs,
+        batches,
+        collectorPaymentLogs,
+        addHarvest,
+        editCollector,
+        deleteCollector,
+        addAgronomistLog,
+        editAgronomistLog,
+        deleteAgronomistLog,
+        addCollector,
+        addBatch,
+        deleteBatch,
+        addCollectorPaymentLog,
+        deleteCollectorPaymentLog,
+        isClient
+    };
+};
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const appData = useAppData();
+  const { currentUser, setCurrentUser, isClient, loading } = appData;
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
 
-
-  const appData: AppData = {
-    loading,
-    currentUser,
-    users: availableUsers,
-    setCurrentUser: handleSetCurrentUser,
-    harvests,
-    collectors,
-    agronomistLogs,
-    batches,
-    collectorPaymentLogs,
-    addHarvest,
-    editCollector,
-    deleteCollector,
-    addAgronomistLog,
-    editAgronomistLog,
-    deleteAgronomistLog,
-    addCollector,
-    addBatch,
-    deleteBatch,
-    addCollectorPaymentLog,
-    deleteCollectorPaymentLog,
-  };
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <AppContextProvider value={appData}>
-      <SidebarProvider>
+      <SidebarProvider open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
         <Sidebar>
           <SidebarHeader className="p-4">
             <div className="flex items-center gap-2">
@@ -284,14 +220,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
-                      <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
-                      <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-                    </div>
+                     {isClient ? (
+                        <>
+                         <Avatar className="h-8 w-8">
+                            <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
+                            <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="text-left">
+                            <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+                            <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                        </div>
+                        </>
+                    ) : (
+                        <div className="flex items-center gap-2 w-full">
+                           <Skeleton className="h-8 w-8 rounded-full" />
+                           <div className="flex flex-col gap-1 w-full">
+                            <Skeleton className="h-4 w-2/3" />
+                            <Skeleton className="h-3 w-full" />
+                           </div>
+                        </div>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-56">
@@ -302,7 +250,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     onValueChange={(userId) => {
                         const user = availableUsers.find(u => u.id === userId);
                         if (user) {
-                            handleSetCurrentUser(user);
+                            setCurrentUser(user);
                         }
                     }}
                   >
@@ -324,7 +272,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </Sidebar>
         <SidebarInset>
           <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
-              <SidebarTrigger />
+              <SidebarTrigger onClick={() => setIsSidebarOpen(prev => !prev)} />
               <div className="flex items-center gap-2">
                 <AgroVisionLogo className="w-6 h-6 text-primary" />
                 <span className="text-lg font-headline">AgroVision</span>
@@ -335,7 +283,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="flex items-center justify-center h-full">
                   <div className="flex flex-col items-center gap-4">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-muted-foreground">Cargando datos desde la nube...</p>
+                    <p className="text-muted-foreground">Cargando datos...</p>
                   </div>
                 </div>
               ) : children}

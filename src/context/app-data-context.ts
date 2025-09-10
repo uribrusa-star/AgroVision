@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppData } from '@/lib/types';
-import { users } from '@/lib/data';
+import { users, harvests, collectors, agronomistLogs, batches, collectorPaymentLogs } from '@/lib/data';
 
 const defaultUser = users.find(u => u.role === 'Productor')!;
 
