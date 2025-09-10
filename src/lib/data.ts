@@ -1,0 +1,42 @@
+import type { Collector, Harvest, MonthlyData, EngineerLogStats } from './types';
+
+export const collectors: Collector[] = [
+  { id: '1', name: 'Ana García', avatar: '1', totalHarvested: 1250, hoursWorked: 160, productivity: 7.8, joinDate: '2023-01-15' },
+  { id: '2', name: 'Carlos Martinez', avatar: '2', totalHarvested: 980, hoursWorked: 140, productivity: 7.0, joinDate: '2023-02-20' },
+  { id: '3', name: 'Sofía Rodríguez', avatar: '3', totalHarvested: 1520, hoursWorked: 180, productivity: 8.4, joinDate: '2022-11-10' },
+  { id: '4', name: 'Javier Hernandez', avatar: '4', totalHarvested: 810, hoursWorked: 115, productivity: 7.04, joinDate: '2023-03-05' },
+  { id: '5', name: 'Isabel Lopez', avatar: '5', totalHarvested: 1340, hoursWorked: 170, productivity: 7.88, joinDate: '2023-01-25' },
+];
+
+export const harvests: Harvest[] = [
+  { id: 'H001', date: '2024-07-22', batchNumber: 'B012', kilograms: 120, collector: { id: '1', name: 'Ana García' } },
+  { id: 'H002', date: '2024-07-22', batchNumber: 'B013', kilograms: 95, collector: { id: '2', name: 'Carlos Martinez' } },
+  { id: 'H003', date: '2024-07-21', batchNumber: 'B010', kilograms: 150, collector: { id: '3', name: 'Sofía Rodríguez' } },
+  { id: 'H004', date: '2024-07-21', batchNumber: 'B011', kilograms: 88, collector: { id: '4', name: 'Javier Hernandez' } },
+  { id: 'H005', date: '2024-07-20', batchNumber: 'B009', kilograms: 130, collector: { id: '5', name: 'Isabel Lopez' } },
+  { id: 'H006', date: '2024-07-20', batchNumber: 'B008', kilograms: 110, collector: { id: '1', name: 'Ana García' } },
+];
+
+export const monthlyData: MonthlyData[] = [
+  { month: 'Jan', total: 1200 },
+  { month: 'Feb', total: 1800 },
+  { month: 'Mar', total: 2200 },
+  { month: 'Apr', total: 2780 },
+  { month: 'May', total: 3200 },
+  { month: 'Jun', total: 3100 },
+  { month: 'Jul', total: 2900 },
+];
+
+export const engineerLogStats: EngineerLogStats = {
+  totalProduction: 58000,
+  totalInputs: 12500,
+  averagePrice: 2.15,
+  collectorCount: 18,
+};
+
+export const dashboardStats = {
+  totalHarvest: 14780,
+  averageYield: 115.6,
+  activeCollectors: 5,
+  peakDay: '2024-05-18',
+};
