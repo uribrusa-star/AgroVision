@@ -100,7 +100,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5 mt-8">
-        <div className="lg:col-span-3">
+        <div id="monthly-harvest-chart-pdf" className="lg:col-span-3">
           <MonthlyHarvestChart harvests={harvests} />
         </div>
         <div className="lg:col-span-2">

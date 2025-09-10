@@ -39,7 +39,7 @@ const prompt = ai.definePrompt({
   name: 'summarizeHarvestDataPrompt',
   input: {schema: SummarizeHarvestDataInputSchema},
   output: {schema: SummarizeHarvestDataOutputSchema},
-  prompt: `You are an expert agronomist tasked with summarizing strawberry harvest data to identify key trends and insights.
+  prompt: `You are an expert agronomist tasked with summarizing strawberry harvest data to identify key trends and insights. The response must be in Spanish.
 
   Please provide a comprehensive summary of the following harvest data, highlighting key statistics such as total kilograms harvested, average yield per batch, most productive harvest dates, and any trends related to collector performance or other relevant factors.
 
