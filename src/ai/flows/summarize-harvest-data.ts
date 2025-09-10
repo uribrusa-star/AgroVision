@@ -39,11 +39,29 @@ const prompt = ai.definePrompt({
   name: 'summarizeHarvestDataPrompt',
   input: {schema: SummarizeHarvestDataInputSchema},
   output: {schema: SummarizeHarvestDataOutputSchema},
-  prompt: `You are an expert agronomist tasked with summarizing strawberry harvest data to identify key trends and insights. The response must be in Spanish.
+  prompt: `Eres un experto agrónomo y analista de datos. Tu tarea es generar un "Resumen Ejecutivo" detallado y profesional en español basado en los datos de cosecha de fresas proporcionados.
 
-  Please provide a comprehensive summary of the following harvest data, highlighting key statistics such as total kilograms harvested, average yield per batch, most productive harvest dates, and any trends related to collector performance or other relevant factors.
+  El resumen debe estar estructurado en las siguientes secciones, cada una con su título en negrita:
 
-  Harvest Data: {{{harvestData}}}
+  1.  **Análisis General de Producción**:
+      *   Calcula y presenta el total de kilogramos cosechados.
+      *   Identifica el lote (batchNumber) más productivo y el menos productivo.
+      *   Menciona el día de mayor cosecha.
+
+  2.  **Análisis de Rendimiento de Recolectores**:
+      *   Identifica al recolector más productivo (total de kg y/o promedio).
+      *   Menciona cualquier tendencia o patrón interesante en el rendimiento de los recolectores.
+
+  3.  **Análisis de Tendencias Temporales**:
+      *   Describe si la producción muestra una tendencia ascendente, descendente o estable a lo largo del tiempo.
+      *   Identifica cualquier patrón estacional o mensual si los datos lo permiten.
+
+  4.  **Recomendaciones Clave**:
+      *   Basado en los datos, proporciona 2-3 recomendaciones accionables para optimizar la cosecha, mejorar la productividad o investigar posibles problemas.
+
+  Utiliza un tono formal y analítico. Presenta los datos de forma clara y concisa.
+
+  Datos de Cosecha: {{{harvestData}}}
   `,
 });
 

@@ -27,7 +27,17 @@ export default function DashboardPage() {
     }
 
     const totalHarvest = harvests.reduce((acc, h) => acc + h.kilograms, 0);
-    const averageYield = totalHarvest / harvests.length;
+    
+    const harvestsByBatch = harvests.reduce((acc, h) => {
+        if (!acc[h.batchNumber]) {
+            acc[h.batchNumber] = 0;
+        }
+        acc[h.batchNumber] += h.kilograms;
+        return acc;
+    }, {} as {[key: string]: number});
+
+    const numberOfBatches = Object.keys(harvestsByBatch).length;
+    const averageYield = numberOfBatches > 0 ? totalHarvest / numberOfBatches : 0;
 
     const dailyHarvests: { [key: string]: number } = harvests.reduce((acc, h) => {
       const date = new Date(h.date).toISOString().split('T')[0];
@@ -38,7 +48,7 @@ export default function DashboardPage() {
       return acc;
     }, {} as { [key: string]: number });
 
-    const peakDay = Object.keys(dailyHarvests).reduce((a, b) => dailyHarvests[a] > dailyHarvests[b] ? a : b);
+    const peakDay = Object.keys(dailyHarvests).reduce((a, b) => dailyHarvests[a] > dailyHarvests[b] ? a : b, '');
 
 
     return {
@@ -53,6 +63,8 @@ export default function DashboardPage() {
     activeCollectors: collectors.length,
   };
   
+  const sortedHarvests = [...harvests].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   return (
     <>
       <PageHeader title="Panel de Control" description="Estadísticas clave y actividad reciente." />
@@ -74,7 +86,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${dashboardStats.averageYield.toLocaleString('es-ES', { maximumFractionDigits: 1 })} kg/lote`}</div>
-            <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
+            <p className="text-xs text-muted-foreground">Promedio por lote cosechado</p>
           </CardContent>
         </Card>
         <Card>
@@ -93,14 +105,14 @@ export default function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : (dashboardStats.peakDay ? new Date(dashboardStats.peakDay).toLocaleDateString('es-ES') : 'N/A')}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : (dashboardStats.peakDay ? new Date(dashboardStats.peakDay).toLocaleDateString('es-ES', {timeZone: 'UTC'}) : 'N/A')}</div>
             <p className="text-xs text-muted-foreground">Cosecha más alta esta temporada</p>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5 mt-8">
-        <div id="monthly-harvest-chart-pdf" className="lg:col-span-3">
+        <div id="monthly-harvest-chart-container" className="lg:col-span-3">
           <MonthlyHarvestChart harvests={harvests} />
         </div>
         <div className="lg:col-span-2">
@@ -110,6 +122,7 @@ export default function DashboardPage() {
                 <CardDescription>Una lista de las entradas de cosecha más recientes.</CardDescription>
             </CardHeader>
             <CardContent>
+                <div className="max-h-[300px] overflow-auto">
                 <Table>
                 <TableHeader>
                     <TableRow>
@@ -125,12 +138,12 @@ export default function DashboardPage() {
                         <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
                     </TableRow>
                     )}
-                    {!loading && harvests.length === 0 && (
+                    {!loading && sortedHarvests.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
                         </TableRow>
                     )}
-                    {!loading && harvests.slice(0, 5).map((harvest) => (
+                    {!loading && sortedHarvests.slice(0, 5).map((harvest) => (
                     <TableRow key={harvest.id}>
                         <TableCell>
                         <Badge variant="outline">{harvest.batchNumber}</Badge>
@@ -142,11 +155,12 @@ export default function DashboardPage() {
                     ))}
                 </TableBody>
                 </Table>
+                </div>
             </CardContent>
             </Card>
         </div>
       </div>
-      <div className="mt-8">
+      <div id="batch-yield-chart" className="mt-8">
         <BatchYieldChart />
       </div>
     </>

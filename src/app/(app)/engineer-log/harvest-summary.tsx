@@ -17,6 +17,7 @@ import { AgroVisionLogo } from '@/components/icons';
 // Extend jsPDF with autoTable
 interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
+  lastAutoTable: { finalY: number };
 }
 
 export function HarvestSummary() {
@@ -26,22 +27,18 @@ export function HarvestSummary() {
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   const addPageHeader = (doc: jsPDFWithAutoTable) => {
-      const pageCount = doc.internal.getNumberOfPages();
-      doc.setFontSize(10);
-      doc.setTextColor(150);
-      
-      const logoSvg = document.getElementById('ag-logo-svg');
-      if (logoSvg) {
+    const logoSvg = document.getElementById('ag-logo-svg');
+    if (logoSvg) {
+        const svgData = new XMLSerializer().serializeToString(logoSvg);
+        const img = new Image();
+        img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
         // This is a simplified way to draw the SVG path. A more robust solution might convert the SVG to an image first.
-        doc.setLineWidth(0.5);
-        doc.setDrawColor(0);
-        // A simple representation of the logo - this would ideally be an image
-        doc.text("AgroVision", 14, 15)
-      } else {
-        doc.text("AgroVision", 14, 15);
-      }
-
-      doc.text(`Informe de Producción`, doc.internal.pageSize.width / 2, 15, { align: 'center'});
+        doc.addImage(img, 'SVG', 14, 15, 30, 30);
+    }
+    
+    doc.setFontSize(10);
+    doc.setTextColor(150);
+    doc.text("AgroVision", 50, 35);
   }
 
   const addPageFooter = (doc: jsPDFWithAutoTable) => {
@@ -51,7 +48,7 @@ export function HarvestSummary() {
         doc.setFontSize(10);
         doc.setTextColor(150);
         doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 20, doc.internal.pageSize.height - 10, { align: 'right'});
-        doc.text(`Fecha: ${new Date().toLocaleDateString('es-ES')}`, 14, doc.internal.pageSize.height - 10);
+        doc.text(`Fecha del Informe: ${new Date().toLocaleDateString('es-ES')}`, 14, doc.internal.pageSize.height - 10);
     }
   }
 
@@ -65,97 +62,151 @@ export function HarvestSummary() {
 
       try {
         const doc = new jsPDF('p', 'pt', 'a4') as jsPDFWithAutoTable;
-        let yPos = 80;
+        const pageHeight = doc.internal.pageSize.height;
+        const pageWidth = doc.internal.pageSize.width;
+
+        // --- COVER PAGE ---
+        const logoSvg = document.getElementById('ag-logo-svg');
+        if (logoSvg) {
+            const svgData = new XMLSerializer().serializeToString(logoSvg);
+            const img = new Image();
+            img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+            doc.addImage(img, 'SVG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
+        }
+        doc.setFontSize(22);
+        doc.setTextColor(40);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Informe de Producción', pageWidth / 2, pageHeight / 2, { align: 'center' });
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Rendimiento y Desarrollo del Sistema Productivo', pageWidth / 2, pageHeight / 2 + 30, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text(`Generado el: ${new Date().toLocaleDateString('es-ES')}`, pageWidth / 2, pageHeight / 2 + 60, { align: 'center' });
+
 
         // 1. Get AI Summary
         const harvestDataString = JSON.stringify(harvests, null, 2);
         const result = await summarizeHarvestData({ harvestData: harvestDataString });
-        const summary = result.summary;
+        let summary = result.summary;
+        // Make titles bold in PDF
+        summary = summary.replace(/\*\*(.*?)\*\*/g, '$1'); 
+
 
         // 2. Capture charts as images
-        const yieldChartElement = document.getElementById('batch-yield-chart-pdf');
-        const monthlyChartElement = document.getElementById('monthly-harvest-chart-pdf');
+        const yieldChartElement = document.getElementById('batch-yield-chart');
+        const monthlyChartElement = document.getElementById('monthly-harvest-chart-container');
         
         let yieldChartImage, monthlyChartImage;
 
         if (yieldChartElement) {
-          const canvas = await html2canvas(yieldChartElement, { backgroundColor: null });
-          yieldChartImage = canvas.toDataURL('image/png');
+          const canvas = await html2canvas(yieldChartElement, { backgroundColor: null, scale: 2});
+          yieldChartImage = canvas.toDataURL('image/png', 1.0);
         }
 
         if (monthlyChartElement) {
-          const canvas = await html2canvas(monthlyChartElement, { backgroundColor: null });
-          monthlyChartImage = canvas.toDataURL('image/png');
+          const canvas = await html2canvas(monthlyChartElement, { backgroundColor: null, scale: 2 });
+          monthlyChartImage = canvas.toDataURL('image/png', 1.0);
         }
 
-        // 3. Add Content to PDF
+        // --- AI SUMMARY PAGE ---
+        doc.addPage();
         addPageHeader(doc);
         doc.setFontSize(18);
         doc.setTextColor(40);
-        doc.text("Resumen Ejecutivo de IA", 40, yPos);
-        yPos += 20;
-        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text("Resumen Ejecutivo de IA", 40, 80);
+        
+        doc.setFontSize(11);
         doc.setTextColor(100);
-        const splitSummary = doc.splitTextToSize(summary, 500);
-        doc.text(splitSummary, 40, yPos);
-        yPos += splitSummary.length * 12 + 20;
+        doc.setFont('helvetica', 'normal');
 
-        // Add charts if they were captured
+        const splitSummary = doc.splitTextToSize(summary, pageWidth - 80);
+        
+        let yPos = 110;
+        
+        splitSummary.forEach((line: string) => {
+            if (yPos > pageHeight - 60) {
+              addPageFooter(doc);
+              doc.addPage();
+              addPageHeader(doc);
+              yPos = 80;
+            }
+
+            const isTitle = ['Análisis General de Producción', 'Análisis de Rendimiento de Recolectores', 'Análisis de Tendencias Temporales', 'Recomendaciones Clave'].some(title => line.includes(title));
+
+            if(isTitle) {
+                doc.setFont('helvetica', 'bold');
+                doc.text(line, 40, yPos);
+                yPos += 5; // less space after bold title
+            } else {
+                doc.setFont('helvetica', 'normal');
+                doc.text(line, 40, yPos);
+            }
+            yPos += 15;
+        })
+
+
+        // --- CHARTS PAGE ---
         if(yieldChartImage || monthlyChartImage) {
            doc.addPage();
-           yPos = 80;
            addPageHeader(doc);
-           doc.setFontSize(14);
+           doc.setFontSize(18);
            doc.setTextColor(40);
-           doc.text("Análisis Gráfico", 40, yPos);
-           yPos += 20;
-        }
+           doc.setFont('helvetica', 'bold');
+           doc.text("Análisis Gráfico", 40, 80);
+           let chartYPos = 100;
+           
+           const chartWidth = pageWidth - 80;
 
-        if (yieldChartImage) {
-          doc.addImage(yieldChartImage, 'PNG', 40, yPos, 515, 250);
-          yPos += 270;
-        }
+            if (yieldChartImage) {
+              const aspect = 300/600; // approximation of aspect ratio
+              const chartHeight = chartWidth * aspect;
+              doc.addImage(yieldChartImage, 'PNG', 40, chartYPos, chartWidth, chartHeight);
+              chartYPos += chartHeight + 30;
+            }
 
-        if (monthlyChartImage) {
-           if (yPos + 270 > doc.internal.pageSize.height) {
-              doc.addPage();
-              yPos = 80;
-              addPageHeader(doc);
-           }
-           doc.addImage(monthlyChartImage, 'PNG', 40, yPos, 515, 250);
-           yPos += 270;
+            if (monthlyChartImage) {
+               if (chartYPos + 300 > pageHeight - 60) {
+                  doc.addPage();
+                  addPageHeader(doc);
+                  chartYPos = 80;
+               }
+              const aspect = 300/600; // approximation of aspect ratio
+              const chartHeight = chartWidth * aspect;
+              doc.addImage(monthlyChartImage, 'PNG', 40, chartYPos, chartWidth, chartHeight);
+              chartYPos += chartHeight + 30;
+            }
         }
-
+        
+        // --- DATA TABLES PAGES ---
         const tableConfig = {
             headStyles: { fillColor: [38, 70, 83], textColor: 255, fontStyle: 'bold' },
             bodyStyles: { textColor: 100 },
             alternateRowStyles: { fillColor: [245, 245, 245] },
             footStyles: { fillColor: [230, 230, 230], textColor: 40, fontStyle: 'bold' },
             theme: 'grid',
-            margin: { top: 80 } // To not overlap header
+            didDrawPage: (data: any) => {
+              addPageHeader(doc);
+            }
         };
 
-        const addTableWithHeader = (title: string, head: any, body: any) => {
-            const tableFinalY = (doc.lastAutoTable && doc.lastAutoTable.finalY) ? doc.lastAutoTable.finalY : 0;
-            let startY = Math.max(yPos, tableFinalY) + 40;
+        const addTableWithHeader = (title: string, head: any, body: any, startYOffset = 0) => {
+            let startY = (doc.lastAutoTable && doc.lastAutoTable.finalY ? doc.lastAutoTable.finalY : 0) + 40 + startYOffset;
             
-            if (startY > doc.internal.pageSize.height - 100) { // check for space
+            if (startY > pageHeight - 100 || startYOffset > 0) { // check for space or force new page
                 doc.addPage();
                 startY = 80; // Start of content area
-                addPageHeader(doc);
             }
             
-            doc.setFontSize(14);
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
             doc.setTextColor(40);
             doc.text(title, 40, startY - 15);
             doc.autoTable({ ...tableConfig, startY, head, body });
             yPos = doc.lastAutoTable.finalY;
         };
         
-        doc.addPage();
-        yPos = 0; // Reset yPos for the new page
-        addPageHeader(doc);
-
         if (harvests.length > 0) {
             addTableWithHeader('Registros de Cosecha', 
                 [['Fecha', 'Lote', 'Recolector', 'Kilogramos']],
@@ -164,7 +215,8 @@ export function HarvestSummary() {
                     h.batchNumber,
                     h.collector.name,
                     h.kilograms.toLocaleString('es-ES')
-                ])
+                ]),
+                1
             );
         }
         
