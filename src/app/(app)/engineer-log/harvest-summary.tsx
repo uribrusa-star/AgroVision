@@ -32,8 +32,7 @@ export function HarvestSummary() {
         const svgData = new XMLSerializer().serializeToString(logoSvg);
         const img = new Image();
         img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-        // This is a simplified way to draw the SVG path. A more robust solution might convert the SVG to an image first.
-        doc.addImage(img, 'SVG', 14, 15, 30, 30);
+        doc.addImage(img, 'PNG', 14, 15, 30, 30);
     }
     
     doc.setFontSize(10);
@@ -61,7 +60,7 @@ export function HarvestSummary() {
       });
 
       try {
-        const doc = new jsPDF('p', 'pt', 'a4') as jsPDFWithAutoTable;
+        const doc = new jsPDF('p', 'a4') as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
 
@@ -71,7 +70,8 @@ export function HarvestSummary() {
             const svgData = new XMLSerializer().serializeToString(logoSvg);
             const img = new Image();
             img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-            doc.addImage(img, 'SVG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
+            await new Promise(resolve => img.onload = resolve);
+            doc.addImage(img, 'PNG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
         }
         doc.setFontSize(22);
         doc.setTextColor(40);
