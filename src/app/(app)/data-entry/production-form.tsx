@@ -273,67 +273,67 @@ export function ProductionForm() {
         </CardHeader>
         <CardContent>
           <div className="max-h-[400px] overflow-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Lote</TableHead>
-                <TableHead>Recolector</TableHead>
-                <TableHead>Kg</TableHead>
-                <TableHead className="text-right">Pago</TableHead>
-                {canManage && <TableHead className="text-right">Acciones</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading && (
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={canManage ? 5 : 4}>
-                      <Skeleton className="h-8 w-full" />
-                  </TableCell>
+                  <TableHead>Lote</TableHead>
+                  <TableHead>Recolector</TableHead>
+                  <TableHead>Kg</TableHead>
+                  <TableHead className="text-right">Pago</TableHead>
+                  {canManage && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
-              )}
-              {!loading && sortedLogs.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={canManage ? 5 : 4} className="text-center">No hay registros de producción.</TableCell>
-                </TableRow>
-              )}
-              {!loading && sortedLogs.map(log => {
-                const harvest = harvests.find(h => h.id === log.harvestId);
-                const batchNum = harvest ? harvest.batchNumber : "L???";
-                return (
-                  <TableRow key={log.id}>
-                    <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
-                    <TableCell className="font-medium">{log.collectorName}</TableCell>
-                    <TableCell>{log.kilograms.toLocaleString('es-AR')}</TableCell>
-                    <TableCell className="text-right font-bold">${log.payment.toFixed(2)}</TableCell>
-                    {canManage && (
-                        <TableCell className="text-right">
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isPending}>
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Eliminar</span>
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y pago.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                            </AlertDialog>
-                        </TableCell>
-                    )}
+              </TableHeader>
+              <TableBody>
+                {loading && (
+                  <TableRow>
+                    <TableCell colSpan={canManage ? 5 : 4}>
+                        <Skeleton className="h-8 w-full" />
+                    </TableCell>
                   </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+                )}
+                {!loading && sortedLogs.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={canManage ? 5 : 4} className="text-center">No hay registros de producción.</TableCell>
+                  </TableRow>
+                )}
+                {!loading && sortedLogs.map(log => {
+                  const harvest = harvests.find(h => h.id === log.harvestId);
+                  const batchNum = harvest ? harvest.batchNumber : "L???";
+                  return (
+                    <TableRow key={log.id}>
+                      <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
+                      <TableCell className="font-medium">{log.collectorName}</TableCell>
+                      <TableCell>{log.kilograms.toLocaleString('es-AR')}</TableCell>
+                      <TableCell className="text-right font-bold">${log.payment.toFixed(2)}</TableCell>
+                      {canManage && (
+                          <TableCell className="text-right">
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isPending}>
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Eliminar</span>
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y pago.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                              </AlertDialog>
+                          </TableCell>
+                      )}
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
           </div>
         </CardContent>
       </Card>
@@ -357,5 +357,7 @@ export function ProductionForm() {
     </div>
   );
 }
+
+    
 
     
