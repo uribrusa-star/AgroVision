@@ -33,12 +33,12 @@ const costChartConfig = {
     label: "Mano de Obra",
     color: "hsl(var(--chart-1))",
   },
-  supplies: {
-    label: "Insumos (Estimado)",
+  insumos: {
+    label: "Insumos",
     color: "hsl(var(--chart-2))",
   },
-  irrigation: {
-    label: "Riego (Estimado)",
+  riego: {
+    label: "Riego",
     color: "hsl(var(--chart-3))",
   },
 };
@@ -46,7 +46,7 @@ const costChartConfig = {
 
 export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
-  const { harvests, collectorPaymentLogs, agronomistLogs, currentUser, establishmentData } = useContext(AppDataContext);
+  const { harvests, transactions, agronomistLogs, currentUser, establishmentData } = useContext(AppDataContext);
   const { toast } = useToast();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
@@ -56,20 +56,22 @@ export function HarvestSummary() {
   const batchYieldChartRef = useRef<HTMLDivElement>(null);
 
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
-  const laborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
+  
+  // Calculate costs from transactions
+  const laborCost = useMemo(() => transactions.filter(t => t.type === 'Gasto' && t.category === 'Mano de Obra').reduce((acc, t) => acc + t.amount, 0), [transactions]);
+  const supplyCost = useMemo(() => transactions.filter(t => t.type === 'Gasto' && t.category === 'Insumos').reduce((acc, t) => acc + t.amount, 0), [transactions]);
+  const irrigationCost = useMemo(() => transactions.filter(t => t.type === 'Gasto' && t.category === 'Riego').reduce((acc, t) => acc + t.amount, 0), [transactions]);
   
   // Use establishment data for calculations, with fallbacks
   const farmArea = establishmentData?.area.strawberry || 5; // Default to 5ha
   
-  const estimatedSupplyCost = totalProduction * 0.15; // Simple estimation
-  const estimatedIrrigationCost = farmArea * 500; // Simple estimation
-  const totalCost = laborCost + estimatedSupplyCost + estimatedIrrigationCost;
+  const totalCost = laborCost + supplyCost + irrigationCost;
   const estimatedRevenue = totalProduction * 2.5; // Simple estimation at $2.5/kg
 
   const costDistributionData = [
       { name: 'Mano de Obra', value: laborCost, fill: 'var(--color-labor)' },
-      { name: 'Insumos (Estimado)', value: estimatedSupplyCost, fill: 'var(--color-supplies)' },
-      { name: 'Riego (Estimado)', value: estimatedIrrigationCost, fill: 'var(--color-irrigation)' },
+      { name: 'Insumos', value: supplyCost, fill: 'var(--color-insumos)' },
+      { name: 'Riego', value: irrigationCost, fill: 'var(--color-riego)' },
     ].filter(item => item.value > 0);
 
   const handleGeneratePdf = () => {
@@ -253,7 +255,7 @@ export function HarvestSummary() {
         // --- Get AI Content ---
         const aiInput = {
             productionData: JSON.stringify({ totalProduction, yieldPerHectare: totalProduction / farmArea }),
-            costData: JSON.stringify({ totalCost, laborCost, estimatedSupplyCost, estimatedIrrigationCost }),
+            costData: JSON.stringify({ totalCost, laborCost, supplyCost, irrigationCost }),
             agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 5).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
         };
         const aiResult = await summarizeHarvestData(aiInput);
@@ -277,12 +279,12 @@ export function HarvestSummary() {
             [[totalProduction.toLocaleString('es-ES'), (totalProduction / farmArea).toLocaleString('es-ES', {maximumFractionDigits: 0})]]
         );
 
-        addTable("Resumen de Costos Operativos (Estimado)",
+        addTable("Resumen de Costos Operativos",
             [['Costo Mano de Obra', 'Costo Insumos', 'Costo Riego', 'Costo Total']],
             [[
                 `$${laborCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
-                `$${estimatedSupplyCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
-                `$${estimatedIrrigationCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${supplyCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${irrigationCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
                 `$${totalCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`
             ]]
         );
@@ -350,7 +352,7 @@ export function HarvestSummary() {
                           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
                           <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}>
                               {costDistributionData.map((entry) => (
-                                  <Cell key={`cell-${entry.name}`} fill={costChartConfig[entry.name.split(' ')[0].toLowerCase() as keyof typeof costChartConfig]?.color || '#000000'} />
+                                  <Cell key={`cell-${entry.name}`} fill={costChartConfig[entry.name.toLowerCase() as keyof typeof costChartConfig]?.color || '#000000'} />
                               ))}
                           </Pie>
                       </RechartsPieChart>

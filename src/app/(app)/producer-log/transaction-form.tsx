@@ -40,7 +40,7 @@ export function TransactionForm() {
 
   const transactionType = form.watch('type');
 
-  const expenseCategories = ['Insumos', 'Mano de Obra', 'Mantenimiento', 'Servicios', 'Otro'];
+  const expenseCategories = ['Insumos', 'Mano de Obra', 'Mantenimiento', 'Servicios', 'Riego', 'Otro'];
   const incomeCategories = ['Venta Mayorista', 'Venta Minorista', 'Otro'];
 
   const onSubmit = (data: TransactionFormValues) => {
