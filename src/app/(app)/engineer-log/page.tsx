@@ -12,6 +12,7 @@ import { ApplicationLogForm } from './application-log-form';
 import { HarvestSummary } from './harvest-summary';
 import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
+import { MonthlyHarvestChart } from '../monthly-harvest-chart';
 
 
 export default function EngineerLogPage() {
@@ -94,13 +95,16 @@ export default function EngineerLogPage() {
         <div id="batch-yield-chart" className="lg:col-span-1">
            <BatchYieldChart />
         </div>
+         <div id="monthly-harvest-chart-container" className="lg:col-span-1">
+           <MonthlyHarvestChart harvests={harvests} />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-8">
         <div>
            <HarvestSummary />
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
             <Card>
                 <CardHeader>
                     <CardTitle>Visión General de Productividad de Recolectores</CardTitle>

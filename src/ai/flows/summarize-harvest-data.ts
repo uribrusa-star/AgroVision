@@ -1,9 +1,9 @@
 'use server';
 
 /**
- * @fileOverview Summarizes the complete strawberry harvest data.
+ * @fileOverview Summarizes the complete strawberry harvest data for a professional report.
  *
- * - summarizeHarvestData - A function that summarizes harvest data.
+ * - summarizeHarvestData - A function that summarizes harvest data for a PDF report.
  * - SummarizeHarvestDataInput - The input type for the summarizeHarvestData function.
  * - SummarizeHarvestDataOutput - The return type for the summarizeHarvestData function.
  */
@@ -12,19 +12,31 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const SummarizeHarvestDataInputSchema = z.object({
-  harvestData: z
+  productionData: z
     .string()
-    .describe(
-      'The complete harvest data as a JSON string. Includes information such as date, batch number, kilograms, collector details, and any other relevant data.'
-    ),
+    .describe('JSON string con los datos de producción total, rendimiento, etc.'),
+  costData: z
+    .string()
+    .describe('JSON string con el desglose de costos (mano de obra, etc.).'),
+  agronomistLogs: z
+    .string()
+    .describe('JSON string con la bitácora del agrónomo (fertilización, fumigación).'),
 });
 export type SummarizeHarvestDataInput = z.infer<typeof SummarizeHarvestDataInputSchema>;
 
 const SummarizeHarvestDataOutputSchema = z.object({
-  summary: z
+  executiveSummary: z
+    .string()
+    .describe('Un párrafo breve y claro que sintetice la información principal.'),
+  analysisAndInterpretation: z
     .string()
     .describe(
-      'A comprehensive summary of the strawberry harvest, highlighting key statistics, trends, and insights for agronomists to make informed decisions.'
+      'Análisis técnico y objetivo de los datos, interpretando los resultados de producción y costos.'
+    ),
+  conclusionsAndRecommendations: z
+    .string()
+    .describe(
+      'Conclusiones clave y recomendaciones accionables para el productor.'
     ),
 });
 export type SummarizeHarvestDataOutput = z.infer<typeof SummarizeHarvestDataOutputSchema>;
@@ -39,29 +51,29 @@ const prompt = ai.definePrompt({
   name: 'summarizeHarvestDataPrompt',
   input: {schema: SummarizeHarvestDataInputSchema},
   output: {schema: SummarizeHarvestDataOutputSchema},
-  prompt: `Eres un experto agrónomo y analista de datos. Tu tarea es generar un "Resumen Ejecutivo" detallado y profesional en español basado en los datos de cosecha de fresas proporcionados.
+  prompt: `Eres un consultor agrónomo experto en la producción de frutillas y analista de datos. Tu tarea es generar el contenido para un informe técnico-productivo en español, basado en los datos proporcionados. El informe debe ser profesional, claro y conciso.
 
-  El resumen debe estar estructurado en las siguientes secciones, cada una con su título en negrita:
+  **Instrucciones:**
+  1.  **Analiza los datos en silencio**: Revisa toda la información de producción, costos y la bitácora del agrónomo.
+  2.  **Redacta las siguientes secciones en español, usando un lenguaje técnico pero comprensible para un productor:**
 
-  1.  **Análisis General de Producción**:
-      *   Calcula y presenta el total de kilogramos cosechados.
-      *   Identifica el lote (batchNumber) más productivo y el menos productivo.
-      *   Menciona el día de mayor cosecha.
+      *   **Resumen Ejecutivo**: Escribe un único párrafo que sintetice los hallazgos más importantes del período. Menciona el volumen total de producción, el rendimiento principal y el aspecto más destacado de los costos. Sé directo y claro.
 
-  2.  **Análisis de Rendimiento de Recolectores**:
-      *   Identifica al recolector más productivo (total de kg y/o promedio).
-      *   Menciona cualquier tendencia o patrón interesante en el rendimiento de los recolectores.
+      *   **Análisis e Interpretación**: Redacta un análisis objetivo y detallado.
+          *   Comenta sobre el rendimiento de la producción ({{{productionData}}}). ¿Fue bueno, malo, promedio? ¿Qué factores podrían haber influido?
+          *   Analiza la estructura de costos ({{{costData}}}). ¿Son los costos de mano de obra una parte significativa? ¿Qué se puede inferir de los costos de insumos registrados en la bitácora ({{{agronomistLogs}}})?
+          *   Relaciona las actividades de la bitácora del agrónomo con los resultados. ¿Las fertilizaciones o controles parecen haber tenido un impacto?
 
-  3.  **Análisis de Tendencias Temporales**:
-      *   Describe si la producción muestra una tendencia ascendente, descendente o estable a lo largo del tiempo.
-      *   Identifica cualquier patrón estacional o mensual si los datos lo permiten.
+      *   **Conclusiones y Recomendaciones**: Basado en tu análisis, proporciona de 2 a 4 conclusiones clave y recomendaciones accionables.
+          *   Las recomendaciones deben ser específicas y prácticas. Por ejemplo: "Optimizar el calendario de riego en la fase de floración para mejorar el calibre de la fruta" o "Evaluar la eficiencia de los recolectores para reducir costos de mano de obra".
+          *   Cada recomendación debe estar justificada por los datos analizados.
 
-  4.  **Recomendaciones Clave**:
-      *   Basado en los datos, proporciona 2-3 recomendaciones accionables para optimizar la cosecha, mejorar la productividad o investigar posibles problemas.
+  **Datos para el Análisis:**
+  -   **Datos de Producción y Rendimiento**: {{{productionData}}}
+  -   **Datos de Costos**: {{{costData}}}
+  -   **Bitácora del Agrónomo**: {{{agronomistLogs}}}
 
-  Utiliza un tono formal y analítico. Presenta los datos de forma clara y concisa.
-
-  Datos de Cosecha: {{{harvestData}}}
+  Genera únicamente el contenido para las secciones solicitadas en el formato de salida JSON especificado.
   `,
 });
 
