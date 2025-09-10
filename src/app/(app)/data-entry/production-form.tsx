@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useActionState, useEffect, useContext, useMemo, useState, useTransition } from 'react';
@@ -44,7 +43,6 @@ export function ProductionForm() {
       farmerId: '',
       ratePerKg: 0.45,
     },
-    disabled: !canManage || isPending,
   });
   
   const availableBatches = useMemo(() => {
@@ -173,7 +171,7 @@ export function ProductionForm() {
                     <FormItem>
                       <FormLabel>Kilos por Lote</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="ej., 125.5" {...field} disabled={isPending} />
+                        <Input type="number" placeholder="ej., 125.5" {...field} disabled={!canManage || isPending} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -186,7 +184,7 @@ export function ProductionForm() {
                       <FormItem>
                         <FormLabel>Tarifa por kg ($)</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" {...field} disabled={isPending}/>
+                          <Input type="number" step="0.01" {...field} disabled={!canManage || isPending}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -218,7 +216,7 @@ export function ProductionForm() {
             </CardContent>
             {canManage && (
                 <CardFooter>
-                    <Button type="submit" disabled={isPending}>
+                    <Button type="submit" disabled={isPending || !canManage}>
                         {isPending ? 'Guardando...' : 'Guardar Producción y Pago'}
                     </Button>
                 </CardFooter>
