@@ -49,7 +49,8 @@ type LogFormValues = z.infer<typeof LogSchema>;
 function HarvestSummary() {
   const [state, formAction] = useActionState(handleSummarizeHarvest, initialState);
   const [showSummary, setShowSummary] = useState(false);
-  const { harvests } = useContext(AppDataContext);
+  const { harvests, currentUser } = useContext(AppDataContext);
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -84,7 +85,7 @@ function HarvestSummary() {
           </CardContent>
         )}
         <CardFooter>
-          <Button type="submit" disabled={state.loading}>
+          <Button type="submit" disabled={state.loading || !canManage}>
             {state.loading ? 'Generando...' : 'Generar Resumen'}
           </Button>
         </CardFooter>
@@ -94,14 +95,17 @@ function HarvestSummary() {
 }
 
 function ApplicationHistory() {
-  const { agronomistLogs, editAgronomistLog, deleteAgronomistLog } = useContext(AppDataContext);
+  const { agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AgronomistLog | null>(null);
 
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
+    disabled: !canManage,
   });
 
   useEffect(() => {
@@ -172,20 +176,20 @@ function ApplicationHistory() {
                     <TableHead>Tipo</TableHead>
                     <TableHead>Producto/Notas</TableHead>
                     <TableHead>Imagen</TableHead>
-                    <TableHead><span className="sr-only">Acciones</span></TableHead>
+                    {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                 {!isClient && (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={canManage ? 5: 4} className="h-24 text-center">
                       Cargando registros...
                     </TableCell>
                   </TableRow>
                 )}
                 {isClient && agronomistLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">No hay registros de aplicaciones.</TableCell>
+                    <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de aplicaciones.</TableCell>
                   </TableRow>
                 )}
                 {isClient && agronomistLogs.map((log) => (
@@ -209,37 +213,39 @@ function ApplicationHistory() {
                             </div>
                           )}
                         </TableCell>
-                        <TableCell>
-                          <AlertDialog>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Toggle menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onSelect={() => handleEdit(log)}>Editar</DropdownMenuItem>
-                                <AlertDialogTrigger asChild>
-                                  <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
-                                </AlertDialogTrigger>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la aplicación.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </TableCell>
+                        {canManage && (
+                            <TableCell>
+                            <AlertDialog>
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Toggle menu</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                    <DropdownMenuItem onSelect={() => handleEdit(log)}>Editar</DropdownMenuItem>
+                                    <AlertDialogTrigger asChild>
+                                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la aplicación.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                            </TableCell>
+                        )}
                     </TableRow>
                 ))}
                 </TableBody>
@@ -262,7 +268,7 @@ function ApplicationHistory() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo de Aplicación</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Seleccione un tipo" />
@@ -314,7 +320,7 @@ function ApplicationHistory() {
               <DialogClose asChild>
                 <Button type="button" variant="secondary">Cancelar</Button>
               </DialogClose>
-              <Button type="submit">Guardar Cambios</Button>
+              <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -324,9 +330,10 @@ function ApplicationHistory() {
 }
 
 function BatchHistory() {
-  const { batches, deleteBatch } = useContext(AppDataContext);
+  const { batches, deleteBatch, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   useEffect(() => {
     setIsClient(true);
@@ -355,20 +362,20 @@ function BatchHistory() {
                     <TableHead>ID Lote</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Fecha Precarga</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    {canManage && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
                 </TableHeader>
                 <TableBody>
                   {!isClient && (
                     <TableRow>
-                      <TableCell colSpan={4} className="h-24 text-center">
+                      <TableCell colSpan={canManage ? 4 : 3} className="h-24 text-center">
                         Cargando lotes...
                       </TableCell>
                     </TableRow>
                   )}
                   {isClient && sortedBatches.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center">No hay lotes registrados.</TableCell>
+                      <TableCell colSpan={canManage ? 4 : 3} className="text-center">No hay lotes registrados.</TableCell>
                     </TableRow>
                   )}
                   {isClient && sortedBatches.map((batch) => (
@@ -380,28 +387,30 @@ function BatchHistory() {
                             </Badge>
                           </TableCell>
                           <TableCell>{new Date(batch.preloadedDate).toLocaleDateString('es-ES')}</TableCell>
-                          <TableCell className="text-right">
-                             <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                   <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                      <Trash2 className="h-4 w-4" />
-                                      <span className="sr-only">Eliminar Lote</span>
-                                  </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el lote. Si este lote ya fue cosechado, los registros de cosecha asociados no serán eliminados pero quedarán sin un lote válido.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(batch.id)}>Continuar</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                          </TableCell>
+                          {canManage && (
+                            <TableCell className="text-right">
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Eliminar Lote</span>
+                                    </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                Esta acción no se puede deshacer. Esto eliminará permanentemente el lote. Si este lote ya fue cosechado, los registros de cosecha asociados no serán eliminados pero quedarán sin un lote válido.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(batch.id)}>Continuar</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </TableCell>
+                          )}
                       </TableRow>
                   ))}
                 </TableBody>
@@ -485,7 +494,7 @@ function BatchYieldChart() {
 
 
 export default function EngineerLogPage() {
-  const { collectors, harvests, collectorPaymentLogs, batches } = useContext(AppDataContext);
+  const { collectors, harvests, collectorPaymentLogs, batches, currentUser } = useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -502,6 +511,9 @@ export default function EngineerLogPage() {
   }, 0);
   
   const averageYieldPerBatch = completedBatches.length > 0 ? totalKgInCompletedBatches / completedBatches.length : 0;
+  
+  const canManageApplications = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canManageBatches = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
 
   return (
@@ -567,13 +579,13 @@ export default function EngineerLogPage() {
         </TabsList>
         <TabsContent value="applications">
           <div className="grid gap-8 lg:grid-cols-2 mt-4">
-            <ApplicationLogForm />
+            {canManageApplications ? <ApplicationLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
             <ApplicationHistory />
           </div>
         </TabsContent>
         <TabsContent value="batches">
            <div className="grid gap-8 lg:grid-cols-2 mt-4">
-            <BatchLogForm />
+            {canManageBatches ? <BatchLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para pre-cargar lotes.</p></CardContent></CardHeader></Card>}
             <BatchHistory />
           </div>
         </TabsContent>

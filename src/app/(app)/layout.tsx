@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import {
@@ -27,17 +27,19 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs } from '@/lib/data';
-import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog } from '@/lib/types';
+import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs, users as availableUsers } from '@/lib/data';
+import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User } from '@/lib/types';
 
 
-const navItems = [
-  { href: '/', label: 'Panel de Control', icon: LayoutDashboard },
-  { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon },
-  { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf },
-  { href: '/collectors', label: 'Recolectores', icon: HardHat },
+const allNavItems = [
+  { href: '/', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
+  { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
+  { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
+  { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
 ];
 
 const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
@@ -69,6 +71,7 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [currentUser, setCurrentUser] = usePersistentState<User>('currentUser', availableUsers.find(u => u.role === 'Productor')!);
   const [harvests, setHarvests] = usePersistentState<Harvest[]>('harvests', initialHarvests);
   const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
   const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
@@ -141,7 +144,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setCollectorPaymentLogs(prevLogs => prevLogs.filter(l => l.id !== logId));
   }
 
+  const handleSetCurrentUser = (user: User) => {
+    setCurrentUser(user);
+  };
+  
+  const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
+
+
   const appData: AppData = {
+    currentUser,
+    users: availableUsers,
+    setCurrentUser: handleSetCurrentUser,
     harvests,
     collectors,
     agronomistLogs,
@@ -195,22 +208,39 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src="https://picsum.photos/seed/user/40/40" alt="Admin" />
-                      <AvatarFallback>A</AvatarFallback>
+                      <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
+                      <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="text-left">
-                      <p className="text-sm font-medium text-sidebar-foreground">Admin</p>
-                      <p className="text-xs text-muted-foreground">admin@agrovision.co</p>
+                      <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+                      <p className="text-xs text-muted-foreground">{currentUser.email}</p>
                     </div>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="right" align="start" className="w-56">
-                  <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                  <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Perfil</DropdownMenuItem>
-                  <DropdownMenuItem>Configuración</DropdownMenuItem>
+                  <DropdownMenuRadioGroup
+                    value={currentUser.id}
+                    onValueChange={(userId) => {
+                        const user = availableUsers.find(u => u.id === userId);
+                        if (user) {
+                            handleSetCurrentUser(user);
+                        }
+                    }}
+                  >
+                    {availableUsers.map(user => (
+                        <DropdownMenuRadioItem key={user.id} value={user.id} className="gap-2">
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/40/40`} alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                           <span>{user.name}</span>
+                        </DropdownMenuRadioItem>
+                    ))}
+                  </DropdownMenuRadioGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
+                  <DropdownMenuItem disabled>Cerrar Sesión</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
           </SidebarFooter>

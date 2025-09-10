@@ -37,8 +37,10 @@ const initialState = {
 export function ProductionForm() {
   const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
-  const { collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests } = useContext(AppDataContext);
+  const { collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
+  
+  const canManage = currentUser.role === 'Productor';
 
   useEffect(() => {
     setIsClient(true);
@@ -52,6 +54,7 @@ export function ProductionForm() {
       farmerId: '',
       ratePerKg: 0.45,
     },
+    disabled: !canManage,
   });
   
   const availableBatches = useMemo(() => batches.filter(b => b.status === 'pending'), [batches]);
@@ -114,7 +117,7 @@ export function ProductionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>ID del Lote</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
                           <FormControl>
                           <SelectTrigger>
                               <SelectValue placeholder="Seleccione un lote" />
@@ -168,7 +171,7 @@ export function ProductionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Recolector</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} name={field.name}>
+                    <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccione un recolector" />
@@ -185,9 +188,11 @@ export function ProductionForm() {
                 )}
               />
             </CardContent>
-            <CardFooter>
-              <Button type="submit">Guardar Producción y Pago</Button>
-            </CardFooter>
+            {canManage && (
+                <CardFooter>
+                    <Button type="submit">Guardar Producción y Pago</Button>
+                </CardFooter>
+            )}
           </form>
         </Form>
       </Card>
@@ -204,20 +209,20 @@ export function ProductionForm() {
                 <TableHead>Recolector</TableHead>
                 <TableHead>Kg</TableHead>
                 <TableHead className="text-right">Pago</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                {canManage && <TableHead className="text-right">Acciones</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {!isClient && (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
+                  <TableCell colSpan={canManage ? 5 : 4} className="h-24 text-center">
                     Cargando historial...
                   </TableCell>
                 </TableRow>
               )}
               {isClient && sortedLogs.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center">No hay registros de producción.</TableCell>
+                  <TableCell colSpan={canManage ? 5 : 4} className="text-center">No hay registros de producción.</TableCell>
                 </TableRow>
               )}
               {isClient && sortedLogs.map(log => {
@@ -229,28 +234,30 @@ export function ProductionForm() {
                     <TableCell className="font-medium">{log.collectorName}</TableCell>
                     <TableCell>{log.kilograms.toLocaleString('es-AR')}</TableCell>
                     <TableCell className="text-right font-bold">${log.payment.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">
-                       <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">Eliminar</span>
-                              </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                              <AlertDialogHeader>
-                                  <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                      Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y pago.
-                                  </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
-                              </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </TableCell>
+                    {canManage && (
+                        <TableCell className="text-right">
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Eliminar</span>
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y pago.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                            </AlertDialog>
+                        </TableCell>
+                    )}
                   </TableRow>
                 )
               })}

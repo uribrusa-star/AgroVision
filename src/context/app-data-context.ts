@@ -1,8 +1,13 @@
 import React from 'react';
-import type { AppData } from '@/lib/types';
-import { harvests, collectors, agronomistLogs, batches, collectorPaymentLogs } from '@/lib/data';
+import type { AppData, User } from '@/lib/types';
+import { harvests, collectors, agronomistLogs, batches, collectorPaymentLogs, users } from '@/lib/data';
+
+const defaultUser = users.find(u => u.role === 'Productor')!;
 
 export const AppDataContext = React.createContext<AppData>({
+  currentUser: defaultUser,
+  users: users,
+  setCurrentUser: () => {},
   harvests: harvests,
   collectors: collectors,
   agronomistLogs: agronomistLogs,

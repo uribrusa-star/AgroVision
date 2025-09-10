@@ -1,3 +1,13 @@
+export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+  role: UserRole;
+};
+
 export type Collector = {
   id: string;
   name: string;
@@ -61,6 +71,9 @@ export type CollectorPaymentLog = {
 }
 
 export type AppData = {
+  currentUser: User;
+  users: User[];
+  setCurrentUser: (user: User) => void;
   harvests: Harvest[];
   collectors: Collector[];
   agronomistLogs: AgronomistLog[];

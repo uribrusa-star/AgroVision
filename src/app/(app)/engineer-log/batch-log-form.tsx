@@ -19,14 +19,16 @@ const BatchLogSchema = z.object({
 type BatchLogFormValues = z.infer<typeof BatchLogSchema>;
 
 export function BatchLogForm() {
-  const { addBatch, batches } = useContext(AppDataContext);
+  const { addBatch, batches, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   const form = useForm<BatchLogFormValues>({
     resolver: zodResolver(BatchLogSchema),
     defaultValues: {
       batchId: '',
     },
+    disabled: !canManage,
   });
 
   const onSubmit = (data: BatchLogFormValues) => {
@@ -73,9 +75,11 @@ export function BatchLogForm() {
               )}
             />
           </CardContent>
-          <CardFooter>
-            <Button type="submit">Agregar Lote</Button>
-          </CardFooter>
+          {canManage && (
+            <CardFooter>
+                <Button type="submit">Agregar Lote</Button>
+            </CardFooter>
+          )}
         </form>
       </Form>
     </Card>

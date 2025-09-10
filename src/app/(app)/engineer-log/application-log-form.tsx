@@ -29,10 +29,12 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function ApplicationLogForm() {
-  const { addAgronomistLog } = React.useContext(AppDataContext);
+  const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
@@ -41,6 +43,7 @@ export function ApplicationLogForm() {
       product: '',
       notes: '',
     },
+    disabled: !canManage,
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,7 +97,7 @@ export function ApplicationLogForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo de Aplicación</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Seleccione un tipo" />
@@ -158,6 +161,7 @@ export function ApplicationLogForm() {
                           field.onChange(e.target.files);
                           handleImageChange(e);
                         }}
+                        disabled={!canManage}
                       />
                     </div>
                   </FormControl>
@@ -178,9 +182,11 @@ export function ApplicationLogForm() {
                 </div>
             )}
           </CardContent>
-          <CardFooter>
-            <Button type="submit">Guardar Registro</Button>
-          </CardFooter>
+          {canManage && (
+            <CardFooter>
+                <Button type="submit">Guardar Registro</Button>
+            </CardFooter>
+          )}
         </form>
       </Form>
     </Card>

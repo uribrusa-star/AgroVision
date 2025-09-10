@@ -1,4 +1,10 @@
-import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog } from './types';
+import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User } from './types';
+
+export const users: User[] = [
+  { id: 'user-productor', name: 'Productor Admin', email: 'productor@agrovision.co', role: 'Productor', avatar: 'user-1' },
+  { id: 'user-agronomo', name: 'Ingeniero Agrónomo', email: 'agronomo@agrovision.co', role: 'Ingeniero Agronomo', avatar: 'user-2' },
+  { id: 'user-encargado', name: 'Encargado de Campo', email: 'encargado@agrovision.co', role: 'Encargado', avatar: 'user-3' },
+];
 
 export const collectors: Collector[] = [
   { id: '1', name: 'Ana García', avatar: '1', totalHarvested: 1250, hoursWorked: 160, productivity: 7.8, joinDate: '2023-01-15' },

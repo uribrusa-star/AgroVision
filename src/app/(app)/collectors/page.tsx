@@ -26,7 +26,7 @@ const CollectorSchema = z.object({
 });
 
 export default function CollectorsPage() {
-  const { collectors, harvests, addCollector, editCollector, deleteCollector } = React.useContext(AppDataContext);
+  const { collectors, harvests, addCollector, editCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -84,6 +84,8 @@ export default function CollectorsPage() {
     form.reset({ name: '' });
   };
 
+  const canManage = currentUser.role === 'Productor';
+
 
   return (
     <>
@@ -91,42 +93,44 @@ export default function CollectorsPage() {
         title="Gestión de Recolectores"
         description="Vea, gestione y siga la productividad de sus recolectores."
       >
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-                <Button>Agregar Nuevo Recolector</Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Agregar Nuevo Recolector</DialogTitle>
-                    <DialogDescription>
-                        Complete los detalles para agregar un nuevo recolector al sistema.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onAddSubmit)} className="space-y-4">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Nombre</FormLabel>
-                                    <FormControl>
-                                        <Input {...field} placeholder="Ej. Juan Pérez" />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button type="button" variant="secondary">Cancelar</Button>
-                            </DialogClose>
-                            <Button type="submit">Agregar Recolector</Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
+        {canManage && (
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>Agregar Nuevo Recolector</Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Agregar Nuevo Recolector</DialogTitle>
+                        <DialogDescription>
+                            Complete los detalles para agregar un nuevo recolector al sistema.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                        <form onSubmit={form.handleSubmit(onAddSubmit)} className="space-y-4">
+                            <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Nombre</FormLabel>
+                                        <FormControl>
+                                            <Input {...field} placeholder="Ej. Juan Pérez" />
+                                        </FormControl>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button type="button" variant="secondary">Cancelar</Button>
+                                </DialogClose>
+                                <Button type="submit">Agregar Recolector</Button>
+                            </DialogFooter>
+                        </form>
+                    </Form>
+                </DialogContent>
+            </Dialog>
+        )}
       </PageHeader>
       <Card>
         <CardHeader>
@@ -141,7 +145,7 @@ export default function CollectorsPage() {
                 <TableHead className="hidden md:table-cell">Total Cosechado</TableHead>
                 <TableHead className="hidden md:table-cell">Productividad (kg/hr)</TableHead>
                 <TableHead className="hidden sm:table-cell">Se unió</TableHead>
-                <TableHead><span className="sr-only">Acciones</span></TableHead>
+                {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -159,83 +163,85 @@ export default function CollectorsPage() {
                   <TableCell className="hidden md:table-cell">{isClient ? collector.totalHarvested.toLocaleString('es-ES') : '...'} kg</TableCell>
                   <TableCell className="hidden md:table-cell">{isClient ? collector.productivity.toFixed(2) : '...'}</TableCell>
                   <TableCell className="hidden sm:table-cell">{isClient ? new Date(collector.joinDate).toLocaleDateString('es-ES') : '...'}</TableCell>
-                  <TableCell>
-                     <Dialog>
-                      <AlertDialog>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                             <DialogTrigger asChild>
-                               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Ver Historial</DropdownMenuItem>
-                            </DialogTrigger>
-                            <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
-                            <AlertDialogTrigger asChild>
-                              <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
-                            </AlertDialogTrigger>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                  {canManage && (
+                    <TableCell>
+                        <Dialog>
+                        <AlertDialog>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Ver Historial</DropdownMenuItem>
+                                </DialogTrigger>
+                                <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
+                                <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
 
-                        <DialogContent className="sm:max-w-2xl">
-                          <DialogHeader>
-                            <DialogTitle>Historial de Cosecha: {collector.name}</DialogTitle>
-                            <DialogDescription>
-                              Revise todas las entradas de cosecha para este recolector.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="max-h-[60vh] overflow-auto">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Fecha</TableHead>
-                                  <TableHead>Lote</TableHead>
-                                  <TableHead className="text-right">Kilogramos</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {(() => {
-                                  const history = getCollectorHistory(collector.id);
-                                  if (history.length > 0) {
-                                    return history.map(h => (
-                                      <TableRow key={h.id}>
-                                        <TableCell>{isClient ? new Date(h.date).toLocaleDateString('es-ES') : '...'}</TableCell>
-                                        <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
-                                        <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
-                                      </TableRow>
-                                    ));
-                                  }
-                                  return (
+                            <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Historial de Cosecha: {collector.name}</DialogTitle>
+                                <DialogDescription>
+                                Revise todas las entradas de cosecha para este recolector.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="max-h-[60vh] overflow-auto">
+                                <Table>
+                                <TableHeader>
                                     <TableRow>
-                                      <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
+                                    <TableHead>Fecha</TableHead>
+                                    <TableHead>Lote</TableHead>
+                                    <TableHead className="text-right">Kilogramos</TableHead>
                                     </TableRow>
-                                  );
-                                })()}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        </DialogContent>
-                        
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Esta acción no se puede deshacer. Esto eliminará permanentemente al recolector y todos sus datos de cosecha asociados.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(collector.id)}>Continuar</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
+                                </TableHeader>
+                                <TableBody>
+                                    {(() => {
+                                    const history = getCollectorHistory(collector.id);
+                                    if (history.length > 0) {
+                                        return history.map(h => (
+                                        <TableRow key={h.id}>
+                                            <TableCell>{isClient ? new Date(h.date).toLocaleDateString('es-ES') : '...'}</TableCell>
+                                            <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
+                                            <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
+                                        </TableRow>
+                                        ));
+                                    }
+                                    return (
+                                        <TableRow>
+                                        <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
+                                        </TableRow>
+                                    );
+                                    })()}
+                                </TableBody>
+                                </Table>
+                            </div>
+                            </DialogContent>
+                            
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Esto eliminará permanentemente al recolector y todos sus datos de cosecha asociados.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(collector.id)}>Continuar</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
 
-                      </AlertDialog>
-                    </Dialog>
-                  </TableCell>
+                        </AlertDialog>
+                        </Dialog>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
