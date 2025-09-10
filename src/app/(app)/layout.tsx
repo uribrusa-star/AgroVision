@@ -149,7 +149,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
 function UserMenu() {
-  const { currentUser, setCurrentUser } = React.useContext(AppDataContext);
+  const { currentUser, users, setCurrentUser } = React.useContext(AppDataContext);
   const router = useRouter();
   
   if(!currentUser) return null;
@@ -176,6 +176,27 @@ function UserMenu() {
         <DropdownMenuContent side="right" align="start" className="w-56">
           <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
           <DropdownMenuSeparator />
+
+          {currentUser.role === 'Productor' && (
+            <>
+                <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
+                <DropdownMenuRadioGroup value={currentUser.id} onValueChange={(userId) => {
+                    const selectedUser = users.find(u => u.id === userId);
+                    if(selectedUser) {
+                        setCurrentUser(selectedUser);
+                    }
+                }}>
+                    {users.map((user) => (
+                        <DropdownMenuRadioItem key={user.id} value={user.id}>
+                            {user.name}
+                            {currentUser.id === user.id && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuRadioItem>
+                    ))}
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+            </>
+          )}
+          
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Cerrar Sesión</span>
