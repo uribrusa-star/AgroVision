@@ -170,6 +170,41 @@ export default function DashboardPage() {
             </CardContent>
             </Card>
         </div>
+        <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Visión General de Productividad de Recolectores</CardTitle>
+                    <CardDescription>Resumen del rendimiento de cada recolector.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>Nombre</TableHead>
+                            <TableHead className="text-right">Total Cosechado (kg)</TableHead>
+                            <TableHead className="text-right">Horas Trabajadas</TableHead>
+                            <TableHead className="text-right">Productividad (kg/hr)</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {loading && (
+                           <TableRow>
+                            <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                           </TableRow>
+                        )}
+                        {!loading && collectors.map((collector) => (
+                            <TableRow key={collector.id}>
+                            <TableCell className="font-medium">{collector.name}</TableCell>
+                            <TableCell className="text-right">{collector.totalHarvested.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right">{collector.hoursWorked.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
       </div>
     </>
   );
