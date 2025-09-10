@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useFormState } from 'react-dom';
+import { useActionState, useState } from 'react';
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,7 +17,7 @@ const initialState = {
 };
 
 function HarvestSummary() {
-  const [state, formAction] = useFormState(handleSummarizeHarvest, initialState);
+  const [state, formAction] = useActionState(handleSummarizeHarvest, initialState);
   const [showSummary, setShowSummary] = useState(false);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
