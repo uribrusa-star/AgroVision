@@ -14,6 +14,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import type { Harvest } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import React, { useEffect, useState } from "react";
 
 const chartConfig = {
   total: {
@@ -43,8 +45,28 @@ const processHarvestsForChart = (harvests: Harvest[]) => {
 
 
 export function MonthlyHarvestChart({ harvests }: { harvests: Harvest[] }) {
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const chartData = processHarvestsForChart(harvests);
   
+  if (!isClient) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Cosecha Mensual</CardTitle>
+          <CardDescription>Total de kilogramos cosechados por mes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+           <Skeleton className="h-[300px] w-full" />
+        </CardContent>
+      </Card>
+    )
+  }
+
   if(chartData.length === 0) {
     return (
       <Card>
