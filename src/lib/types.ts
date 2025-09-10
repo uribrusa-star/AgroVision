@@ -37,6 +37,8 @@ export type AgronomistLog = {
     type: 'Fertilización' | 'Fumigación' | 'Control';
     product?: string;
     notes: string;
+    imageUrl?: string;
+    imageHint?: string;
 }
 
 export type AppData = {

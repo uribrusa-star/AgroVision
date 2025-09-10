@@ -1,11 +1,12 @@
 'use client';
 
 import React, { useActionState, useState, useContext, useEffect } from 'react';
+import Image from 'next/image';
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { DollarSign, HardHat, Sprout, Tractor, Weight } from 'lucide-react';
+import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon } from 'lucide-react';
 import { engineerLogStats } from '@/lib/data';
 import { handleSummarizeHarvest } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -97,12 +98,13 @@ function ApplicationHistory() {
                   <TableHead>Fecha</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Producto/Notas</TableHead>
+                  <TableHead>Imagen</TableHead>
               </TableRow>
               </TableHeader>
               <TableBody>
               {agronomistLogs.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center">No hay registros de aplicaciones.</TableCell>
+                  <TableCell colSpan={4} className="text-center">No hay registros de aplicaciones.</TableCell>
                 </TableRow>
               )}
               {agronomistLogs.map((log) => (
@@ -112,6 +114,19 @@ function ApplicationHistory() {
                       <TableCell>
                         <p className="font-medium">{log.product}</p>
                         <p className="text-sm text-muted-foreground">{log.notes}</p>
+                      </TableCell>
+                      <TableCell>
+                        {log.imageUrl && (
+                          <div className="relative w-24 h-16 rounded-md overflow-hidden">
+                              <Image 
+                                src={log.imageUrl}
+                                alt={log.notes}
+                                fill
+                                className="object-cover"
+                                data-ai-hint={log.imageHint}
+                              />
+                          </div>
+                        )}
                       </TableCell>
                   </TableRow>
               ))}
@@ -123,12 +138,14 @@ function ApplicationHistory() {
 }
 
 export default function EngineerLogPage() {
-  const { collectors } = useContext(AppDataContext);
+  const { collectors, harvests } = useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
 
   return (
     <>
@@ -144,7 +161,7 @@ export default function EngineerLogPage() {
             <Weight className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient ? engineerLogStats.totalProduction.toLocaleString('es-ES') : 'Cargando...'} kg</div>
+            <div className="text-2xl font-bold">{isClient ? totalProduction.toLocaleString('es-ES') : 'Cargando...'} kg</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>

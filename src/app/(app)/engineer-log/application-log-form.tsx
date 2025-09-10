@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,6 +14,7 @@ import { AppDataContext } from '@/context/app-data-context';
 import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Upload } from 'lucide-react';
 
 
 const LogSchema = z.object({
@@ -21,6 +23,7 @@ const LogSchema = z.object({
   }),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
+  image: z.any().optional(),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -28,6 +31,8 @@ type LogFormValues = z.infer<typeof LogSchema>;
 export function ApplicationLogForm() {
   const { addAgronomistLog } = React.useContext(AppDataContext);
   const { toast } = useToast();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
@@ -38,11 +43,28 @@ export function ApplicationLogForm() {
     },
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview(null);
+    }
+  };
+
   const onSubmit = (data: LogFormValues) => {
     const newLog: AgronomistLog = {
       id: `LOG${Date.now()}`,
       date: new Date().toISOString(),
-      ...data,
+      type: data.type,
+      product: data.product,
+      notes: data.notes,
+      imageUrl: imagePreview || undefined,
+      imageHint: imagePreview ? 'field application' : undefined,
     };
     addAgronomistLog(newLog);
     toast({
@@ -50,6 +72,10 @@ export function ApplicationLogForm() {
       description: `Se ha agregado una nueva entrada de tipo "${data.type}".`,
     });
     form.reset();
+    setImagePreview(null);
+    if(fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -68,7 +94,7 @@ export function ApplicationLogForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo de Aplicación</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Seleccione un tipo" />
@@ -115,6 +141,42 @@ export function ApplicationLogForm() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Imagen (Opcional)</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center gap-4">
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        className="w-full"
+                        ref={fileInputRef}
+                        onChange={(e) => {
+                          field.onChange(e.target.files);
+                          handleImageChange(e);
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {imagePreview && (
+                <div className="flex justify-center p-4 border-dashed border-2 border-muted rounded-md">
+                    <div className="relative w-full max-w-xs aspect-video">
+                        <Image
+                        src={imagePreview}
+                        alt="Vista previa de la imagen"
+                        fill
+                        className="object-contain rounded-md"
+                        />
+                    </div>
+                </div>
+            )}
           </CardContent>
           <CardFooter>
             <Button type="submit">Guardar Registro</Button>

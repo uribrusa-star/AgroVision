@@ -18,8 +18,8 @@ export const harvests: Harvest[] = [
 ];
 
 export const agronomistLogs: AgronomistLog[] = [
-    { id: 'LOG001', date: '2024-07-21', type: 'Fertilización', product: 'Nitrato de potasio', notes: 'Aplicación foliar en dosis de 2kg/ha.' },
-    { id: 'LOG002', date: '2024-07-19', type: 'Fumigación', product: 'Abamectina', notes: 'Control de araña roja, se observa baja incidencia.' },
+    { id: 'LOG001', date: '2024-07-21', type: 'Fertilización', product: 'Nitrato de potasio', notes: 'Aplicación foliar en dosis de 2kg/ha.', imageUrl: 'https://picsum.photos/seed/fertilizer/400/300', imageHint: 'fertilizer bag' },
+    { id: 'LOG002', date: '2024-07-19', type: 'Fumigación', product: 'Abamectina', notes: 'Control de araña roja, se observa baja incidencia.', imageUrl: 'https://picsum.photos/seed/pest/400/300', imageHint: 'strawberry pest' },
     { id: 'LOG003', date: '2024-07-18', type: 'Control', notes: 'Monitoreo de trampas de esporas. Sin presencia de Botrytis.' },
 ]
 
