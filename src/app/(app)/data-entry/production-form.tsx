@@ -47,9 +47,10 @@ export function ProductionForm() {
   });
   
   const availableBatches = useMemo(() => {
-    const harvestedBatchIds = new Set(harvests.map(h => h.batchNumber));
-    return batches.filter(b => !harvestedBatchIds.has(b.id));
-  }, [batches, harvests]);
+    // Show all batches that are not explicitly marked as 'completed'.
+    // This allows multiple harvests to be logged for the same batch.
+    return batches.filter(b => b.status !== 'completed');
+  }, [batches]);
 
   const onSubmit = (values: ProductionFormValues) => {
     startTransition(async () => {
