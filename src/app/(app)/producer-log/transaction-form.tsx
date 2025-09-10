@@ -126,7 +126,7 @@ export function TransactionForm() {
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Monto ($)</FormLabel>
+                  <FormLabel>Monto (ARS)</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" {...field} disabled={isPending} />
                   </FormControl>
@@ -143,3 +143,5 @@ export function TransactionForm() {
     </Card>
   );
 }
+
+    

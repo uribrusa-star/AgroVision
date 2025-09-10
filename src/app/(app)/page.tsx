@@ -88,7 +88,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
             <p className="text-xs text-muted-foreground">Basado en pagos registrados</p>
           </CardContent>
         </Card>
@@ -209,3 +209,5 @@ export default function DashboardPage() {
     </>
   );
 }
+
+    
