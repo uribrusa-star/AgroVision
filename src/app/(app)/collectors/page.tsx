@@ -128,152 +128,148 @@ export default function CollectorsPage() {
             </Dialog>
         )}
       </PageHeader>
-      <div className="flex justify-center">
-        <div className="w-full max-w-5xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>Todos los Recolectores</CardTitle>
-              <CardDescription>Una lista de todos los recolectores en su organización.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead className="hidden md:table-cell">Total Cosechado</TableHead>
-                    <TableHead className="hidden lg:table-cell">Productividad (kg/hr)</TableHead>
-                    <TableHead className="hidden sm:table-cell">Se unió</TableHead>
-                    {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading && (
-                    <TableRow>
-                      <TableCell colSpan={canManage ? 5 : 4}>
-                        <div className="flex items-center gap-3">
-                          <Skeleton className="h-10 w-10 rounded-full" />
-                          <div className="space-y-2">
-                            <Skeleton className="h-4 w-[250px]" />
-                          </div>
+        <Card>
+        <CardHeader>
+            <CardTitle>Todos los Recolectores</CardTitle>
+            <CardDescription>Una lista de todos los recolectores en su organización.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+            <TableHeader>
+                <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead className="hidden md:table-cell">Total Cosechado</TableHead>
+                <TableHead className="hidden lg:table-cell">Productividad (kg/hr)</TableHead>
+                <TableHead className="hidden sm:table-cell">Se unió</TableHead>
+                {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {loading && (
+                <TableRow>
+                    <TableCell colSpan={canManage ? 5 : 4}>
+                    <div className="flex items-center gap-3">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <div className="space-y-2">
+                        <Skeleton className="h-4 w-[250px]" />
                         </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <Skeleton className="h-4 w-[50px]" />
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <Skeleton className="h-4 w-[50px]" />
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <Skeleton className="h-4 w-[80px]" />
-                      </TableCell>
-                      {canManage && (
-                        <TableCell>
-                          <Skeleton className="h-8 w-8" />
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  )}
-                  {!loading && collectors.map((collector) => (
-                    <TableRow key={collector.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={`https://picsum.photos/seed/${collector.avatar}/40/40`} alt={collector.name} data-ai-hint="person portrait" />
-                            <AvatarFallback>{collector.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <span className="font-medium">{collector.name}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">{collector.totalHarvested.toLocaleString('es-ES')} kg</TableCell>
-                      <TableCell className="hidden lg:table-cell">{collector.productivity.toFixed(2)}</TableCell>
-                      <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString('es-ES')}</TableCell>
-                      {canManage && (
-                        <TableCell>
-                            <Dialog>
-                            <AlertDialog>
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                    <DialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Ver Historial</DropdownMenuItem>
-                                    </DialogTrigger>
-                                    <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
-                                    <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                </DropdownMenuContent>
-                                </DropdownMenu>
+                    </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                    <Skeleton className="h-4 w-[50px]" />
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                    <Skeleton className="h-4 w-[50px]" />
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                    <Skeleton className="h-4 w-[80px]" />
+                    </TableCell>
+                    {canManage && (
+                    <TableCell>
+                        <Skeleton className="h-8 w-8" />
+                    </TableCell>
+                    )}
+                </TableRow>
+                )}
+                {!loading && collectors.map((collector) => (
+                <TableRow key={collector.id}>
+                    <TableCell>
+                    <div className="flex items-center gap-3">
+                        <Avatar>
+                        <AvatarImage src={`https://picsum.photos/seed/${collector.avatar}/40/40`} alt={collector.name} data-ai-hint="person portrait" />
+                        <AvatarFallback>{collector.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{collector.name}</span>
+                    </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{collector.totalHarvested.toLocaleString('es-ES')} kg</TableCell>
+                    <TableCell className="hidden lg:table-cell">{collector.productivity.toFixed(2)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString('es-ES')}</TableCell>
+                    {canManage && (
+                    <TableCell>
+                        <Dialog>
+                        <AlertDialog>
+                            <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Toggle menu</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Ver Historial</DropdownMenuItem>
+                                </DialogTrigger>
+                                <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
+                                <AlertDialogTrigger asChild>
+                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                </AlertDialogTrigger>
+                            </DropdownMenuContent>
+                            </DropdownMenu>
 
-                                <DialogContent className="sm:max-w-2xl">
-                                <DialogHeader>
-                                    <DialogTitle>Historial de Cosecha: {collector.name}</DialogTitle>
-                                    <DialogDescription>
-                                    Revise todas las entradas de cosecha para este recolector.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="max-h-[60vh] overflow-auto">
-                                    <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                        <TableHead>Fecha</TableHead>
-                                        <TableHead>Lote</TableHead>
-                                        <TableHead className="text-right">Kilogramos</TableHead>
+                            <DialogContent className="sm:max-w-2xl">
+                            <DialogHeader>
+                                <DialogTitle>Historial de Cosecha: {collector.name}</DialogTitle>
+                                <DialogDescription>
+                                Revise todas las entradas de cosecha para este recolector.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="max-h-[60vh] overflow-auto">
+                                <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                    <TableHead>Fecha</TableHead>
+                                    <TableHead>Lote</TableHead>
+                                    <TableHead className="text-right">Kilogramos</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {(() => {
+                                    const history = getCollectorHistory(collector.id);
+                                    if (history.length > 0) {
+                                        return history.map(h => (
+                                        <TableRow key={h.id}>
+                                            <TableCell>{new Date(h.date).toLocaleDateString('es-ES')}</TableCell>
+                                            <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
+                                            <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
                                         </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {(() => {
-                                        const history = getCollectorHistory(collector.id);
-                                        if (history.length > 0) {
-                                            return history.map(h => (
-                                            <TableRow key={h.id}>
-                                                <TableCell>{new Date(h.date).toLocaleDateString('es-ES')}</TableCell>
-                                                <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
-                                                <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
-                                            </TableRow>
-                                            ));
-                                        }
-                                        return (
-                                            <TableRow>
-                                            <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
-                                            </TableRow>
-                                        );
-                                        })()}
-                                    </TableBody>
-                                    </Table>
-                                </div>
-                                </DialogContent>
-                                
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Esto eliminará permanentemente al recolector y todos sus datos de cosecha asociados.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(collector.id)}>Continuar</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
+                                        ));
+                                    }
+                                    return (
+                                        <TableRow>
+                                        <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
+                                        </TableRow>
+                                    );
+                                    })()}
+                                </TableBody>
+                                </Table>
+                            </div>
+                            </DialogContent>
+                            
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Esto eliminará permanentemente al recolector y todos sus datos de cosecha asociados.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(collector.id)}>Continuar</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
 
-                            </AlertDialog>
-                            </Dialog>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                        </AlertDialog>
+                        </Dialog>
+                    </TableCell>
+                    )}
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </CardContent>
+        </Card>
       
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
