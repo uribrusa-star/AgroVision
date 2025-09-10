@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { AppDataContext } from '@/context/app-data-context';
 import type { Collector } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const CollectorSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
@@ -149,7 +150,33 @@ export default function CollectorsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {collectors.map((collector) => (
+              {!isClient && (
+                <TableRow>
+                  <TableCell colSpan={canManage ? 5 : 4}>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-[250px]" />
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Skeleton className="h-4 w-[50px]" />
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    <Skeleton className="h-4 w-[50px]" />
+                  </TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    <Skeleton className="h-4 w-[80px]" />
+                  </TableCell>
+                  {canManage && (
+                    <TableCell>
+                      <Skeleton className="h-8 w-8" />
+                    </TableCell>
+                  )}
+                </TableRow>
+              )}
+              {isClient && collectors.map((collector) => (
                 <TableRow key={collector.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -160,9 +187,9 @@ export default function CollectorsPage() {
                       <span className="font-medium">{collector.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell">{isClient ? collector.totalHarvested.toLocaleString('es-ES') : '...'} kg</TableCell>
-                  <TableCell className="hidden md:table-cell">{isClient ? collector.productivity.toFixed(2) : '...'}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{isClient ? new Date(collector.joinDate).toLocaleDateString('es-ES') : '...'}</TableCell>
+                  <TableCell className="hidden md:table-cell">{collector.totalHarvested.toLocaleString('es-ES')} kg</TableCell>
+                  <TableCell className="hidden md:table-cell">{collector.productivity.toFixed(2)}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString('es-ES')}</TableCell>
                   {canManage && (
                     <TableCell>
                         <Dialog>
@@ -208,7 +235,7 @@ export default function CollectorsPage() {
                                     if (history.length > 0) {
                                         return history.map(h => (
                                         <TableRow key={h.id}>
-                                            <TableCell>{isClient ? new Date(h.date).toLocaleDateString('es-ES') : '...'}</TableCell>
+                                            <TableCell>{new Date(h.date).toLocaleDateString('es-ES')}</TableCell>
                                             <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
                                             <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
                                         </TableRow>
@@ -285,3 +312,5 @@ export default function CollectorsPage() {
     </>
   );
 }
+
+    
