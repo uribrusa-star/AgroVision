@@ -1,3 +1,5 @@
+'use client';
+
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
 import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction } from '@/lib/types';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
