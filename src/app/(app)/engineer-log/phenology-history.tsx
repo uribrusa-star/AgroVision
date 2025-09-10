@@ -138,7 +138,7 @@ export function PhenologyHistory() {
                 {!loading && [...phenologyLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const stateInfo = getStateInfo(log.developmentState);
                     return (
-                        <TableRow key={log.id}>
+                        <TableRow key={log.id} onClick={() => handleDetails(log)} className="cursor-pointer">
                             <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                             <TableCell>
                                 <Badge variant={stateInfo.variant as any} className="gap-1">
@@ -167,7 +167,7 @@ export function PhenologyHistory() {
                             )}
                             </TableCell>
                             {canManage && (
-                                <TableCell>
+                                <TableCell onClick={(e) => e.stopPropagation()}>
                                 <AlertDialog>
                                     <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -371,3 +371,5 @@ export function PhenologyHistory() {
     </>
   )
 }
+
+    

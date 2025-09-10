@@ -136,7 +136,7 @@ export function ApplicationHistory() {
                 {!loading && [...agronomistLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const typeInfo = getTypeInfo(log.type);
                     return (
-                    <TableRow key={log.id}>
+                    <TableRow key={log.id} onClick={() => handleDetails(log)} className="cursor-pointer">
                         <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                         <TableCell>
                           <Badge variant={typeInfo.variant as any} className="gap-1">
@@ -162,7 +162,7 @@ export function ApplicationHistory() {
                           )}
                         </TableCell>
                         {canManage && (
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                             <AlertDialog>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -350,3 +350,5 @@ export function ApplicationHistory() {
     </>
   )
 }
+
+    
