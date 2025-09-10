@@ -7,7 +7,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { BarChart, HardHat, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
-import { HarvestSummary } from './harvest-summary';
 import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
 import { MonthlyHarvestChart } from '../monthly-harvest-chart';
@@ -98,12 +97,6 @@ export default function EngineerLogPage() {
         </div>
          <div id="monthly-harvest-chart-container" className="lg:col-span-1">
            <MonthlyHarvestChart harvests={harvests} />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-1 mb-8">
-        <div>
-           <HarvestSummary />
         </div>
       </div>
     </>

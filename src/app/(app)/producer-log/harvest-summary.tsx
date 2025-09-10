@@ -14,8 +14,8 @@ import { AppDataContext } from '@/context/app-data-context';
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
 import { useToast } from '@/hooks/use-toast';
 import { AgroVisionLogo } from '@/components/icons';
-import { MonthlyHarvestChart } from '../monthly-harvest-chart';
-import { BatchYieldChart } from './batch-yield-chart';
+import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
+import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 
 
 // Extend jsPDF with autoTable
@@ -69,9 +69,9 @@ export function HarvestSummary() {
   const estimatedRevenue = totalProduction * 2.5; // Simple estimation at $2.5/kg
 
   const costDistributionData = [
-      { name: 'Mano de Obra', value: laborCost, fill: 'var(--color-labor)' },
-      { name: 'Insumos', value: supplyCost, fill: 'var(--color-insumos)' },
-      { name: 'Riego', value: irrigationCost, fill: 'var(--color-riego)' },
+      { name: 'labor', value: laborCost, fill: 'var(--color-labor)' },
+      { name: 'insumos', value: supplyCost, fill: 'var(--color-insumos)' },
+      { name: 'riego', value: irrigationCost, fill: 'var(--color-riego)' },
     ].filter(item => item.value > 0);
 
   const handleGeneratePdf = () => {
@@ -246,6 +246,7 @@ export function HarvestSummary() {
         doc.setFontSize(24);
         doc.setTextColor(40);
         doc.text('Informe de Producción de Frutilla', pageWidth / 2, pageHeight / 2 + 10, { align: 'center' });
+        
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
         doc.setTextColor(100);
@@ -350,9 +351,9 @@ export function HarvestSummary() {
                     <ChartContainer config={costChartConfig} className="h-[250px] w-full">
                       <RechartsPieChart>
                           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                          <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                          <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${costChartConfig[name as keyof typeof costChartConfig]?.label}: ${(percent * 100).toFixed(0)}%`}>
                               {costDistributionData.map((entry) => (
-                                  <Cell key={`cell-${entry.name}`} fill={costChartConfig[entry.name.toLowerCase() as keyof typeof costChartConfig]?.color || '#000000'} />
+                                  <Cell key={`cell-${entry.name}`} fill={costChartConfig[entry.name as keyof typeof costChartConfig]?.color || '#000000'} />
                               ))}
                           </Pie>
                       </RechartsPieChart>
