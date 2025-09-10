@@ -2,18 +2,18 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { BarChart as BarChartIcon, CalendarDays, Users, Weight, DollarSign } from "lucide-react";
-import { MonthlyHarvestChart } from "../monthly-harvest-chart";
 import { AppDataContext } from '@/context/app-data-context';
 import type { Harvest } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BatchYieldChart } from '../engineer-log/batch-yield-chart';
-import { ProductionPaymentHistory } from '../production-payment-history';
+import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
+import { ProductionPaymentHistory } from '@/app/(app)/production-payment-history';
+import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 
 
 export default function DashboardPage() {
