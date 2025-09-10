@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useContext, useMemo } from 'react';
+import { useActionState, useEffect, useContext, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,11 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, "El ID del lote es requerido."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
-  farmerId: z.string().min(1, "El agricultor es requerido."),
+  farmerId: z.string().min(1, "El recolector es requerido."),
+  ratePerKg: z.coerce.number().min(0.01, "La tarifa por kg es requerida."),
 });
 
 type ProductionFormValues = z.infer<typeof ProductionSchema>;
@@ -26,12 +29,18 @@ const initialState = {
   message: '',
   success: false,
   newHarvest: undefined,
+  newPaymentLog: undefined,
 };
 
 export function ProductionForm() {
   const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
-  const { collectors, batches, addHarvest } = useContext(AppDataContext);
+  const { collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs } = useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),
@@ -39,6 +48,7 @@ export function ProductionForm() {
       batchId: '',
       kilosPerBatch: 0,
       farmerId: '',
+      ratePerKg: 0.45,
     },
   });
   
@@ -51,102 +61,170 @@ export function ProductionForm() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
-      if (state.success && state.newHarvest) {
-          addHarvest(state.newHarvest);
-          form.reset();
+      if (state.success) {
+          if (state.newHarvest) addHarvest(state.newHarvest);
+          if (state.newPaymentLog) addCollectorPaymentLog(state.newPaymentLog);
+          form.reset({
+            batchId: '',
+            kilosPerBatch: 0,
+            farmerId: '',
+            ratePerKg: 0.45,
+          });
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, toast, form]);
+  }, [state, toast]);
+  
+  const sortedLogs = [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Registrar Producción</CardTitle>
-        <CardDescription>Ingrese los detalles de un nuevo lote de producción.</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form action={(formData) => {
-            const valid = form.trigger();
-            if(valid) {
-              const data = new FormData();
-              data.set('batchId', form.getValues('batchId'));
-              data.set('kilosPerBatch', form.getValues('kilosPerBatch').toString());
-              data.set('farmerId', form.getValues('farmerId'));
-              data.set('collectors', JSON.stringify(collectors));
-              formAction(data);
-            }
-        }}>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+    <div className="grid lg:grid-cols-2 gap-8">
+      <Card>
+        <CardHeader>
+          <CardTitle>Registrar Carga de Producción</CardTitle>
+          <CardDescription>Ingrese los detalles de la cosecha y calcule el pago del recolector.</CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form action={(formData) => {
+              const valid = form.trigger();
+              if(valid) {
+                const data = new FormData();
+                data.set('batchId', form.getValues('batchId'));
+                data.set('kilosPerBatch', form.getValues('kilosPerBatch').toString());
+                data.set('farmerId', form.getValues('farmerId'));
+                data.set('ratePerKg', form.getValues('ratePerKg').toString());
+                data.set('collectors', JSON.stringify(collectors));
+                formAction(data);
+              }
+          }}>
+            <CardContent className="space-y-4">
+               <FormField
+                  control={form.control}
+                  name="batchId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>ID del Lote</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Seleccione un lote" />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {availableBatches.length > 0 ? (
+                              availableBatches.map(b => (
+                                <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="none" disabled>No hay lotes pendientes</SelectItem>
+                            )}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="kilosPerBatch"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Kilos por Lote</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="ej., 125.5" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                    control={form.control}
+                    name="ratePerKg"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Tarifa por kg ($)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
               <FormField
                 control={form.control}
-                name="batchId"
+                name="farmerId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>ID del Lote</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
+                    <FormLabel>Recolector</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} name={field.name}>
+                      <FormControl>
                         <SelectTrigger>
-                            <SelectValue placeholder="Seleccione un lote" />
+                          <SelectValue placeholder="Seleccione un recolector" />
                         </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {availableBatches.length > 0 ? (
-                            availableBatches.map(b => (
-                              <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
-                            ))
-                          ) : (
-                            <SelectItem value="none" disabled>No hay lotes pendientes</SelectItem>
-                          )}
-                        </SelectContent>
+                      </FormControl>
+                      <SelectContent>
+                        {collectors.map(c => (
+                          <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="kilosPerBatch"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kilos por Lote</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="ej., 125.5" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="farmerId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Agricultor / Recolector</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} name={field.name}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione un agricultor" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {collectors.map(c => (
-                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit">Guardar Producción y Pago</Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Historial de Producción y Pagos</CardTitle>
+          <CardDescription>Un registro de todas las cosechas y los pagos calculados.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Lote</TableHead>
+                <TableHead>Recolector</TableHead>
+                <TableHead>Kg</TableHead>
+                <TableHead className="text-right">Pago</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!isClient && (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    Cargando historial...
+                  </TableCell>
+                </TableRow>
               )}
-            />
-          </CardContent>
-          <CardFooter>
-            <Button type="submit">Enviar Lote</Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+              {isClient && sortedLogs.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center">No hay registros de producción.</TableCell>
+                </TableRow>
+              )}
+              {isClient && sortedLogs.map(log => {
+                const harvest = state.newHarvest;
+                const batchNum = harvest && log.id.endsWith(harvest.id) ? harvest.batchNumber : "L???";
+                return (
+                  <TableRow key={log.id}>
+                    <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
+                    <TableCell className="font-medium">{log.collectorName}</TableCell>
+                    <TableCell>{log.kilograms.toLocaleString('es-AR')}</TableCell>
+                    <TableCell className="text-right font-bold">${log.payment.toFixed(2)}</TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
