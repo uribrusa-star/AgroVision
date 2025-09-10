@@ -120,14 +120,26 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {harvests.slice(0, 5).map((harvest) => (
+                {!isClient && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      Cargando cosechas...
+                    </TableCell>
+                  </TableRow>
+                )}
+                {isClient && harvests.length === 0 && (
+                    <TableRow>
+                        <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
+                    </TableRow>
+                )}
+                {isClient && harvests.slice(0, 5).map((harvest) => (
                   <TableRow key={harvest.id}>
                     <TableCell>
                       <Badge variant="outline">{harvest.batchNumber}</Badge>
                     </TableCell>
                     <TableCell>{harvest.collector.name}</TableCell>
-                    <TableCell className="text-right font-medium">{isClient ? harvest.kilograms.toLocaleString('es-ES') : '...'} kg</TableCell>
-                    <TableCell className="text-right text-muted-foreground">{isClient ? new Date(harvest.date).toLocaleDateString('es-ES') : '...'}</TableCell>
+                    <TableCell className="text-right font-medium">{harvest.kilograms.toLocaleString('es-ES')} kg</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{new Date(harvest.date).toLocaleDateString('es-ES')}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
