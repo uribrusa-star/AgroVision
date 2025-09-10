@@ -78,7 +78,7 @@ export function ProductionForm() {
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, toast]);
+  }, [state, toast, form]);
 
   const handleDelete = (logId: string) => {
     deleteCollectorPaymentLog(logId);
@@ -90,6 +90,16 @@ export function ProductionForm() {
   
   const sortedLogs = [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
+  const onSubmit = (values: ProductionFormValues) => {
+    const formData = new FormData();
+    formData.set('batchId', values.batchId);
+    formData.set('kilosPerBatch', values.kilosPerBatch.toString());
+    formData.set('farmerId', values.farmerId);
+    formData.set('ratePerKg', values.ratePerKg.toString());
+    formData.set('collectors', JSON.stringify(collectors));
+    formAction(formData);
+  }
+
   return (
     <div className="grid lg:grid-cols-2 gap-8">
       <Card>
@@ -98,18 +108,7 @@ export function ProductionForm() {
           <CardDescription>Ingrese los detalles de la cosecha y calcule el pago del recolector.</CardDescription>
         </CardHeader>
         <Form {...form}>
-          <form action={(formData) => {
-              const valid = form.trigger();
-              if(valid) {
-                const data = new FormData();
-                data.set('batchId', form.getValues('batchId'));
-                data.set('kilosPerBatch', form.getValues('kilosPerBatch').toString());
-                data.set('farmerId', form.getValues('farmerId'));
-                data.set('ratePerKg', form.getValues('ratePerKg').toString());
-                data.set('collectors', JSON.stringify(collectors));
-                formAction(data);
-              }
-          }}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
                <FormField
                   control={form.control}
