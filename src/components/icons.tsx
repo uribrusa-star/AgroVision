@@ -41,4 +41,25 @@ export function StrawberryIcon(props: SVGProps<SVGSVGElement>) {
     )
 }
 
-    
+export function NotebookPen(props: SVGProps<SVGSVGElement>) {
+    return (
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            {...props}
+        >
+          <path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/>
+          <path d="M2 13h6"/>
+          <path d="M2 18h1.4"/>
+          <path d="M2 8h4"/>
+          <path d="M17.1 2.1a2.8 2.8 0 1 1 4 4L11.5 16H8v-3.5L17.1 2.1Z"/>
+        </svg>
+    );
+}

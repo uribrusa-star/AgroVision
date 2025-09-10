@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   collection,
@@ -46,7 +46,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
-import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog } from '@/lib/types';
+import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
@@ -54,6 +54,7 @@ import { useToast } from '@/hooks/use-toast';
 const allNavItems = [
   { href: '/', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/establishment', label: 'Establecimiento', icon: Building, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
+  { href: '/producer-log', label: 'Bitácora del Productor', icon: NotebookPen, roles: ['Productor'] },
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
@@ -94,6 +95,8 @@ const useAppData = () => {
     const [batches, setBatches] = useState<Batch[]>([]);
     const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
     const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
+    const [producerLogs, setProducerLogs] = useState<ProducerLog[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
 
@@ -124,6 +127,8 @@ const useAppData = () => {
           phenologyLogsSnapshot,
           batchesSnapshot,
           collectorPaymentsSnapshot,
+          producerLogsSnapshot,
+          transactionsSnapshot,
         ] = await Promise.all([
           getDocs(collection(db, 'collectors')),
           getDocs(collection(db, 'harvests')),
@@ -131,6 +136,8 @@ const useAppData = () => {
           getDocs(collection(db, 'phenologyLogs')),
           getDocs(collection(db, 'batches')),
           getDocs(collection(db, 'collectorPaymentLogs')),
+          getDocs(collection(db, 'producerLogs')),
+          getDocs(collection(db, 'transactions')),
         ]);
         
         setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
@@ -139,6 +146,9 @@ const useAppData = () => {
         setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
         setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
         setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
+        setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
+        setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
+
 
       } catch (error) {
         console.error("Error fetching data from Firestore:", error);
@@ -287,6 +297,16 @@ const useAppData = () => {
         await fetchData();
     };
 
+    const addProducerLog = async (log: Omit<ProducerLog, 'id'>) => {
+        await addDoc(collection(db, 'producerLogs'), log);
+        await fetchData();
+    };
+
+    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+        await addDoc(collection(db, 'transactions'), transaction);
+        await fetchData();
+    };
+
     return {
         loading,
         currentUser,
@@ -299,6 +319,8 @@ const useAppData = () => {
         batches,
         collectorPaymentLogs,
         establishmentData,
+        producerLogs,
+        transactions,
         addHarvest,
         editCollector,
         deleteCollector,
@@ -314,6 +336,8 @@ const useAppData = () => {
         addCollectorPaymentLog,
         deleteCollectorPaymentLog,
         updateEstablishmentData,
+        addProducerLog,
+        addTransaction,
         isClient
     };
 };

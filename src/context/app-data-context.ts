@@ -1,6 +1,6 @@
 
 import React from 'react';
-import type { AppData } from '@/lib/types';
+import type { AppData, ProducerLog, Transaction } from '@/lib/types';
 import { users } from '@/lib/data';
 
 const defaultUser = users.find(u => u.role === 'Productor')!;
@@ -17,6 +17,8 @@ export const AppDataContext = React.createContext<AppData>({
   batches: [],
   collectorPaymentLogs: [],
   establishmentData: null,
+  producerLogs: [],
+  transactions: [],
   addHarvest: async () => {},
   editCollector: async () => {},
   deleteCollector: async () => {},
@@ -32,8 +34,9 @@ export const AppDataContext = React.createContext<AppData>({
   addCollectorPaymentLog: async () => {},
   deleteCollectorPaymentLog: async () => {},
   updateEstablishmentData: async () => {},
+  addProducerLog: async () => {},
+  addTransaction: async () => {},
   isClient: false,
 });
 
 export const AppContextProvider = AppDataContext.Provider;
-

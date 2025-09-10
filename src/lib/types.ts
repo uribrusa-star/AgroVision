@@ -138,6 +138,21 @@ export type EstablishmentData = {
   };
 };
 
+export type ProducerLog = {
+    id: string;
+    date: string;
+    notes: string;
+}
+
+export type Transaction = {
+    id: string;
+    date: string;
+    type: 'Ingreso' | 'Gasto';
+    category: string;
+    description: string;
+    amount: number;
+}
+
 
 export type AppData = {
   loading: boolean;
@@ -151,6 +166,8 @@ export type AppData = {
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
   establishmentData: EstablishmentData | null;
+  producerLogs: ProducerLog[];
+  transactions: Transaction[];
   addHarvest: (harvest: Omit<Harvest, 'id'>) => Promise<string | undefined>;
   editCollector: (collector: Collector) => Promise<void>;
   deleteCollector: (collectorId: string) => Promise<void>;
@@ -166,5 +183,7 @@ export type AppData = {
   addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
   deleteCollectorPaymentLog: (logId: string) => Promise<void>;
   updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
+  addProducerLog: (log: Omit<ProducerLog, 'id'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   isClient: boolean;
 };
