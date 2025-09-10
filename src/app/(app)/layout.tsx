@@ -5,7 +5,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut } from 'lucide-react';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, ReactNode } from 'react';
 import {
   collection,
   getDocs,
@@ -46,7 +46,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -62,291 +62,9 @@ const allNavItems = [
   { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
 ];
 
-const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
-  const [state, setState] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return initialValue;
-    }
-  });
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(key, JSON.stringify(state));
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
-    }
-  }, [key, state]);
-
-  return [state, setState];
-};
-
-const useAppData = () => {
-    const { toast } = useToast();
-    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser', null);
-    const [harvests, setHarvests] = useState<Harvest[]>([]);
-    const [collectors, setCollectors] = useState<Collector[]>([]);
-    const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
-    const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
-    const [batches, setBatches] = useState<Batch[]>([]);
-    const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
-    const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
-    const [producerLogs, setProducerLogs] = useState<ProducerLog[]>([]);
-    const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isClient, setIsClient] = useState(false);
-
-    useEffect(() => {
-      setIsClient(true);
-    }, []);
-
-    const fetchData = useCallback(async () => {
-      setLoading(true);
-      try {
-        const establishmentDocRef = doc(db, 'establishment', 'main');
-        const establishmentDocSnap = await getDoc(establishmentDocRef);
-
-        let estData;
-        if (establishmentDocSnap.exists()) {
-          estData = { id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData;
-        } else {
-          await setDoc(establishmentDocRef, initialEstablishmentData);
-          estData = { id: 'main', ...initialEstablishmentData } as EstablishmentData;
-        }
-        setEstablishmentData(estData);
-        
-        const [
-          collectorsSnapshot,
-          harvestsSnapshot,
-          agronomistLogsSnapshot,
-          phenologyLogsSnapshot,
-          batchesSnapshot,
-          collectorPaymentsSnapshot,
-          producerLogsSnapshot,
-          transactionsSnapshot,
-        ] = await Promise.all([
-          getDocs(collection(db, 'collectors')),
-          getDocs(collection(db, 'harvests')),
-          getDocs(collection(db, 'agronomistLogs')),
-          getDocs(collection(db, 'phenologyLogs')),
-          getDocs(collection(db, 'batches')),
-          getDocs(collection(db, 'collectorPaymentLogs')),
-          getDocs(collection(db, 'producerLogs')),
-          getDocs(collection(db, 'transactions')),
-        ]);
-        
-        setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
-        setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
-        setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
-        setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
-        setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
-        setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
-        setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
-        setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
-
-
-      } catch (error) {
-        console.error("Error fetching data from Firestore:", error);
-        toast({
-          title: "Error de Conexión",
-          description: "No se pudieron cargar los datos. Asegúrese de que Firestore esté configurado y con las reglas de seguridad correctas.",
-          variant: "destructive",
-        })
-      } finally {
-        setLoading(false);
-      }
-    }, [toast]);
-    
-    useEffect(() => {
-        if(isClient) {
-            fetchData();
-        }
-    }, [isClient, fetchData]);
-
-    const addHarvest = async (harvest: Omit<Harvest, 'id'>) => {
-        const newHarvestRef = await addDoc(collection(db, 'harvests'), harvest);
-        const collectorRef = doc(db, 'collectors', harvest.collector.id);
-        
-        const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
-        if (!collectorDoc) {
-          console.error("Collector not found in state");
-          return;
-        }
-
-        const newTotalHarvested = collectorDoc.totalHarvested + harvest.kilograms;
-        const newHoursWorked = collectorDoc.hoursWorked + 4; // Assuming 4 hours
-        
-        const batch = writeBatch(db);
-        batch.update(collectorRef, {
-            totalHarvested: newTotalHarvested,
-            hoursWorked: newHoursWorked,
-            productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-        });
-
-        await batch.commit();
-        await fetchData();
-        return newHarvestRef.id;
-    };
-
-    const editCollector = async (updatedCollector: Collector) => {
-        const collectorRef = doc(db, 'collectors', updatedCollector.id);
-        const { id, ...data } = updatedCollector;
-        await setDoc(collectorRef, data, { merge: true });
-        await fetchData();
-    };
-
-    const deleteCollector = async (collectorId: string) => {
-        const batch = writeBatch(db);
-
-        const collectorRef = doc(db, 'collectors', collectorId);
-        batch.delete(collectorRef);
-
-        const harvestsToDeleteQuery = query(collection(db, 'harvests'), where('collector.id', '==', collectorId));
-        const harvestsToDeleteSnapshot = await getDocs(harvestsToDeleteQuery);
-        harvestsToDeleteSnapshot.forEach(doc => batch.delete(doc.ref));
-
-        const paymentsToDeleteQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', collectorId));
-        const paymentsToDeleteSnapshot = await getDocs(paymentsToDeleteQuery);
-        paymentsToDeleteSnapshot.forEach(doc => batch.delete(doc.ref));
-
-        await batch.commit();
-        await fetchData();
-    };
-
-    const addCollector = async (collector: Omit<Collector, 'id'>) => {
-        await addDoc(collection(db, 'collectors'), collector);
-        await fetchData();
-    };
-
-    const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
-        await addDoc(collection(db, 'agronomistLogs'), log);
-        await fetchData();
-    };
-
-    const editAgronomistLog = async (updatedLog: AgronomistLog) => {
-        const logRef = doc(db, 'agronomistLogs', updatedLog.id);
-        const { id, ...data } = updatedLog;
-        await setDoc(logRef, data, { merge: true });
-        await fetchData();
-    };
-
-    const deleteAgronomistLog = async (logId: string) => {
-        await deleteDoc(doc(db, 'agronomistLogs', logId));
-        await fetchData();
-    };
-
-    const addPhenologyLog = async (log: Omit<PhenologyLog, 'id'>) => {
-        await addDoc(collection(db, 'phenologyLogs'), log);
-        await fetchData();
-    };
-
-    const editPhenologyLog = async (updatedLog: PhenologyLog) => {
-        const logRef = doc(db, 'phenologyLogs', updatedLog.id);
-        const { id, ...data } = updatedLog;
-        await setDoc(logRef, data, { merge: true });
-        await fetchData();
-    };
-
-    const deletePhenologyLog = async (logId: string) => {
-        await deleteDoc(doc(db, 'phenologyLogs', logId));
-        await fetchData();
-    };
-
-    const addBatch = async (batchData: Omit<Batch, 'id'>) => {
-        const newBatchRef = doc(db, 'batches', batchData.id);
-        await setDoc(newBatchRef, batchData);
-        await fetchData();
-    };
-
-
-    const deleteBatch = async (batchId: string) => {
-        await deleteDoc(doc(db, 'batches', batchId));
-        await fetchData();
-    };
-
-    const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
-        await addDoc(collection(db, 'collectorPaymentLogs'), log);
-        await fetchData();
-    };
-
-    const deleteCollectorPaymentLog = async (logId: string) => {
-      const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
-      if (!logToDelete) return;
-  
-      const batch = writeBatch(db);
-      
-      const paymentLogRef = doc(db, 'collectorPaymentLogs', logId);
-      batch.delete(paymentLogRef);
-      
-      const harvestRef = doc(db, 'harvests', logToDelete.harvestId);
-      batch.delete(harvestRef);
-      
-      await batch.commit();
-      await fetchData();
-    };
-
-    const updateEstablishmentData = async (data: Partial<EstablishmentData>) => {
-        const { id, ...updateData } = data;
-        const establishmentRef = doc(db, 'establishment', 'main');
-        await setDoc(establishmentRef, updateData, { merge: true });
-        await fetchData();
-    };
-
-    const addProducerLog = async (log: Omit<ProducerLog, 'id'>) => {
-        await addDoc(collection(db, 'producerLogs'), log);
-        await fetchData();
-    };
-
-    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-        await addDoc(collection(db, 'transactions'), transaction);
-        await fetchData();
-    };
-
-    return {
-        loading,
-        currentUser,
-        users: availableUsers,
-        setCurrentUser,
-        harvests,
-        collectors,
-        agronomistLogs,
-        phenologyLogs,
-        batches,
-        collectorPaymentLogs,
-        establishmentData,
-        producerLogs,
-        transactions,
-        addHarvest,
-        editCollector,
-        deleteCollector,
-        addAgronomistLog,
-        editAgronomistLog,
-        deleteAgronomistLog,
-        addPhenologyLog,
-        editPhenologyLog,
-        deletePhenologyLog,
-        addCollector,
-        addBatch,
-        deleteBatch,
-        addCollectorPaymentLog,
-        deleteCollectorPaymentLog,
-        updateEstablishmentData,
-        addProducerLog,
-        addTransaction,
-        isClient
-    };
-};
-
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const appData = useAppData();
-  const { currentUser, setCurrentUser, isClient, loading } = appData;
+  const { currentUser, isClient, loading } = React.useContext(AppDataContext);
   const router = useRouter();
 
   useEffect(() => {
@@ -365,16 +83,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
     );
   }
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    router.push('/');
-  }
-
+  
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
 
   return (
-    <AppContextProvider value={appData}>
       <SidebarProvider>
         <div className="flex min-h-screen">
           <Sidebar collapsible='offcanvas'>
@@ -405,48 +117,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </SidebarContent>
             <SidebarFooter className="p-4">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
-                        <Avatar className="h-8 w-8">
-                            <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
-                            <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="text-left">
-                            <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
-                            <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-                        </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" align="start" className="w-56">
-                    <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuRadioGroup
-                      value={currentUser.id}
-                      onValueChange={(userId) => {
-                          const user = availableUsers.find(u => u.id === userId);
-                          if (user) {
-                              setCurrentUser(user);
-                          }
-                      }}
-                    >
-                      {availableUsers.map(user => (
-                          <DropdownMenuRadioItem key={user.id} value={user.id} className="gap-2">
-                              <Avatar className="h-6 w-6">
-                                  <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/40/40`} alt={user.name} />
-                                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                            <span>{user.name}</span>
-                          </DropdownMenuRadioItem>
-                      ))}
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Cerrar Sesión</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <UserMenu />
             </SidebarFooter>
           </Sidebar>
           <div className="flex-1 flex flex-col">
@@ -473,6 +144,63 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </SidebarProvider>
-    </AppContextProvider>
   );
+}
+
+
+function UserMenu() {
+  const { currentUser, setCurrentUser } = React.useContext(AppDataContext);
+  const router = useRouter();
+  
+  if(!currentUser) return null;
+  
+  const handleLogout = () => {
+    setCurrentUser(null);
+    router.push('/');
+  }
+  
+  return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
+              <Avatar className="h-8 w-8">
+                  <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
+                  <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div className="text-left">
+                  <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+                  <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+              </div>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" className="w-56">
+          <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuRadioGroup
+            value={currentUser.id}
+            onValueChange={(userId) => {
+                const user = availableUsers.find(u => u.id === userId);
+                if (user) {
+                    setCurrentUser(user);
+                }
+            }}
+          >
+            {availableUsers.map(user => (
+                <DropdownMenuRadioItem key={user.id} value={user.id} className="gap-2">
+                    <Avatar className="h-6 w-6">
+                        <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/40/40`} alt={user.name} />
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  <span>{user.name}</span>
+                </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Cerrar Sesión</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+  )
 }

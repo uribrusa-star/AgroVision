@@ -17,7 +17,7 @@ export function ProductionPaymentHistory() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
 
-  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
+  const canManage = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
 
   const handleDelete = (logId: string) => {
     startTransition(async () => {
@@ -55,14 +55,14 @@ export function ProductionPaymentHistory() {
               <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 3 : 2}>
+                    <TableCell colSpan={canManage ? 4 : 3}>
                         <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!loading && sortedLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 3 : 2} className="text-center">No hay registros de producción.</TableCell>
+                    <TableCell colSpan={canManage ? 4 : 3} className="text-center">No hay registros de producción.</TableCell>
                   </TableRow>
                 )}
                 {!loading && sortedLogs.map(log => {

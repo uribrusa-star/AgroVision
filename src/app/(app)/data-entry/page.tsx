@@ -11,7 +11,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
 export default function DataEntryPage() {
   const { currentUser } = React.useContext(AppDataContext);
-  const canManageBatches = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
+  const canManageBatches = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
 
   return (
     <>

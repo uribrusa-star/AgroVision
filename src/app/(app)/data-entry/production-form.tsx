@@ -32,7 +32,7 @@ export function ProductionForm() {
   const [isPending, startTransition] = useTransition();
   const [validationAlert, setValidationAlert] = useState<{ open: boolean; reason: string; data: ProductionFormValues | null }>({ open: false, reason: '', data: null });
   
-  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
+  const canManage = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
 
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),
