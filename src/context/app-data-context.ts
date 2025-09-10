@@ -16,6 +16,7 @@ export const AppDataContext = React.createContext<AppData>({
   deleteAgronomistLog: () => {},
   addCollector: () => {},
   addBatch: () => {},
+  deleteBatch: () => {},
   addCollectorPaymentLog: () => {},
 });
 

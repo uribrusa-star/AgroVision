@@ -128,6 +128,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const addBatch = (batch: Batch) => {
     setBatches(prevBatches => [batch, ...prevBatches]);
   };
+  
+  const deleteBatch = (batchId: string) => {
+    setBatches(prevBatches => prevBatches.filter(b => b.id !== batchId));
+  }
 
   const addCollectorPaymentLog = (log: CollectorPaymentLog) => {
     setCollectorPaymentLogs(prevLogs => [log, ...prevLogs]);
@@ -147,6 +151,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     deleteAgronomistLog,
     addCollector,
     addBatch,
+    deleteBatch,
     addCollectorPaymentLog,
   };
 

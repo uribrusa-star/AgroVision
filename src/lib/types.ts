@@ -73,5 +73,6 @@ export type AppData = {
   deleteAgronomistLog: (logId: string) => void;
   addCollector: (collector: Collector) => void;
   addBatch: (batch: Batch) => void;
+  deleteBatch: (batchId: string) => void;
   addCollectorPaymentLog: (log: CollectorPaymentLog) => void;
 };

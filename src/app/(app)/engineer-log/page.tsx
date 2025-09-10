@@ -6,14 +6,14 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon, MoreHorizontal, PackageCheck, Package, CalendarClock } from 'lucide-react';
+import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon, MoreHorizontal, PackageCheck, Package, CalendarClock, Trash2 } from 'lucide-react';
 import { engineerLogStats } from '@/lib/data';
 import { handleSummarizeHarvest } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AppDataContext } from '@/context/app-data-context';
 import { ApplicationLogForm } from './application-log-form';
-import type { AgronomistLog, Batch } from '@/lib/types';
+import type { AgronomistLog, Batch, Harvest } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -28,6 +28,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BatchLogForm } from './batch-log-form';
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
 const initialState = {
@@ -323,12 +325,21 @@ function ApplicationHistory() {
 }
 
 function BatchHistory() {
-  const { batches } = useContext(AppDataContext);
+  const { batches, deleteBatch } = useContext(AppDataContext);
+  const { toast } = useToast();
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  const handleDelete = (batchId: string) => {
+    deleteBatch(batchId);
+    toast({
+      title: "Lote Eliminado",
+      description: `El lote ${batchId} ha sido eliminado exitosamente.`,
+    });
+  };
 
   const sortedBatches = [...batches].sort((a, b) => new Date(b.preloadedDate).getTime() - new Date(a.preloadedDate).getTime());
 
@@ -345,7 +356,7 @@ function BatchHistory() {
                     <TableHead>ID Lote</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Fecha Precarga</TableHead>
-                    <TableHead>Fecha Completado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -370,7 +381,28 @@ function BatchHistory() {
                             </Badge>
                           </TableCell>
                           <TableCell>{new Date(batch.preloadedDate).toLocaleDateString('es-ES')}</TableCell>
-                          <TableCell>{batch.completionDate ? new Date(batch.completionDate).toLocaleDateString('es-ES') : '-'}</TableCell>
+                          <TableCell className="text-right">
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                   <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Eliminar Lote</span>
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el lote. Si este lote ya fue cosechado, los registros de cosecha asociados no serán eliminados pero quedarán sin un lote válido.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(batch.id)}>Continuar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                          </TableCell>
                       </TableRow>
                   ))}
                 </TableBody>
@@ -379,6 +411,79 @@ function BatchHistory() {
     </Card>
   )
 }
+
+const chartConfig = {
+  kilograms: {
+    label: "Kilogramos",
+    color: "hsl(var(--chart-1))",
+  },
+};
+
+function BatchYieldChart() {
+  const { harvests, batches } = useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const completedBatches = batches.filter(b => b.status === 'completed')
+    .sort((a, b) => new Date(b.completionDate!).getTime() - new Date(a.completionDate!).getTime())
+    .slice(0, 10);
+
+  const chartData = completedBatches.map(batch => {
+    const batchHarvests = harvests.filter(h => h.batchNumber === batch.id);
+    const totalKilos = batchHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+    return {
+      batch: batch.id,
+      kilograms: totalKilos,
+    };
+  }).reverse(); // reverse to show chronologically
+
+  if (!isClient) {
+    return <Skeleton className="h-[400px] w-full" />;
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Rendimiento por Lote</CardTitle>
+        <CardDescription>Kilogramos cosechados de los últimos 10 lotes completados.</CardDescription>
+      </CardHeader>
+      <CardContent>
+         {chartData.length > 0 ? (
+           <ChartContainer config={chartConfig} className="h-[300px] w-full">
+            <BarChart data={chartData} accessibilityLayer>
+              <CartesianGrid vertical={false} />
+              <XAxis
+                dataKey="batch"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                tickFormatter={(value) => `${value} kg`}
+              />
+              <ChartTooltip
+                cursor={false}
+                content={<ChartTooltipContent indicator="dot" />}
+              />
+              <Bar dataKey="kilograms" fill="var(--color-kilograms)" radius={4} />
+            </BarChart>
+          </ChartContainer>
+         ) : (
+          <div className="flex h-[300px] w-full items-center justify-center">
+            <p className="text-muted-foreground">No hay datos de lotes completados para mostrar.</p>
+          </div>
+         )}
+      </CardContent>
+    </Card>
+  )
+}
+
 
 export default function EngineerLogPage() {
   const { collectors, harvests } = useContext(AppDataContext);
@@ -464,9 +569,17 @@ export default function EngineerLogPage() {
           </div>
         </TabsContent>
       </Tabs>
+      
+      <div className="grid gap-8 lg:grid-cols-3 mb-8">
+        <div className="lg:col-span-2">
+           <BatchYieldChart />
+        </div>
+        <div>
+           <HarvestSummary />
+        </div>
+      </div>
 
-
-      <div className="grid gap-8 lg:grid-cols-3">
+      <div className="grid gap-8">
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
@@ -496,9 +609,6 @@ export default function EngineerLogPage() {
                     </Table>
                 </CardContent>
             </Card>
-        </div>
-        <div>
-          <HarvestSummary />
         </div>
       </div>
     </>
