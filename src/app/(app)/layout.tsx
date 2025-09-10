@@ -46,7 +46,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -174,27 +174,7 @@ function UserMenu() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="w-56">
-          <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup
-            value={currentUser.id}
-            onValueChange={(userId) => {
-                const user = availableUsers.find(u => u.id === userId);
-                if (user) {
-                    setCurrentUser(user);
-                }
-            }}
-          >
-            {availableUsers.map(user => (
-                <DropdownMenuRadioItem key={user.id} value={user.id} className="gap-2">
-                    <Avatar className="h-6 w-6">
-                        <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/40/40`} alt={user.name} />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  <span>{user.name}</span>
-                </DropdownMenuRadioItem>
-            ))}
-          </DropdownMenuRadioGroup>
+          <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
