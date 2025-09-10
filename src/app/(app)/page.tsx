@@ -66,7 +66,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{isClient ? dashboardStats.totalHarvest.toLocaleString('es-ES', { maximumFractionDigits: 0 }) : 'Cargando...'} kg</div>
-            <p className="text-xs text-muted-foreground">+15.2% desde el mes pasado</p>
+            <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>
         <Card>
@@ -76,7 +76,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{isClient ? dashboardStats.averageYield.toLocaleString('es-ES', { maximumFractionDigits: 1 }) : 'Cargando...'} kg/lote</div>
-            <p className="text-xs text-muted-foreground">+2.1% desde el mes pasado</p>
+            <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>
         <Card>
