@@ -153,12 +153,11 @@ export function HarvestSummary() {
         
         let yPos = 40;
         const addSection = (title: string, content: string) => {
-            doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
             doc.setTextColor(40);
 
             if (yPos + 18 > pageHeight - 25) { // Check space for title
-                addPageFooter(doc);
                 doc.addPage();
                 addPageHeader(doc, logoPngDataUri);
                 yPos = 40;
@@ -166,14 +165,13 @@ export function HarvestSummary() {
             doc.text(title, 15, yPos);
             yPos += 8;
             
-            doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10); // Ensure body text size is correct
             doc.setTextColor(80);
             
             const splitContent = doc.splitTextToSize(content, pageWidth - 30);
             splitContent.forEach((line: string) => {
                 if (yPos + 5 > pageHeight - 25) { // Check space for each line
-                    addPageFooter(doc);
                     doc.addPage();
                     addPageHeader(doc, logoPngDataUri);
                     yPos = 40;
@@ -187,7 +185,6 @@ export function HarvestSummary() {
         const addTable = (title: string, head: any, body: any) => {
             const tableHeight = (body.length + 1) * 10 + 15; // Simple height estimation
             if (yPos + tableHeight > pageHeight - 20) {
-                 addPageFooter(doc);
                  doc.addPage();
                  addPageHeader(doc, logoPngDataUri);
                  yPos = 40;
@@ -214,7 +211,6 @@ export function HarvestSummary() {
              if (!monthlyChartRef.current || !costChartRef.current) return;
 
              if (yPos > pageHeight - 110) { // Need space for charts
-                addPageFooter(doc);
                 doc.addPage();
                 addPageHeader(doc, logoPngDataUri);
                 yPos = 40;
@@ -270,7 +266,6 @@ export function HarvestSummary() {
         );
         
         if (yPos + 50 > pageHeight - 25) { // Check space for next table
-            addPageFooter(doc);
             doc.addPage();
             addPageHeader(doc, logoPngDataUri);
             yPos = 40;
