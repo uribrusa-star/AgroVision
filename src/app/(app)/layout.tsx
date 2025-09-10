@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   collection,
@@ -60,7 +60,6 @@ const allNavItems = [
 
 const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
   const [state, setState] = useState<T>(() => {
-    // This function now only runs on the client
     if (typeof window === 'undefined') {
       return initialValue;
     }
@@ -74,7 +73,6 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
   });
 
   useEffect(() => {
-    // This effect also only runs on the client
     try {
       window.localStorage.setItem(key, JSON.stringify(state));
     } catch (error) {
@@ -155,8 +153,6 @@ const useAppData = () => {
         const newHoursWorked = collectorDoc.hoursWorked + 4; // Assuming 4 hours
         
         const batch = writeBatch(db);
-        // We need to pass the newly created ID to the payment log.
-        // We'll do this outside this function for now to keep it simple.
         batch.update(collectorRef, {
             totalHarvested: newTotalHarvested,
             hoursWorked: newHoursWorked,
@@ -164,7 +160,7 @@ const useAppData = () => {
         });
 
         await batch.commit();
-        await fetchData(); // Refetch all data to keep client state in sync
+        await fetchData();
         return newHarvestRef.id;
     };
 
@@ -295,7 +291,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AppContextProvider value={appData}>
       <SidebarProvider>
         <div className="flex min-h-screen">
-          <Sidebar collapsible="none">
+          <Sidebar>
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
                 <Link href="/" className="flex items-center gap-2">
@@ -367,7 +363,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1 flex flex-col">
             <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
                 <SidebarTrigger>
-                  <MenuIcon className="h-6 w-6" />
+                  <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle Menu</span>
                 </SidebarTrigger>
                 <div className="flex items-center gap-2">
@@ -389,26 +385,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </div>
       </SidebarProvider>
     </AppContextProvider>
-  );
-}
-
-function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <line x1="4" x2="20" y1="12" y2="12" />
-      <line x1="4" x2="20" y1="6" y2="6" />
-      <line x1="4" x2="20" y1="18" y2="18" />
-    </svg>
   );
 }
