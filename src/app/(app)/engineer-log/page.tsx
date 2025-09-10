@@ -6,14 +6,14 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon, MoreHorizontal } from 'lucide-react';
+import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon, MoreHorizontal, PackageCheck, Package, CalendarClock } from 'lucide-react';
 import { engineerLogStats } from '@/lib/data';
 import { handleSummarizeHarvest } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AppDataContext } from '@/context/app-data-context';
 import { ApplicationLogForm } from './application-log-form';
-import type { AgronomistLog } from '@/lib/types';
+import type { AgronomistLog, Batch } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -26,6 +26,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BatchLogForm } from './batch-log-form';
+
 
 const initialState = {
   summary: '',
@@ -319,6 +322,64 @@ function ApplicationHistory() {
   )
 }
 
+function BatchHistory() {
+  const { batches } = useContext(AppDataContext);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  const sortedBatches = [...batches].sort((a, b) => new Date(b.preloadedDate).getTime() - new Date(a.preloadedDate).getTime());
+
+  return (
+    <Card>
+        <CardHeader>
+            <CardTitle>Historial de Lotes</CardTitle>
+            <CardDescription>Registro de todos los lotes pre-cargados para la cosecha.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                <TableRow>
+                    <TableHead>ID Lote</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha Precarga</TableHead>
+                    <TableHead>Fecha Completado</TableHead>
+                </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {!isClient && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="h-24 text-center">
+                        Cargando lotes...
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {isClient && sortedBatches.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center">No hay lotes registrados.</TableCell>
+                    </TableRow>
+                  )}
+                  {isClient && sortedBatches.map((batch) => (
+                      <TableRow key={batch.id}>
+                          <TableCell className="font-medium">{batch.id}</TableCell>
+                          <TableCell>
+                            <Badge variant={batch.status === 'completed' ? 'default' : 'secondary'}>
+                              {batch.status === 'completed' ? 'Completado' : 'Pendiente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{new Date(batch.preloadedDate).toLocaleDateString('es-ES')}</TableCell>
+                          <TableCell>{batch.completionDate ? new Date(batch.completionDate).toLocaleDateString('es-ES') : '-'}</TableCell>
+                      </TableRow>
+                  ))}
+                </TableBody>
+            </Table>
+        </CardContent>
+    </Card>
+  )
+}
+
 export default function EngineerLogPage() {
   const { collectors, harvests } = useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
@@ -333,7 +394,7 @@ export default function EngineerLogPage() {
     <>
       <PageHeader
         title="Bitácora del Agrónomo"
-        description="Validación cruzada avanzada y visión general de la producción."
+        description="Gestión de aplicaciones, lotes y visión general de la producción."
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -379,10 +440,31 @@ export default function EngineerLogPage() {
         </Card>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2 mb-8">
-        <ApplicationLogForm />
-        <ApplicationHistory />
-      </div>
+       <Tabs defaultValue="applications" className="mb-8">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="applications">
+            <Sprout className="mr-2" />
+            Gestión de Aplicaciones
+          </TabsTrigger>
+          <TabsTrigger value="batches">
+            <Package className="mr-2" />
+            Gestión de Lotes
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="applications">
+          <div className="grid gap-8 lg:grid-cols-2 mt-4">
+            <ApplicationLogForm />
+            <ApplicationHistory />
+          </div>
+        </TabsContent>
+        <TabsContent value="batches">
+           <div className="grid gap-8 lg:grid-cols-2 mt-4">
+            <BatchLogForm />
+            <BatchHistory />
+          </div>
+        </TabsContent>
+      </Tabs>
+
 
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -402,12 +484,12 @@ export default function EngineerLogPage() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {collectors.map((collector) => (
+                        {isClient && collectors.map((collector) => (
                             <TableRow key={collector.id}>
                             <TableCell className="font-medium">{collector.name}</TableCell>
-                            <TableCell className="text-right">{isClient ? collector.totalHarvested.toLocaleString('es-ES') : '...'}</TableCell>
-                            <TableCell className="text-right">{isClient ? collector.hoursWorked.toLocaleString('es-ES') : '...'}</TableCell>
-                            <TableCell className="text-right font-bold">{isClient ? collector.productivity.toFixed(2) : '...'}</TableCell>
+                            <TableCell className="text-right">{collector.totalHarvested.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right">{collector.hoursWorked.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                         </TableBody>

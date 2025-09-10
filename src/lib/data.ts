@@ -1,4 +1,4 @@
-import type { Collector, Harvest, MonthlyData, EngineerLogStats, AgronomistLog } from './types';
+import type { Collector, Harvest, MonthlyData, EngineerLogStats, AgronomistLog, Batch } from './types';
 
 export const collectors: Collector[] = [
   { id: '1', name: 'Ana García', avatar: '1', totalHarvested: 1250, hoursWorked: 160, productivity: 7.8, joinDate: '2023-01-15' },
@@ -22,6 +22,18 @@ export const agronomistLogs: AgronomistLog[] = [
     { id: 'LOG002', date: '2024-07-19', type: 'Fumigación', product: 'Abamectina', notes: 'Control de araña roja, se observa baja incidencia.', imageUrl: 'https://picsum.photos/seed/pest/400/300', imageHint: 'strawberry pest' },
     { id: 'LOG003', date: '2024-07-18', type: 'Control', notes: 'Monitoreo de trampas de esporas. Sin presencia de Botrytis.' },
 ]
+
+export const batches: Batch[] = [
+    { id: 'L014', preloadedDate: '2024-07-23', status: 'pending' },
+    { id: 'L015', preloadedDate: '2024-07-23', status: 'pending' },
+    { id: 'L016', preloadedDate: '2024-07-23', status: 'pending' },
+    { id: 'L012', preloadedDate: '2024-07-21', status: 'completed', completionDate: '2024-07-22' },
+    { id: 'L013', preloadedDate: '2024-07-21', status: 'completed', completionDate: '2024-07-22' },
+    { id: 'L010', preloadedDate: '2024-07-20', status: 'completed', completionDate: '2024-07-21' },
+    { id: 'L011', preloadedDate: '2024-07-20', status: 'completed', completionDate: '2024-07-21' },
+    { id: 'L009', preloadedDate: '2024-07-19', status: 'completed', completionDate: '2024-07-20' },
+    { id: 'L008', preloadedDate: '2024-07-19', status: 'completed', completionDate: '2024-07-20' },
+];
 
 export const monthlyData: MonthlyData[] = [
   { month: 'Ene', total: 1200 },

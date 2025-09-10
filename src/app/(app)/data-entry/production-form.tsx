@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useContext } from 'react';
+import { useActionState, useEffect, useContext, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,12 +10,12 @@ import { handleProductionUpload } from './actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription as FormDescriptionComponent } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
 
 const ProductionSchema = z.object({
-  batchId: z.string().regex(/^L\d{3}$/, "El ID del lote debe tener el formato L000 (ej., L014)."),
+  batchId: z.string().min(1, "El ID del lote es requerido."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
   farmerId: z.string().min(1, "El agricultor es requerido."),
 });
@@ -31,7 +31,7 @@ const initialState = {
 export function ProductionForm() {
   const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
-  const { collectors, addHarvest } = useContext(AppDataContext);
+  const { collectors, batches, addHarvest } = useContext(AppDataContext);
 
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),
@@ -41,6 +41,8 @@ export function ProductionForm() {
       farmerId: '',
     },
   });
+  
+  const availableBatches = useMemo(() => batches.filter(b => b.status === 'pending'), [batches]);
 
   useEffect(() => {
     if (state.message) {
@@ -49,11 +51,9 @@ export function ProductionForm() {
         description: state.message,
         variant: state.success ? 'default' : 'destructive',
       });
-      if (state.success) {
-        if(state.newHarvest) {
+      if (state.success && state.newHarvest) {
           addHarvest(state.newHarvest);
-        }
-        form.reset();
+          form.reset();
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -85,12 +85,22 @@ export function ProductionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>ID del Lote</FormLabel>
-                    <FormControl>
-                      <Input placeholder="ej., L014" {...field} />
-                    </FormControl>
-                    <FormDescriptionComponent>
-                      El formato debe ser 'L' seguido de 3 números.
-                    </FormDescriptionComponent>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Seleccione un lote" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableBatches.length > 0 ? (
+                            availableBatches.map(b => (
+                              <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="none" disabled>No hay lotes pendientes</SelectItem>
+                          )}
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

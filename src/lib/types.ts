@@ -19,6 +19,13 @@ export type Harvest = {
   };
 };
 
+export type Batch = {
+  id: string;
+  preloadedDate: string;
+  status: 'pending' | 'completed';
+  completionDate?: string;
+}
+
 export type MonthlyData = {
   month: string;
   total: number;
@@ -45,6 +52,7 @@ export type AppData = {
   harvests: Harvest[];
   collectors: Collector[];
   agronomistLogs: AgronomistLog[];
+  batches: Batch[];
   addHarvest: (harvest: Harvest) => void;
   editCollector: (collector: Collector) => void;
   deleteCollector: (collectorId: string) => void;
@@ -52,4 +60,5 @@ export type AppData = {
   editAgronomistLog: (log: AgronomistLog) => void;
   deleteAgronomistLog: (logId: string) => void;
   addCollector: (collector: Collector) => void;
+  addBatch: (batch: Batch) => void;
 };

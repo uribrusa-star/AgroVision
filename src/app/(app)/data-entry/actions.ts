@@ -5,7 +5,7 @@ import { z } from 'zod';
 import type { Collector, Harvest } from '@/lib/types';
 
 const ProductionSchema = z.object({
-  batchId: z.string().regex(/^L\d{3}$/, 'El ID del lote debe tener el formato L000 (ej., L014).'),
+  batchId: z.string().min(1, 'El ID del lote es requerido.'),
   kilosPerBatch: z.coerce.number().min(0.1, 'Los kilos deben ser un número positivo'),
   farmerId: z.string().min(1, 'El agricultor es requerido'),
   collectors: z.string().min(1, 'La lista de recolectores es requerida'),
@@ -57,7 +57,7 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
   } catch (error) {
     console.error(error);
     return {
-      message: 'Ocurrió un error inesperado durante la validación de IA.',
+      message: 'Ocurrió un error inesperado.',
       success: false,
     };
   }

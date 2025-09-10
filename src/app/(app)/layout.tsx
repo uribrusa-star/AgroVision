@@ -29,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs } from '@/lib/data';
-import type { Harvest, AppData, Collector, AgronomistLog } from '@/lib/types';
+import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches } from '@/lib/data';
+import type { Harvest, AppData, Collector, AgronomistLog, Batch } from '@/lib/types';
 
 
 const navItems = [
@@ -72,6 +72,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [harvests, setHarvests] = usePersistentState<Harvest[]>('harvests', initialHarvests);
   const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
   const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
+  const [batches, setBatches] = usePersistentState<Batch[]>('batches', initialBatches);
 
 
   const addHarvest = (harvest: Harvest) => {
@@ -90,6 +91,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       }
       return c;
     }));
+    setBatches(prevBatches => prevBatches.map(b => 
+      b.id === harvest.batchNumber 
+        ? { ...b, status: 'completed', completionDate: new Date().toISOString() } 
+        : b
+    ));
   };
 
   const editCollector = (updatedCollector: Collector) => {
@@ -118,10 +124,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setCollectors(prevCollectors => [collector, ...prevCollectors]);
   };
 
+  const addBatch = (batch: Batch) => {
+    setBatches(prevBatches => [batch, ...prevBatches]);
+  };
+
   const appData: AppData = {
     harvests,
     collectors,
     agronomistLogs,
+    batches,
     addHarvest,
     editCollector,
     deleteCollector,
@@ -129,6 +140,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     editAgronomistLog,
     deleteAgronomistLog,
     addCollector,
+    addBatch,
   };
 
   return (
