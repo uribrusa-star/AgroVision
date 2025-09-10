@@ -6,7 +6,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useToast } from '@/hooks/use-toast';
-import { handleProductionUpload } from './actions';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +47,10 @@ export function ProductionForm() {
     disabled: !canManage || isPending,
   });
   
-  const availableBatches = useMemo(() => batches.filter(b => b.status === 'pending'), [batches]);
+  const availableBatches = useMemo(() => {
+    const harvestedBatchIds = new Set(harvests.map(h => h.batchNumber));
+    return batches.filter(b => !harvestedBatchIds.has(b.id));
+  }, [batches, harvests]);
 
   const onSubmit = (values: ProductionFormValues) => {
     startTransition(async () => {
@@ -85,7 +87,7 @@ export function ProductionForm() {
               payment: calculatedPayment,
             };
 
-            // We are not awaiting these to prevent blocking UI, context will refetch
+            // Not awaiting these is fine as the context will refetch and update UI
             addHarvest(newHarvestData);
             addCollectorPaymentLog(newPaymentLogData);
 
@@ -122,7 +124,10 @@ export function ProductionForm() {
     });
   }
   
-  const sortedLogs = [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const sortedLogs = useMemo(() => 
+    [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [collectorPaymentLogs]
+  );
 
   return (
     <div className="grid lg:grid-cols-2 gap-8">
@@ -227,6 +232,7 @@ export function ProductionForm() {
           <CardDescription>Un registro de todas las cosechas y los pagos calculados.</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="max-h-[400px] overflow-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -288,6 +294,7 @@ export function ProductionForm() {
               })}
             </TableBody>
           </Table>
+          </div>
         </CardContent>
       </Card>
     </div>

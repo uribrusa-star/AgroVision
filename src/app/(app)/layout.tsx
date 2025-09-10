@@ -1,9 +1,22 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch } from 'lucide-react';
 import React, { useEffect, useState, useCallback } from 'react';
+import {
+  collection,
+  getDocs,
+  doc,
+  setDoc,
+  deleteDoc,
+  writeBatch,
+  query,
+  where,
+  documentId,
+} from 'firebase/firestore';
+
 import {
   SidebarProvider,
   Sidebar,
@@ -33,6 +46,8 @@ import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
 import { users as availableUsers, harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const allNavItems = [
   { href: '/', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
@@ -73,85 +88,172 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
 };
 
 const useAppData = () => {
+    const { toast } = useToast();
     const [currentUser, setCurrentUser] = usePersistentState<User>('currentUser', availableUsers.find(u => u.role === 'Productor')!);
-    const [harvests, setHarvests] = usePersistentState<Harvest[]>('harvests', initialHarvests);
-    const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
-    const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
-    const [batches, setBatches] = usePersistentState<Batch[]>('batches', initialBatches);
-    const [collectorPaymentLogs, setCollectorPaymentLogs] = usePersistentState<CollectorPaymentLog[]>('collectorPaymentLogs', initialCollectorPaymentLogs);
+    const [harvests, setHarvests] = useState<Harvest[]>([]);
+    const [collectors, setCollectors] = useState<Collector[]>([]);
+    const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
+    const [batches, setBatches] = useState<Batch[]>([]);
+    const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
 
+    const fetchData = useCallback(async () => {
+      setLoading(true);
+      try {
+        const [
+          collectorsSnapshot,
+          harvestsSnapshot,
+          agronomistLogsSnapshot,
+          batchesSnapshot,
+          collectorPaymentsSnapshot,
+        ] = await Promise.all([
+          getDocs(collection(db, 'collectors')),
+          getDocs(collection(db, 'harvests')),
+          getDocs(collection(db, 'agronomistLogs')),
+          getDocs(collection(db, 'batches')),
+          getDocs(collection(db, 'collectorPaymentLogs')),
+        ]);
+        
+        setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
+        setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
+        setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
+        setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
+        setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
+
+      } catch (error) {
+        console.error("Error fetching data from Firestore:", error);
+        toast({
+          title: "Error de Conexión",
+          description: "No se pudieron cargar los datos de la base de datos. Asegúrese de que Firestore esté configurado correctamente.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false);
+      }
+    }, [toast]);
+    
     useEffect(() => {
         setIsClient(true);
-        setLoading(false);
-    }, []);
+        fetchData();
+    }, [fetchData]);
 
-  const addHarvest = async (harvest: Omit<Harvest, 'id'>) => {
-    setHarvests(prev => {
-      const newHarvest = { ...harvest, id: `H${prev.length + 1}` } as Harvest;
-      return [newHarvest, ...prev];
-    });
-    setCollectors(prev => prev.map(c => {
-        if (c.id === harvest.collector.id) {
-            const newTotalHarvested = c.totalHarvested + harvest.kilograms;
-            const newHoursWorked = c.hoursWorked + 4; // Assuming 4 hours
-            return {
-                ...c,
-                totalHarvested: newTotalHarvested,
-                hoursWorked: newHoursWorked,
-                productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-            };
+    const addHarvest = async (harvest: Omit<Harvest, 'id'>) => {
+        const tempId = `H${Date.now()}`;
+        const newHarvestRef = doc(db, 'harvests', tempId);
+        const collectorRef = doc(db, 'collectors', harvest.collector.id);
+        
+        const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
+        if (!collectorDoc) {
+          console.error("Collector not found in state");
+          return;
         }
-        return c;
-    }));
-  };
 
-  const editCollector = async (updatedCollector: Collector) => {
-    setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
-  };
+        const newTotalHarvested = collectorDoc.totalHarvested + harvest.kilograms;
+        const newHoursWorked = collectorDoc.hoursWorked + 4; // Assuming 4 hours
+        
+        const batch = writeBatch(db);
+        batch.set(newHarvestRef, harvest);
+        batch.update(collectorRef, {
+            totalHarvested: newTotalHarvested,
+            hoursWorked: newHoursWorked,
+            productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
+        });
 
-  const deleteCollector = async (collectorId: string) => {
-     setCollectors(prev => prev.filter(c => c.id !== collectorId));
-     setHarvests(prev => prev.filter(h => h.collector.id !== collectorId));
-     setCollectorPaymentLogs(prev => prev.filter(p => p.collectorId !== collectorId));
-  };
+        await batch.commit();
+        await fetchData(); // Refetch all data to keep client state in sync
+    };
 
-  const addCollector = async (collector: Omit<Collector, 'id'>) => {
-    setCollectors(prev => [{ ...collector, id: `C${prev.length + 1}` } as Collector, ...prev]);
-  };
+    const editCollector = async (updatedCollector: Collector) => {
+        const collectorRef = doc(db, 'collectors', updatedCollector.id);
+        const { id, ...data } = updatedCollector;
+        await setDoc(collectorRef, data, { merge: true });
+        await fetchData();
+    };
+
+    const deleteCollector = async (collectorId: string) => {
+        const batch = writeBatch(db);
+
+        // Delete the collector
+        const collectorRef = doc(db, 'collectors', collectorId);
+        batch.delete(collectorRef);
+
+        // Find and delete associated harvests
+        const harvestsToDelete = harvests.filter(h => h.collector.id === collectorId);
+        harvestsToDelete.forEach(h => batch.delete(doc(db, 'harvests', h.id)));
+
+        // Find and delete associated payment logs
+        const paymentsToDelete = collectorPaymentLogs.filter(p => p.collectorId === collectorId);
+        paymentsToDelete.forEach(p => batch.delete(doc(db, 'collectorPaymentLogs', p.id)));
+
+        await batch.commit();
+        await fetchData();
+    };
+
+    const addCollector = async (collector: Omit<Collector, 'id'>) => {
+        const tempId = `C${Date.now()}`;
+        const newCollectorRef = doc(db, 'collectors', tempId);
+        await setDoc(newCollectorRef, collector);
+        await fetchData();
+    };
+
+    const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
+        const tempId = `LOG${Date.now()}`;
+        const newLogRef = doc(db, 'agronomistLogs', tempId);
+        await setDoc(newLogRef, log);
+        await fetchData();
+    };
+
+    const editAgronomistLog = async (updatedLog: AgronomistLog) => {
+        const logRef = doc(db, 'agronomistLogs', updatedLog.id);
+        const { id, ...data } = updatedLog;
+        await setDoc(logRef, data, { merge: true });
+        await fetchData();
+    };
+
+    const deleteAgronomistLog = async (logId: string) => {
+        await deleteDoc(doc(db, 'agronomistLogs', logId));
+        await fetchData();
+    };
+
+    const addBatch = async (batchData: Omit<Batch, 'id'>) => {
+        // Use the user-provided ID
+        const newBatchRef = doc(db, 'batches', batchData.id);
+        await setDoc(newBatchRef, batchData);
+        await fetchData();
+    };
+
+
+    const deleteBatch = async (batchId: string) => {
+        await deleteDoc(doc(db, 'batches', batchId));
+        await fetchData();
+    };
+
+    const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
+        const tempId = `PAY${Date.now()}`;
+        const newLogRef = doc(db, 'collectorPaymentLogs', tempId);
+        // We need to update the harvestId with the real ID
+        const harvestRef = doc(db, 'harvests', log.harvestId);
+        await setDoc(newLogRef, {...log, harvestId: harvestRef.id });
+        await fetchData();
+    };
+
+    const deleteCollectorPaymentLog = async (logId: string) => {
+      const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
+      if (!logToDelete) return;
   
-  const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
-    setAgronomistLogs(prev => [{ ...log, id: `LOG${prev.length + 1}` } as AgronomistLog, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-  };
-
-  const editAgronomistLog = async (updatedLog: AgronomistLog) => {
-    setAgronomistLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
-  };
-
-  const deleteAgronomistLog = async (logId: string) => {
-    setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
-  };
-
-  const addBatch = async (batch: Omit<Batch, 'id'>) => {
-     setBatches(prev => [{...batch} as Batch, ...prev].sort((a,b) => new Date(b.preloadedDate).getTime() - new Date(a.preloadedDate).getTime()))
-  };
-
-  const deleteBatch = async (batchId: string) => {
-    setBatches(prev => prev.filter(b => b.id !== batchId));
-  };
-
-  const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
-    setCollectorPaymentLogs(prev => [{ ...log, id: `PAY${prev.length + 1}` } as CollectorPaymentLog, ...prev]);
-  };
-
-  const deleteCollectorPaymentLog = async (logId: string) => {
-    const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
-    if (!logToDelete) return;
-    
-    setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
-    setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
-  };
+      const batch = writeBatch(db);
+      
+      const paymentLogRef = doc(db, 'collectorPaymentLogs', logId);
+      batch.delete(paymentLogRef);
+      
+      // Delete the associated harvest record
+      const harvestRef = doc(db, 'harvests', logToDelete.harvestId);
+      batch.delete(harvestRef);
+      
+      await batch.commit();
+      await fetchData();
+    };
 
     return {
         loading,

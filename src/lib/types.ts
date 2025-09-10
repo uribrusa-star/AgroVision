@@ -87,8 +87,9 @@ export type AppData = {
   editAgronomistLog: (log: AgronomistLog) => Promise<void>;
   deleteAgronomistLog: (logId: string) => Promise<void>;
   addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
-  addBatch: (batch: Omit<Batch, 'id'>) => Promise<void>;
+  addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
   deleteBatch: (batchId: string) => Promise<void>;
   addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
   deleteCollectorPaymentLog: (logId: string) => Promise<void>;
+  isClient: boolean;
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { AppData } from '@/lib/types';
-import { users, harvests, collectors, agronomistLogs, batches, collectorPaymentLogs } from '@/lib/data';
+import { users } from '@/lib/data';
 
 const defaultUser = users.find(u => u.role === 'Productor')!;
 
@@ -25,6 +25,7 @@ export const AppDataContext = React.createContext<AppData>({
   deleteBatch: async () => {},
   addCollectorPaymentLog: async () => {},
   deleteCollectorPaymentLog: async () => {},
+  isClient: false,
 });
 
 export const AppContextProvider = AppDataContext.Provider;
