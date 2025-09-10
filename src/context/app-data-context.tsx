@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -153,7 +154,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [isClient, fetchData]);
 
-    const addHarvest = async (harvest: Omit<Harvest, 'id'>): Promise<string> => {
+    const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string> => {
         const newHarvestRef = await addDoc(collection(db, 'harvests'), harvest);
         const collectorRef = doc(db, 'collectors', harvest.collector.id);
         
@@ -164,7 +165,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const newTotalHarvested = collectorDoc.totalHarvested + harvest.kilograms;
-        const newHoursWorked = collectorDoc.hoursWorked + 4; // Assuming 4 hours
+        const newHoursWorked = collectorDoc.hoursWorked + hoursWorked;
         
         const batch = writeBatch(db);
         batch.update(collectorRef, {
@@ -333,3 +334,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+    

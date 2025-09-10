@@ -2,6 +2,7 @@
 
 
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -171,7 +172,7 @@ export type AppData = {
   establishmentData: EstablishmentData | null;
   producerLogs: ProducerLog[];
   transactions: Transaction[];
-  addHarvest: (harvest: Omit<Harvest, 'id'>) => Promise<string | undefined>;
+  addHarvest: (harvest: Omit<Harvest, 'id'>, hoursWorked: number) => Promise<string | undefined>;
   editCollector: (collector: Collector) => Promise<void>;
   deleteCollector: (collectorId: string) => Promise<void>;
   addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => Promise<void>;
@@ -190,3 +191,5 @@ export type AppData = {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   isClient: boolean;
 };
+
+    

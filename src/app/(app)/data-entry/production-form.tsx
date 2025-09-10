@@ -5,6 +5,9 @@ import { useActionState, useEffect, useContext, useMemo, useState, useTransition
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,12 +19,19 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import type { CollectorPaymentLog, Harvest } from '@/lib/types';
 import { validateProductionData } from '@/ai/flows/validate-production-data';
 import { ProductionPaymentHistory } from '../production-payment-history';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
 
 const ProductionSchema = z.object({
+  date: z.date({
+    required_error: "La fecha de cosecha es requerida.",
+  }),
   batchId: z.string().min(1, "El ID del lote es requerido."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
   farmerId: z.string().min(1, "El recolector es requerido."),
   ratePerKg: z.coerce.number().min(0.01, "La tarifa por kg es requerida."),
+  hoursWorked: z.coerce.number().min(0.5, "Las horas trabajadas son requeridas."),
 });
 
 type ProductionFormValues = z.infer<typeof ProductionSchema>;
@@ -37,10 +47,12 @@ export function ProductionForm() {
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),
     defaultValues: {
+      date: new Date(),
       batchId: '',
       kilosPerBatch: 0,
       farmerId: '',
       ratePerKg: 0.45,
+      hoursWorked: 8,
     },
   });
   
@@ -58,7 +70,7 @@ export function ProductionForm() {
 
     try {
       const newHarvestData: Omit<Harvest, 'id'> = {
-        date: new Date().toISOString(),
+        date: values.date.toISOString(),
         batchNumber: values.batchId,
         kilograms: values.kilosPerBatch,
         collector: {
@@ -67,21 +79,20 @@ export function ProductionForm() {
         }
       };
       
-      const newHarvestId = await addHarvest(newHarvestData);
+      const newHarvestId = await addHarvest(newHarvestData, values.hoursWorked);
       if(!newHarvestId) {
         throw new Error("Failed to get new harvest ID");
       }
       
       const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
-      const hoursWorked = 4; // For simplicity, we assume fixed hours
 
       const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
         harvestId: newHarvestId, 
-        date: new Date().toISOString(),
+        date: values.date.toISOString(),
         collectorId: values.farmerId,
         collectorName: farmer.name,
         kilograms: values.kilosPerBatch,
-        hours: hoursWorked,
+        hours: values.hoursWorked,
         ratePerKg: values.ratePerKg,
         payment: calculatedPayment,
       };
@@ -94,10 +105,12 @@ export function ProductionForm() {
       });
 
       form.reset({
+        date: new Date(),
         batchId: '',
         kilosPerBatch: 0,
         farmerId: '',
         ratePerKg: 0.45,
+        hoursWorked: 8,
       });
 
     } catch (error) {
@@ -123,7 +136,7 @@ export function ProductionForm() {
             const validationResult = await validateProductionData({
                 kilosPerBatch: values.kilosPerBatch,
                 batchId: values.batchId,
-                timestamp: new Date().toISOString(),
+                timestamp: values.date.toISOString(),
                 farmerId: values.farmerId,
                 averageKilosPerBatch: averageKilos,
                 historicalData: JSON.stringify(historicalDataForFarmer),
@@ -161,33 +174,78 @@ export function ProductionForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
-               <FormField
-                  control={form.control}
-                  name="batchId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ID del Lote</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
-                          <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Seleccione un lote" />
-                          </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {availableBatches.length > 0 ? (
-                              availableBatches.map(b => (
-                                <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value="none" disabled>No hay lotes pendientes</SelectItem>
-                            )}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Fecha de Cosecha</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={!canManage || isPending}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: es })
+                                ) : (
+                                  <span>Seleccione una fecha</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("2020-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="batchId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>ID del Lote</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un lote" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {availableBatches.length > 0 ? (
+                                availableBatches.map(b => (
+                                  <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                                ))
+                              ) : (
+                                <SelectItem value="none" disabled>No hay lotes pendientes</SelectItem>
+                              )}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
                   name="kilosPerBatch"
@@ -203,6 +261,19 @@ export function ProductionForm() {
                 />
                 <FormField
                     control={form.control}
+                    name="hoursWorked"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Horas Trabajadas</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.5" {...field} disabled={!canManage || isPending}/>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                <FormField
+                    control={form.control}
                     name="ratePerKg"
                     render={({ field }) => (
                       <FormItem>
@@ -215,6 +286,7 @@ export function ProductionForm() {
                     )}
                   />
               </div>
+
               <FormField
                 control={form.control}
                 name="farmerId"
