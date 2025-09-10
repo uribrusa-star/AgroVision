@@ -58,7 +58,7 @@ export function PhenologyLogForm() {
         fruitCount: data.fruitCount,
         notes: data.notes,
         imageUrl: data.image || "",
-        imageHint: data.image ? 'crop phenology' : undefined,
+        ...(data.image && { imageHint: 'crop phenology' }),
       };
       await addPhenologyLog(newLog);
       toast({
