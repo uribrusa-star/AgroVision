@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,65 +11,34 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Leaf } from "lucide-react";
+import { AppDataContext } from "@/context/app-data-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
-
-const exampleLots = [
-  {
-    id: "lote1",
-    nombre: "Lote Norte",
-    productor: "Productor Admin",
-    superficie_ha: 1.5,
-    estado: "activo",
-    polygon: [
-      [-31.4523, -60.7254],
-      [-31.4525, -60.7240],
-      [-31.4535, -60.7245],
-      [-31.4530, -60.7260],
-    ],
-    historial: [
-      { fecha: "2024-07-01", kg: 120 },
-      { fecha: "2024-07-02", kg: 110 },
-    ],
-    productividad: 80, // kg/ha
-  },
-  {
-    id: "lote2",
-    nombre: "Lote Sur",
-    productor: "Encargado de Campo",
-    superficie_ha: 2.0,
-    estado: "inactivo",
-    polygon: [
-      [-31.4550, -60.7300],
-      [-31.4555, -60.7285],
-      [-31.4565, -60.7290],
-      [-31.4560, -60.7310],
-    ],
-    historial: [
-      { fecha: "2024-07-01", kg: 80 },
-      { fecha: "2024-07-02", kg: 90 },
-    ],
-    productividad: 45, // kg/ha
-  },
-    {
-    id: "lote3",
-    nombre: "Lote Este",
-    productor: "Productor Admin",
-    superficie_ha: 1.2,
-    estado: "activo",
-    polygon: [],
-    historial: [
-      { fecha: "2024-07-03", kg: 150 },
-      { fecha: "2024-07-04", kg: 145 },
-    ],
-    productividad: 120, // kg/ha
-  },
-];
 
 export default function LotsPage() {
+  const { loading, batches, harvests } = useContext(AppDataContext);
   const [filterProductor, setFilterProductor] = useState("");
   const [filterEstado, setFilterEstado] = useState("all");
 
-  const filteredLots = exampleLots.filter(
+  const processedLots = batches.map(batch => {
+    const batchHarvests = harvests.filter(h => h.batchNumber === batch.id);
+    const totalKg = batchHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+    // Assuming a fixed surface area and productivity calculation for now
+    const superficie_ha = 1.5; 
+    const productividad = superficie_ha > 0 ? totalKg / superficie_ha : 0;
+    
+    return {
+        id: batch.id,
+        nombre: batch.id,
+        productor: "Productor Admin", // Placeholder
+        superficie_ha,
+        estado: batch.status === 'completed' ? 'activo' : 'inactivo',
+        historial: batchHarvests.map(h => ({ fecha: h.date, kg: h.kilograms })),
+        productividad,
+    }
+  });
+
+  const filteredLots = processedLots.filter(
     (lot) =>
       (filterProductor === "" || lot.productor.toLowerCase().includes(filterProductor.toLowerCase())) &&
       (filterEstado === "all" || lot.estado === filterEstado)
@@ -112,7 +82,21 @@ export default function LotsPage() {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {filteredLots.map((lot) => (
+        {loading && (
+            Array.from({ length: 3 }).map((_, index) => (
+                <Card key={index}>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-1/2" />
+                        <Skeleton className="h-4 w-1/3" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                </Card>
+            ))
+        )}
+        {!loading && filteredLots.map((lot) => (
             <Card key={lot.id}>
                 <CardHeader>
                     <div className="flex justify-between items-start">
@@ -128,7 +112,7 @@ export default function LotsPage() {
                         <p><span className="font-semibold">Superficie:</span> {lot.superficie_ha} ha</p>
                     </div>
                     <div>
-                        <label className="text-sm font-medium">Productividad: {lot.productividad} kg/ha</label>
+                        <label className="text-sm font-medium">Productividad: {lot.productividad.toFixed(2)} kg/ha</label>
                         <Progress value={lot.productividad} max={150} indicatorClassName={getProductivityColor(lot.productividad)} className="h-2" />
                     </div>
 
@@ -163,7 +147,7 @@ export default function LotsPage() {
             </Card>
         ))}
       </div>
-      {filteredLots.length === 0 && (
+      {!loading && filteredLots.length === 0 && (
         <Card>
             <CardContent className="p-10 flex flex-col items-center justify-center text-center">
                 <Leaf className="w-12 h-12 text-muted-foreground mb-4" />
