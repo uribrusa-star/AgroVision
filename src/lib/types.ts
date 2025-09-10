@@ -35,4 +35,6 @@ export type AppData = {
   harvests: Harvest[];
   collectors: Collector[];
   addHarvest: (harvest: Harvest) => void;
+  editCollector: (collector: Collector) => void;
+  deleteCollector: (collectorId: string) => void;
 };

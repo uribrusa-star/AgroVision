@@ -6,6 +6,8 @@ export const AppDataContext = React.createContext<AppData>({
   harvests: harvests,
   collectors: collectors,
   addHarvest: () => {},
+  editCollector: () => {},
+  deleteCollector: () => {},
 });
 
 export const AppContextProvider = AppDataContext.Provider;

@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
 import { harvests as initialHarvests, collectors as initialCollectors } from '@/lib/data';
-import type { Harvest, AppData } from '@/lib/types';
+import type { Harvest, AppData, Collector } from '@/lib/types';
 
 
 const navItems = [
@@ -62,11 +62,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       return c;
     }));
   };
+
+  const editCollector = (updatedCollector: Collector) => {
+    setCollectors(prevCollectors => prevCollectors.map(c => c.id === updatedCollector.id ? updatedCollector : c));
+  };
+
+  const deleteCollector = (collectorId: string) => {
+    setCollectors(prevCollectors => prevCollectors.filter(c => c.id !== collectorId));
+    // Optional: also remove harvests associated with the deleted collector
+    setHarvests(prevHarvests => prevHarvests.filter(h => h.collector.id !== collectorId));
+  };
   
   const appData: AppData = {
     harvests,
     collectors,
-    addHarvest
+    addHarvest,
+    editCollector,
+    deleteCollector
   };
 
   return (
