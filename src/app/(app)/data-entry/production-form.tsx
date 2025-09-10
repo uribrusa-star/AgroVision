@@ -71,6 +71,7 @@ export function ProductionForm() {
               data.set('batchId', form.getValues('batchId'));
               data.set('kilosPerBatch', form.getValues('kilosPerBatch').toString());
               data.set('farmerId', form.getValues('farmerId'));
+              data.set('collectors', JSON.stringify(collectors));
               formAction(data);
             }
         }}>

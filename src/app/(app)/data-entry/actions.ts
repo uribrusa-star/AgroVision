@@ -1,14 +1,13 @@
 'use server';
 
 import { z } from 'zod';
-// import { validateProductionData } from '@/ai/flows/validate-production-data';
-import { collectors, harvests } from '@/lib/data';
-import type { Harvest } from '@/lib/types';
+import type { Collector, Harvest } from '@/lib/types';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, 'El ID del lote es requerido'),
   kilosPerBatch: z.coerce.number().min(0.1, 'Los kilos deben ser un número positivo'),
   farmerId: z.string().min(1, 'El agricultor es requerido'),
+  collectors: z.string().min(1, 'La lista de recolectores es requerida'),
 });
 
 type State = {
@@ -21,42 +20,23 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
   const validatedFields = ProductionSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
+    const errorMessages = Object.values(validatedFields.error.flatten().fieldErrors).join(', ');
     return {
-      message: 'Datos de formulario no válidos. Por favor, revise sus entradas.',
+      message: `Datos de formulario no válidos: ${errorMessages}`,
       success: false,
     };
   }
 
-  const { batchId, kilosPerBatch, farmerId } = validatedFields.data;
+  const { batchId, kilosPerBatch, farmerId, collectors: collectorsString } = validatedFields.data;
   
+  const collectors: Collector[] = JSON.parse(collectorsString);
   const farmer = collectors.find(c => c.id === farmerId);
+
   if (!farmer) {
-    return { message: 'Agricultor no encontrado.', success: false };
+    return { message: 'Recolector no encontrado.', success: false };
   }
 
-  // const farmerHarvests = harvests.filter(h => h.collector.id === farmerId);
-  // const historicalData = JSON.stringify(farmerHarvests);
-  // const totalKilos = farmerHarvests.reduce((sum, h) => sum + h.kilograms, 0);
-  // const averageKilosPerBatch = farmerHarvests.length > 0 ? totalKilos / farmerHarvests.length : 0;
-
-
   try {
-    // const validationResult = await validateProductionData({
-    //   batchId,
-    //   kilosPerBatch,
-    //   farmerId,
-    //   timestamp: new Date().toISOString(),
-    //   averageKilosPerBatch,
-    //   historicalData,
-    // });
-
-    // if (!validationResult.isValid) {
-    //   return {
-    //     message: `Falló la validación de IA: ${validationResult.reason}`,
-    //     success: false,
-    //   };
-    // }
-
     const newHarvest: Harvest = {
         id: `H${Date.now()}`,
         date: new Date().toISOString(),
