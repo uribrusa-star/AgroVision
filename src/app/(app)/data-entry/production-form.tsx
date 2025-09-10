@@ -18,6 +18,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Trash2 } from 'lucide-react';
 import type { CollectorPaymentLog, Harvest } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { validateProductionData } from '@/ai/flows/validate-production-data';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, "El ID del lote es requerido."),
@@ -28,11 +29,11 @@ const ProductionSchema = z.object({
 
 type ProductionFormValues = z.infer<typeof ProductionSchema>;
 
-
 export function ProductionForm() {
   const { toast } = useToast();
   const { loading, collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const [isPending, startTransition] = useTransition();
+  const [validationAlert, setValidationAlert] = useState<{ open: boolean; reason: string; data: ProductionFormValues | null }>({ open: false, reason: '', data: null });
   
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
 
@@ -47,73 +48,111 @@ export function ProductionForm() {
   });
   
   const availableBatches = useMemo(() => {
-    // Show all batches that are not explicitly marked as 'completed'.
-    // This allows multiple harvests to be logged for the same batch.
-    return batches.filter(b => b.status !== 'completed');
+    // Show all batches. Let users log multiple harvests for the same batch.
+    return batches;
   }, [batches]);
 
+  const saveHarvestData = async (values: ProductionFormValues) => {
+    const farmer = collectors.find(c => c.id === values.farmerId);
+    if (!farmer) {
+      toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
+      return;
+    }
+
+    try {
+      const newHarvestData: Omit<Harvest, 'id'> = {
+        date: new Date().toISOString(),
+        batchNumber: values.batchId,
+        kilograms: values.kilosPerBatch,
+        collector: {
+          id: values.farmerId,
+          name: farmer.name,
+        }
+      };
+      
+      const newHarvestId = await addHarvest(newHarvestData);
+      if(!newHarvestId) {
+        throw new Error("Failed to get new harvest ID");
+      }
+      
+      const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+      const hoursWorked = 4; // For simplicity, we assume fixed hours
+
+      const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
+        harvestId: newHarvestId, 
+        date: new Date().toISOString(),
+        collectorId: values.farmerId,
+        collectorName: farmer.name,
+        kilograms: values.kilosPerBatch,
+        hours: hoursWorked,
+        ratePerKg: values.ratePerKg,
+        payment: calculatedPayment,
+      };
+
+      await addCollectorPaymentLog(newPaymentLogData);
+
+      toast({
+        title: '¡Éxito!',
+        description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
+      });
+
+      form.reset({
+        batchId: '',
+        kilosPerBatch: 0,
+        farmerId: '',
+        ratePerKg: 0.45,
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Error',
+        description: 'Ocurrió un error inesperado al guardar los datos.',
+        variant: 'destructive',
+      });
+    }
+  }
+  
   const onSubmit = (values: ProductionFormValues) => {
     startTransition(async () => {
         const farmer = collectors.find(c => c.id === values.farmerId);
-        if (!farmer) {
-            toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
-            return;
-        }
+        if(!farmer) return;
 
+        const historicalDataForFarmer = harvests.filter(h => h.collector.id === values.farmerId);
+        const totalKilos = historicalDataForFarmer.reduce((sum, h) => sum + h.kilograms, 0);
+        const averageKilos = historicalDataForFarmer.length > 0 ? totalKilos / historicalDataForFarmer.length : values.kilosPerBatch;
+        
         try {
-            const newHarvestData: Omit<Harvest, 'id'> = {
-                date: new Date().toISOString(),
-                batchNumber: values.batchId,
-                kilograms: values.kilosPerBatch,
-                collector: {
-                    id: values.farmerId,
-                    name: farmer.name,
-                }
-            };
+            const validationResult = await validateProductionData({
+                kilosPerBatch: values.kilosPerBatch,
+                batchId: values.batchId,
+                timestamp: new Date().toISOString(),
+                farmerId: values.farmerId,
+                averageKilosPerBatch: averageKilos,
+                historicalData: JSON.stringify(historicalDataForFarmer),
+            });
             
-            const newHarvestId = await addHarvest(newHarvestData);
-            if(!newHarvestId) {
-                throw new Error("Failed to get new harvest ID");
+            if (validationResult.isValid) {
+                await saveHarvestData(values);
+            } else {
+                setValidationAlert({ open: true, reason: validationResult.reason || 'Anomalía detectada.', data: values });
             }
-            
-            const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
-            const hoursWorked = 4; // For simplicity, we assume fixed hours
 
-            const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
-              harvestId: newHarvestId, 
-              date: new Date().toISOString(),
-              collectorId: values.farmerId,
-              collectorName: farmer.name,
-              kilograms: values.kilosPerBatch,
-              hours: hoursWorked,
-              ratePerKg: values.ratePerKg,
-              payment: calculatedPayment,
-            };
-
-            await addCollectorPaymentLog(newPaymentLogData);
-
-            toast({
-                title: '¡Éxito!',
-                description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
-            });
-
-            form.reset({
-                batchId: '',
-                kilosPerBatch: 0,
-                farmerId: '',
-                ratePerKg: 0.45,
-            });
-
-        } catch (error) {
-            console.error(error);
-            toast({
-                title: 'Error',
-                description: 'Ocurrió un error inesperado al guardar los datos.',
-                variant: 'destructive',
-            });
+        } catch (aiError) {
+             console.error("AI validation failed, saving data directly.", aiError);
+             await saveHarvestData(values);
         }
     });
   }
+
+  const handleConfirmValidation = () => {
+    if (validationAlert.data) {
+        startTransition(async () => {
+            await saveHarvestData(validationAlert.data!);
+            setValidationAlert({ open: false, reason: '', data: null });
+        });
+    }
+  };
 
   const handleDelete = (logId: string) => {
     startTransition(async () => {
@@ -220,7 +259,7 @@ export function ProductionForm() {
             {canManage && (
                 <CardFooter>
                     <Button type="submit" disabled={isPending || !canManage}>
-                        {isPending ? 'Guardando...' : 'Guardar Producción y Pago'}
+                        {isPending ? 'Validando y Guardando...' : 'Guardar Producción y Pago'}
                     </Button>
                 </CardFooter>
             )}
@@ -298,6 +337,25 @@ export function ProductionForm() {
           </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={validationAlert.open} onOpenChange={(open) => setValidationAlert(prev => ({...prev, open}))}>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+                <AlertDialogTitle>Advertencia de Validación de IA</AlertDialogTitle>
+                <AlertDialogDescription>
+                   {validationAlert.reason}
+                   <br/><br/>
+                   ¿Desea guardar este registro de todos modos?
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+                <AlertDialogCancel onClick={() => setValidationAlert({open: false, reason: '', data: null})}>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleConfirmValidation}>Guardar de todos modos</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+       </AlertDialog>
     </div>
   );
 }
+
+    
