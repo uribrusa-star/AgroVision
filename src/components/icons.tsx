@@ -1,3 +1,4 @@
+
 import type { SVGProps } from 'react';
 
 export function AgroVisionLogo(props: SVGProps<SVGSVGElement>) {
@@ -39,3 +40,5 @@ export function StrawberryIcon(props: SVGProps<SVGSVGElement>) {
         </svg>
     )
 }
+
+    

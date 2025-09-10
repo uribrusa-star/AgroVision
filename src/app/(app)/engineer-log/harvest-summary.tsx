@@ -45,7 +45,7 @@ const costChartConfig = {
 
 export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
-  const { harvests, collectorPaymentLogs, agronomistLogs, currentUser } = useContext(AppDataContext);
+  const { harvests, collectorPaymentLogs, agronomistLogs, currentUser, establishmentData } = useContext(AppDataContext);
   const { toast } = useToast();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
@@ -56,17 +56,13 @@ export function HarvestSummary() {
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
   const laborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
   
-  // Placeholder data for report
-  const producerData = {
-    name: "Finca Las Fresas",
-    location: "Tucumán, Argentina",
-    area: 5, // hectares
-    variety: "Camino Real",
-  };
-  const estimatedSupplyCost = totalProduction * 0.15; // Estimación simple
-  const estimatedIrrigationCost = producerData.area * 500; // Estimación simple
+  // Use establishment data for calculations, with fallbacks
+  const farmArea = establishmentData?.area.strawberry || 5; // Default to 5ha
+  
+  const estimatedSupplyCost = totalProduction * 0.15; // Simple estimation
+  const estimatedIrrigationCost = farmArea * 500; // Simple estimation
   const totalCost = laborCost + estimatedSupplyCost + estimatedIrrigationCost;
-  const estimatedRevenue = totalProduction * 2.5; // Estimación simple a $2.5/kg
+  const estimatedRevenue = totalProduction * 2.5; // Simple estimation at $2.5/kg
 
   const costDistributionData = [
       { name: 'Mano de Obra', value: laborCost, fill: 'var(--color-labor)' },
@@ -74,33 +70,16 @@ export function HarvestSummary() {
       { name: 'Riego (Estimado)', value: estimatedIrrigationCost, fill: 'var(--color-irrigation)' },
     ].filter(item => item.value > 0);
 
-
-  const addPageHeader = (doc: jsPDF, logoPngDataUri: string) => {
-    if (logoPngDataUri) {
-      doc.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
-    }
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(40);
-    doc.text("Informe de Producción de Frutilla", doc.internal.pageSize.width / 2, 22, { align: 'center' });
-    doc.setDrawColor(180);
-    doc.line(15, 30, doc.internal.pageSize.width - 15, 30);
-  };
-
-  const addPageFooter = (doc: jsPDF) => {
-    const pageCount = doc.internal.getNumberOfPages();
-    for(let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(9);
-        doc.setTextColor(150);
-        doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 15, doc.internal.pageSize.height - 10, { align: 'right'});
-        doc.text(`Informe de Producción de Frutilla - AgroVision`, 15, doc.internal.pageSize.height - 10);
-    }
-  };
-
-  const handleGeneratePdf = async () => {
+  const handleGeneratePdf = () => {
     startTransition(async () => {
+      if (!establishmentData) {
+        toast({
+            title: 'Datos no disponibles',
+            description: 'No se pueden cargar los datos del establecimiento para generar el informe.',
+            variant: 'destructive',
+        });
+        return;
+      }
       if (harvests.length === 0) {
         toast({
             title: 'No hay datos',
@@ -127,68 +106,61 @@ export function HarvestSummary() {
             logoPngDataUri = canvas.toDataURL('image/png');
         }
         
-        // --- COVER PAGE ---
-        if (logoPngDataUri) {
-          doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 20, pageHeight / 3 - 10, 40, 40);
-        }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(24);
-        doc.setTextColor(40);
-        doc.text('Informe de Producción de Frutilla', pageWidth / 2, pageHeight / 2 + 10, { align: 'center' });
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-        doc.setTextColor(100);
-        doc.text(`Fecha del Informe: ${new Date().toLocaleDateString('es-ES')}`, pageWidth / 2, pageHeight / 2 + 20, { align: 'center' });
-        doc.text(producerData.name, pageWidth / 2, pageHeight / 2 + 30, { align: 'center' });
-
-
-        // --- Get AI Content ---
-        const aiInput = {
-            productionData: JSON.stringify({ totalProduction, yieldPerHectare: totalProduction / producerData.area }),
-            costData: JSON.stringify({ totalCost, laborCost, estimatedSupplyCost, estimatedIrrigationCost }),
-            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 5).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
-        };
-        const aiResult = await summarizeHarvestData(aiInput);
-
-        
+        // --- PDF HELPER FUNCTIONS ---
         let yPos = 40;
+        const addPageFooter = (docInstance: jsPDF) => {
+            const pageNum = docInstance.internal.getNumberOfPages();
+            docInstance.setFont('helvetica', 'normal');
+            docInstance.setFontSize(9);
+            docInstance.setTextColor(150);
+            docInstance.text(`Página ${pageNum}`, pageWidth - 15, pageHeight - 10, { align: 'right'});
+            docInstance.text(`Informe de Producción de Frutilla - AgroVision`, 15, pageHeight - 10);
+        };
+        
+        const addPageHeader = (docInstance: jsPDF) => {
+            if (logoPngDataUri) {
+              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
+            }
+            docInstance.setFont('helvetica', 'bold');
+            docInstance.setFontSize(16);
+            docInstance.setTextColor(40);
+            docInstance.text("Informe de Producción de Frutilla", pageWidth / 2, 22, { align: 'center' });
+            docInstance.setDrawColor(180);
+            docInstance.line(15, 30, pageWidth - 15, 30);
+        };
+        
+        const checkAndAddPage = () => {
+            if (yPos > pageHeight - 25) {
+                addPageFooter(doc);
+                doc.addPage();
+                addPageHeader(doc);
+                yPos = 40;
+            }
+        };
+
         const addSection = (title: string, content: string) => {
+            checkAndAddPage();
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.setTextColor(40);
-
-            if (yPos + 18 > pageHeight - 25) { // Check space for title
-                doc.addPage();
-                addPageHeader(doc, logoPngDataUri);
-                yPos = 40;
-            }
             doc.text(title, 15, yPos);
             yPos += 8;
             
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10); // Ensure body text size is correct
+            doc.setFontSize(10);
             doc.setTextColor(80);
             
             const splitContent = doc.splitTextToSize(content, pageWidth - 30);
             splitContent.forEach((line: string) => {
-                if (yPos + 5 > pageHeight - 25) { // Check space for each line
-                    doc.addPage();
-                    addPageHeader(doc, logoPngDataUri);
-                    yPos = 40;
-                }
+                checkAndAddPage();
                 doc.text(line, 15, yPos, { align: 'justify' });
                 yPos += 5;
             });
-            yPos += 10; // Extra space after section
+            yPos += 10;
         };
 
         const addTable = (title: string, head: any, body: any) => {
-            const tableHeight = (body.length + 1) * 10 + 15; // Simple height estimation
-            if (yPos + tableHeight > pageHeight - 20) {
-                 doc.addPage();
-                 addPageHeader(doc, logoPngDataUri);
-                 yPos = 40;
-            }
+            checkAndAddPage();
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.setTextColor(40);
@@ -209,10 +181,11 @@ export function HarvestSummary() {
 
         const addCharts = async () => {
              if (!monthlyChartRef.current || !costChartRef.current) return;
-
-             if (yPos > pageHeight - 110) { // Need space for charts
+            
+             if (yPos > pageHeight - 90) { // check for chart space
+                addPageFooter(doc);
                 doc.addPage();
-                addPageHeader(doc, logoPngDataUri);
+                addPageHeader(doc);
                 yPos = 40;
             }
             
@@ -222,8 +195,8 @@ export function HarvestSummary() {
             doc.text("Análisis Gráfico", 15, yPos);
             yPos += 10;
 
-            const monthlyCanvas = await html2canvas(monthlyChartRef.current, { scale: 2, backgroundColor: null });
-            const costCanvas = await html2canvas(costChartRef.current, { scale: 2, backgroundColor: null });
+            const monthlyCanvas = await html2canvas(monthlyChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
+            const costCanvas = await html2canvas(costChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
             const monthlyImgData = monthlyCanvas.toDataURL('image/png');
             const costImgData = costCanvas.toDataURL('image/png');
             
@@ -235,15 +208,38 @@ export function HarvestSummary() {
             yPos += chartHeight + 15;
         }
 
+        // --- PDF GENERATION ---
+        
+        // --- COVER PAGE ---
+        if (logoPngDataUri) {
+          doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 20, pageHeight / 3 - 10, 40, 40);
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(24);
+        doc.setTextColor(40);
+        doc.text('Informe de Producción de Frutilla', pageWidth / 2, pageHeight / 2 + 10, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+        doc.setTextColor(100);
+        doc.text(`Fecha del Informe: ${new Date().toLocaleDateString('es-ES')}`, pageWidth / 2, pageHeight / 2 + 20, { align: 'center' });
+        doc.text(establishmentData.producer, pageWidth / 2, pageHeight / 2 + 30, { align: 'center' });
+
+        // --- Get AI Content ---
+        const aiInput = {
+            productionData: JSON.stringify({ totalProduction, yieldPerHectare: totalProduction / farmArea }),
+            costData: JSON.stringify({ totalCost, laborCost, estimatedSupplyCost, estimatedIrrigationCost }),
+            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 5).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
+        };
+        const aiResult = await summarizeHarvestData(aiInput);
 
         // --- REPORT CONTENT ---
         doc.addPage();
-        addPageHeader(doc, logoPngDataUri);
+        addPageHeader(doc);
         
         // Section: Producer Data
-        addTable("Datos Generales del Productor", 
+        addTable("Datos Generales del Establecimiento", 
             [['Productor', 'Localidad', 'Superficie (ha)', 'Variedad']],
-            [[producerData.name, producerData.location, producerData.area, producerData.variety]]
+            [[establishmentData.producer, `${establishmentData.location.locality}, ${establishmentData.location.province}`, establishmentData.area.strawberry, establishmentData.planting.variety]]
         );
 
         // Section: AI Executive Summary
@@ -252,11 +248,11 @@ export function HarvestSummary() {
         // Section: Data Tables
         addTable("Resumen de Producción y Rendimiento",
             [['Producción Total (kg)', 'Rendimiento (kg/ha)']],
-            [[totalProduction.toLocaleString('es-ES'), (totalProduction / producerData.area).toLocaleString('es-ES', {maximumFractionDigits: 0})]]
+            [[totalProduction.toLocaleString('es-ES'), (totalProduction / farmArea).toLocaleString('es-ES', {maximumFractionDigits: 0})]]
         );
 
-        addTable("Resumen de Costos Operativos",
-            [['Costo Mano de Obra', 'Costo Insumos (Est.)', 'Costo Riego (Est.)', 'Costo Total']],
+        addTable("Resumen de Costos Operativos (Estimado)",
+            [['Costo Mano de Obra', 'Costo Insumos', 'Costo Riego', 'Costo Total']],
             [[
                 `$${laborCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
                 `$${estimatedSupplyCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`,
@@ -265,12 +261,6 @@ export function HarvestSummary() {
             ]]
         );
         
-        if (yPos + 50 > pageHeight - 25) { // Check space for next table
-            doc.addPage();
-            addPageHeader(doc, logoPngDataUri);
-            yPos = 40;
-        }
-
         addTable("Proyección Financiera (Estimada)",
             [['Ingresos Totales', 'Costos Totales', 'Margen Bruto']],
             [[
@@ -286,8 +276,9 @@ export function HarvestSummary() {
         // Section: AI Analysis & Recommendations
         addSection("Análisis e Interpretación", aiResult.analysisAndInterpretation);
         addSection("Conclusiones y Recomendaciones", aiResult.conclusionsAndRecommendations);
-
+        
         addPageFooter(doc);
+        
         doc.save('Informe_Produccion_Frutilla.pdf');
         
         toast({
@@ -333,7 +324,7 @@ export function HarvestSummary() {
                           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
                           <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}>
                               {costDistributionData.map((entry) => (
-                                  <Cell key={`cell-${entry.name}`} fill={`var(--color-${entry.name.split(' ')[0].toLowerCase()})`} />
+                                  <Cell key={`cell-${entry.name}`} fill={costChartConfig[entry.name.split(' ')[0].toLowerCase() as keyof typeof costChartConfig]?.color || '#000000'} />
                               ))}
                           </Pie>
                       </RechartsPieChart>
@@ -355,3 +346,5 @@ export function HarvestSummary() {
     </>
   )
 }
+
+    
