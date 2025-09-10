@@ -16,19 +16,18 @@ import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
-
 const LogSchema = z.object({
-  type: z.enum(['Fertilización', 'Fumigación', 'Control'], {
-    required_error: "El tipo de aplicación es requerido.",
+  observationType: z.enum(['Plaga', 'Enfermedad'], {
+    required_error: "El tipo de observación es requerido.",
   }),
-  product: z.string().optional(),
+  product: z.string().min(1, "El producto o agente observado es requerido."),
+  severity: z.string().min(3, "La incidencia o severidad es requerida."),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
-  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
 
-export function ApplicationLogForm() {
+export function HealthLogForm() {
   const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -38,51 +37,35 @@ export function ApplicationLogForm() {
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
     defaultValues: {
-      type: undefined,
+      observationType: undefined,
       product: '',
+      severity: '',
       notes: '',
-      image: '',
     },
   });
-  
-  const imageUrl = form.watch('image');
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
-        type: data.type,
-        product: data.product,
-        notes: data.notes,
-        imageUrl: data.image || undefined,
-        imageHint: data.image ? 'field application' : undefined,
+        type: 'Sanidad',
+        product: `${data.observationType}: ${data.product}`,
+        notes: `Incidencia: ${data.severity}. Observaciones: ${data.notes}`,
       };
       await addAgronomistLog(newLog);
       toast({
-        title: "¡Registro Exitoso!",
-        description: `Se ha agregado una nueva entrada de tipo "${data.type}".`,
+        title: "¡Registro de Sanidad Exitoso!",
+        description: `Se ha agregado una nueva observación de ${data.observationType}.`,
       });
       form.reset();
     });
   };
   
-  const getDisplayImageUrl = (url: string | undefined): string | undefined => {
-    if (!url) return undefined;
-    if (url.includes('imgur.com') && !url.includes('i.imgur.com')) {
-      const parts = url.split('/');
-      const hash = parts.pop();
-      return `https://i.imgur.com/${hash}.jpg`;
-    }
-    return url;
-  }
-  
-  const displayImageUrl = getDisplayImageUrl(imageUrl);
-
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Registrar Nueva Aplicación</CardTitle>
-        <CardDescription>Ingrese los detalles de una nueva aplicación o control realizado en el campo.</CardDescription>
+        <CardTitle>Registrar Sanidad y Monitoreo</CardTitle>
+        <CardDescription>Observe plagas, enfermedades y el grado de incidencia en el cultivo.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -90,10 +73,10 @@ export function ApplicationLogForm() {
              <div className="grid md:grid-cols-2 gap-4">
                 <FormField
                 control={form.control}
-                name="type"
+                name="observationType"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Tipo de Aplicación</FormLabel>
+                    <FormLabel>Tipo de Observación</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                         <FormControl>
                         <SelectTrigger>
@@ -101,9 +84,8 @@ export function ApplicationLogForm() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="Fertilización">Fertilización</SelectItem>
-                            <SelectItem value="Fumigación">Fumigación</SelectItem>
-                            <SelectItem value="Control">Control</SelectItem>
+                            <SelectItem value="Plaga">Plaga</SelectItem>
+                            <SelectItem value="Enfermedad">Enfermedad</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -115,24 +97,37 @@ export function ApplicationLogForm() {
                     name="product"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Producto Utilizado (Opcional)</FormLabel>
+                        <FormLabel>Agente Observado</FormLabel>
                         <FormControl>
-                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage || isPending} />
+                        <Input placeholder="Ej. Ácaros, Botritis" {...field} disabled={!canManage || isPending} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
                 />
             </div>
+             <FormField
+                control={form.control}
+                name="severity"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Incidencia / Severidad</FormLabel>
+                    <FormControl>
+                    <Input placeholder="Ej. 10% de plantas afectadas" {...field} disabled={!canManage || isPending} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
             <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notas</FormLabel>
+                  <FormLabel>Notas Adicionales</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describa la aplicación, dosis, observaciones, etc."
+                      placeholder="Describa la ubicación, condiciones, etc."
                       className="resize-none"
                       {...field}
                       disabled={!canManage || isPending}
@@ -142,39 +137,10 @@ export function ApplicationLogForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL de Imagen (Opcional)</FormLabel>
-                  <FormControl>
-                     <Input 
-                        placeholder="https://ejemplo.com/imagen.jpg" 
-                        {...field} 
-                        disabled={!canManage || isPending}
-                      />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {displayImageUrl && (
-                <div className="flex justify-center p-4 border-dashed border-2 border-muted rounded-md">
-                    <div className="relative w-full max-w-xs aspect-video">
-                        <Image
-                        src={displayImageUrl}
-                        alt="Vista previa de la imagen"
-                        fill
-                        className="object-contain rounded-md"
-                        />
-                    </div>
-                </div>
-            )}
           </CardContent>
           {canManage && (
             <CardFooter>
-                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Observación'}</Button>
             </CardFooter>
           )}
         </form>

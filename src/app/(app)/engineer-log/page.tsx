@@ -4,21 +4,21 @@
 import React, { useContext } from 'react';
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DollarSign, HardHat, Package, Sprout, BarChart, Weight } from 'lucide-react';
+import { BarChart, HardHat, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
-import { ApplicationLogForm } from './application-log-form';
 import { HarvestSummary } from './harvest-summary';
 import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
 import { MonthlyHarvestChart } from '../monthly-harvest-chart';
 import { PhenologyLogForm } from './phenology-log-form';
 import { PhenologyHistory } from './phenology-history';
+import { HealthLogForm } from './health-log-form';
+import { CulturalPracticesLogForm } from './cultural-practices-log-form';
 
 
 export default function EngineerLogPage() {
-  const { loading, collectors, harvests, collectorPaymentLogs, batches, currentUser } = useContext(AppDataContext);
+  const { loading, collectors, harvests, currentUser } = useContext(AppDataContext);
   
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
   
@@ -40,7 +40,7 @@ export default function EngineerLogPage() {
         description="Gestión de aplicaciones, fenología y visión general de la producción."
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Producción Total</CardTitle>
@@ -75,8 +75,10 @@ export default function EngineerLogPage() {
 
        <div className="mb-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-            {canManageApplications ? <ApplicationLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
+            {canManageApplications ? <HealthLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
+            {canManageApplications ? <CulturalPracticesLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar labores.</p></CardContent></CardHeader></Card>}
             {canManageApplications ? <PhenologyLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar el estado fenológico.</p></CardContent></CardHeader></Card>}
+
             <div className="lg:col-span-2">
               <ApplicationHistory />
             </div>

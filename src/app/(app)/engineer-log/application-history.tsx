@@ -9,10 +9,10 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
-import type { AgronomistLog } from '@/lib/types';
+import type { AgronomistLog, AgronomistLogType } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -24,9 +24,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 const LogSchema = z.object({
-  type: z.enum(['Fertilización', 'Fumigación', 'Control'], {
-    required_error: "El tipo de aplicación es requerido.",
-  }),
+  type: z.enum(['Fertilización', 'Fumigación', 'Control', 'Sanidad', 'Labor Cultural', 'Riego']),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
 });
@@ -72,7 +70,7 @@ export function ApplicationHistory() {
     if (selectedLog) {
       editAgronomistLog({
         ...selectedLog,
-        type: values.type,
+        type: values.type as AgronomistLogType,
         product: values.product,
         notes: values.notes,
       });
@@ -85,12 +83,15 @@ export function ApplicationHistory() {
     }
   };
 
-  const getTypeVariant = (type: AgronomistLog['type']) => {
+  const getTypeInfo = (type: AgronomistLog['type']) => {
     switch (type) {
-      case 'Fertilización': return 'default';
-      case 'Fumigación': return 'destructive';
-      case 'Control': return 'secondary';
-      default: return 'outline';
+      case 'Fertilización': return { variant: 'default', icon: Leaf, label: 'Fertilización' };
+      case 'Fumigación': return { variant: 'destructive', icon: SprayCan, label: 'Fumigación' };
+      case 'Control': return { variant: 'secondary', icon: Bug, label: 'Control' };
+      case 'Sanidad': return { variant: 'destructive', icon: Bug, label: 'Sanidad'};
+      case 'Labor Cultural': return { variant: 'secondary', icon: Hand, label: 'Labor Cultural'};
+      case 'Riego': return { variant: 'default', icon: Wind, label: 'Riego'};
+      default: return { variant: 'outline', icon: MoreHorizontal, label: type};
     }
   }
 
@@ -98,8 +99,8 @@ export function ApplicationHistory() {
     <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
       <Card>
         <CardHeader>
-            <CardTitle>Historial de Aplicaciones</CardTitle>
-            <CardDescription>Registro de todas las aplicaciones de productos y controles realizados.</CardDescription>
+            <CardTitle>Historial de Actividades</CardTitle>
+            <CardDescription>Registro de todas las aplicaciones, labores y controles realizados en el campo.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
@@ -122,16 +123,23 @@ export function ApplicationHistory() {
                 )}
                 {!loading && agronomistLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de aplicaciones.</TableCell>
+                    <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de actividades.</TableCell>
                   </TableRow>
                 )}
-                {!loading && agronomistLogs.map((log) => (
+                {!loading && agronomistLogs.map((log) => {
+                    const typeInfo = getTypeInfo(log.type);
+                    return (
                     <TableRow key={log.id}>
                         <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
-                        <TableCell><Badge variant={getTypeVariant(log.type)}>{log.type}</Badge></TableCell>
+                        <TableCell>
+                          <Badge variant={typeInfo.variant as any} className="gap-1">
+                            <typeInfo.icon className="h-3 w-3" />
+                            {typeInfo.label}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <p className="font-medium">{log.product || '-'}</p>
-                          <p className="text-sm text-muted-foreground">{log.notes}</p>
+                          <p className="text-sm text-muted-foreground max-w-xs truncate">{log.notes}</p>
                         </TableCell>
                         <TableCell>
                           {log.imageUrl && (
@@ -180,14 +188,14 @@ export function ApplicationHistory() {
                             </TableCell>
                         )}
                     </TableRow>
-                ))}
+                )})}
                 </TableBody>
             </Table>
         </CardContent>
     </Card>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Editar Registro de Aplicación</DialogTitle>
+          <DialogTitle>Editar Registro de Actividad</DialogTitle>
           <DialogDescription>
             Actualice los detalles del registro. Haga clic en guardar cuando haya terminado.
           </DialogDescription>
@@ -200,7 +208,7 @@ export function ApplicationHistory() {
                 name="type"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Tipo de Aplicación</FormLabel>
+                    <FormLabel>Tipo de Actividad</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
                         <FormControl>
                         <SelectTrigger>
@@ -208,8 +216,10 @@ export function ApplicationHistory() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                            <SelectItem value="Sanidad">Sanidad</SelectItem>
+                            <SelectItem value="Labor Cultural">Labor Cultural</SelectItem>
                             <SelectItem value="Fertilización">Fertilización</SelectItem>
-                            <SelectItem value="Fumigación">Fumigación</SelectItem>
+                            <SelectItem value="Riego">Riego</SelectItem>
                             <SelectItem value="Control">Control</SelectItem>
                         </SelectContent>
                     </Select>
@@ -222,7 +232,7 @@ export function ApplicationHistory() {
                     name="product"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Producto Utilizado (Opcional)</FormLabel>
+                        <FormLabel>Producto/Labor (Opcional)</FormLabel>
                         <FormControl>
                         <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
                         </FormControl>
@@ -262,5 +272,3 @@ export function ApplicationHistory() {
     </Dialog>
   )
 }
-
-    

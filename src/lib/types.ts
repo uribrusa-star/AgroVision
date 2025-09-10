@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -49,10 +50,19 @@ export type EngineerLogStats = {
   collectorCount: number;
 };
 
+export type AgronomistLogType = 
+    | 'Fertilización' 
+    | 'Fumigación' 
+    | 'Control' 
+    | 'Sanidad'
+    | 'Labor Cultural'
+    | 'Riego';
+
+
 export type AgronomistLog = {
     id: string;
     date: string;
-    type: 'Fertilización' | 'Fumigación' | 'Control';
+    type: AgronomistLogType;
     product?: string;
     notes: string;
     imageUrl?: string;
@@ -157,4 +167,3 @@ export type AppData = {
   updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
   isClient: boolean;
 };
-
