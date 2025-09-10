@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext, useTransition } from 'react';
@@ -60,7 +61,7 @@ export function HarvestSummary() {
       });
 
       try {
-        const doc = new jsPDF('p', 'a4') as jsPDFWithAutoTable;
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4'}) as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
 
