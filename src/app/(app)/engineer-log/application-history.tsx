@@ -9,13 +9,13 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer } from 'lucide-react';
+import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import type { AgronomistLog, AgronomistLogType } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -35,6 +35,7 @@ export function ApplicationHistory() {
   const { loading, agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AgronomistLog | null>(null);
 
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
@@ -57,6 +58,11 @@ export function ApplicationHistory() {
     setSelectedLog(log);
     setIsEditDialogOpen(true);
   };
+
+  const handleDetails = (log: AgronomistLog) => {
+    setSelectedLog(log);
+    setIsDetailOpen(true);
+  }
   
   const handleDelete = (logId: string) => {
     deleteAgronomistLog(logId);
@@ -97,7 +103,7 @@ export function ApplicationHistory() {
   }
 
   return (
-    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+    <>
       <Card>
         <CardHeader>
             <CardTitle>Historial de Actividades</CardTitle>
@@ -167,6 +173,7 @@ export function ApplicationHistory() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                    <DropdownMenuItem onSelect={() => handleDetails(log)}>Ver Detalles</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => handleEdit(log)}>Editar</DropdownMenuItem>
                                     <AlertDialogTrigger asChild>
                                     <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
@@ -175,7 +182,7 @@ export function ApplicationHistory() {
                                 </DropdownMenu>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogTitle>¿Está absolutely seguro?</AlertDialogTitle>
                                         <AlertDialogDescription>
                                             Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la aplicación.
                                         </AlertDialogDescription>
@@ -194,83 +201,152 @@ export function ApplicationHistory() {
             </Table>
         </CardContent>
     </Card>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Registro de Actividad</DialogTitle>
-          <DialogDescription>
-            Actualice los detalles del registro. Haga clic en guardar cuando haya terminado.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
-             <div className="grid md:grid-cols-2 gap-4">
+
+    {/* Edit Dialog */}
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+            <DialogTitle>Editar Registro de Actividad</DialogTitle>
+            <DialogDescription>
+                Actualice los detalles del registro. Haga clic en guardar cuando haya terminado.
+            </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                    control={form.control}
+                    name="type"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Tipo de Actividad</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un tipo" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Condiciones Ambientales">Condiciones Ambientales</SelectItem>
+                                <SelectItem value="Riego">Riego</SelectItem>
+                                <SelectItem value="Fertilización">Fertilización</SelectItem>
+                                <SelectItem value="Sanidad">Sanidad</SelectItem>
+                                <SelectItem value="Labor Cultural">Labor Cultural</SelectItem>
+                                <SelectItem value="Control">Control</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="product"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Producto/Labor/Detalle (Opcional)</FormLabel>
+                            <FormControl>
+                            <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
                 <FormField
                 control={form.control}
-                name="type"
+                name="notes"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Tipo de Actividad</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccione un tipo" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Condiciones Ambientales">Condiciones Ambientales</SelectItem>
-                            <SelectItem value="Riego">Riego</SelectItem>
-                            <SelectItem value="Fertilización">Fertilización</SelectItem>
-                            <SelectItem value="Sanidad">Sanidad</SelectItem>
-                            <SelectItem value="Labor Cultural">Labor Cultural</SelectItem>
-                            <SelectItem value="Control">Control</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <FormLabel>Notas</FormLabel>
+                    <FormControl>
+                        <Textarea
+                        placeholder="Describa la aplicación, dosis, observaciones, etc."
+                        className="resize-none"
+                        {...field}
+                        disabled={!canManage}
+                        />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
-                 <FormField
-                    control={form.control}
-                    name="product"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Producto/Labor/Detalle (Opcional)</FormLabel>
-                        <FormControl>
-                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describa la aplicación, dosis, observaciones, etc."
-                      className="resize-none"
-                      {...field}
-                      disabled={!canManage}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Note: Image editing is not implemented in this version for simplicity */}
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">Cancelar</Button>
-              </DialogClose>
-              <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
+                <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
+                </DialogFooter>
+            </form>
+            </Form>
+        </DialogContent>
     </Dialog>
+
+    {/* Detail View Dialog */}
+     <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-lg">
+           {selectedLog && (() => {
+              const typeInfo = getTypeInfo(selectedLog.type);
+              return (
+                 <>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                           <typeInfo.icon className="h-5 w-5" />
+                           Detalle del Registro de Actividad
+                        </DialogTitle>
+                        <DialogDescription>
+                           Revisión de la entrada de la bitácora.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>{new Date(selectedLog.date).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</span>
+                        </div>
+                        <Card>
+                            <CardContent className="p-4 space-y-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Tipo de Actividad</p>
+                                    <Badge variant={typeInfo.variant as any}>{typeInfo.label}</Badge>
+                                </div>
+
+                                {selectedLog.product && (
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-muted-foreground">Producto / Detalle</p>
+                                        <p className="font-semibold">{selectedLog.product}</p>
+                                    </div>
+                                )}
+                                
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Notas</p>
+                                    <p className="text-foreground whitespace-pre-wrap">{selectedLog.notes}</p>
+                                </div>
+                                
+                                {selectedLog.imageUrl && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium text-muted-foreground">Imagen Adjunta</p>
+                                        <div className="relative w-full aspect-video rounded-md overflow-hidden border">
+                                            <Image
+                                                src={selectedLog.imageUrl}
+                                                alt={selectedLog.notes}
+                                                fill
+                                                className="object-cover"
+                                                data-ai-hint={selectedLog.imageHint}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                 </>
+              );
+           })()}
+        </DialogContent>
+     </Dialog>
+    </>
   )
 }

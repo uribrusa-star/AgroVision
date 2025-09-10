@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Flower, Grape, Sun } from 'lucide-react';
+import { MoreHorizontal, Flower, Grape, Sun, Calendar } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import type { PhenologyLog } from '@/lib/types';
@@ -38,6 +38,7 @@ export function PhenologyHistory() {
   const { loading, phenologyLogs, editPhenologyLog, deletePhenologyLog, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<PhenologyLog | null>(null);
 
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
@@ -62,6 +63,11 @@ export function PhenologyHistory() {
     setIsEditDialogOpen(true);
   };
   
+  const handleDetails = (log: PhenologyLog) => {
+    setSelectedLog(log);
+    setIsDetailOpen(true);
+  };
+
   const handleDelete = (logId: string) => {
     deletePhenologyLog(logId);
     toast({
@@ -98,7 +104,7 @@ export function PhenologyHistory() {
   }
 
   return (
-    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+    <>
       <Card>
         <CardHeader>
             <CardTitle>Historial de Fenología</CardTitle>
@@ -129,13 +135,13 @@ export function PhenologyHistory() {
                     <TableCell colSpan={canManage ? 6: 5} className="text-center">No hay registros de fenología.</TableCell>
                   </TableRow>
                 )}
-                {!loading && phenologyLogs.map((log) => {
+                {!loading && [...phenologyLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const stateInfo = getStateInfo(log.developmentState);
                     return (
                         <TableRow key={log.id}>
                             <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                             <TableCell>
-                                <Badge variant={stateInfo.variant} className="gap-1">
+                                <Badge variant={stateInfo.variant as any} className="gap-1">
                                     <stateInfo.icon className="h-3 w-3" />
                                     {stateInfo.label}
                                 </Badge>
@@ -172,6 +178,7 @@ export function PhenologyHistory() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                        <DropdownMenuItem onSelect={() => handleDetails(log)}>Ver Detalles</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleEdit(log)}>Editar</DropdownMenuItem>
                                         <AlertDialogTrigger asChild>
                                         <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
@@ -200,93 +207,167 @@ export function PhenologyHistory() {
             </Table>
         </CardContent>
     </Card>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Registro de Fenología</DialogTitle>
-          <DialogDescription>
-            Actualice los detalles del registro. Haga clic en guardar cuando haya terminado.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
-             <FormField
+      
+    {/* Edit Dialog */}
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+            <DialogTitle>Editar Registro de Fenología</DialogTitle>
+            <DialogDescription>
+                Actualice los detalles del registro. Haga clic en guardar cuando haya terminado.
+            </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="developmentState"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Estado de Desarrollo</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un estado" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Floración">Floración</SelectItem>
+                                <SelectItem value="Fructificación">Fructificación</SelectItem>
+                                <SelectItem value="Maduración">Maduración</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="flowerCount"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nº Flores (aprox.)</FormLabel>
+                            <FormControl>
+                            <Input type="number" {...field} disabled={!canManage} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="fruitCount"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Nº Frutos (aprox.)</FormLabel>
+                            <FormControl>
+                            <Input type="number" {...field} disabled={!canManage} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+                <FormField
                 control={form.control}
-                name="developmentState"
+                name="notes"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Estado de Desarrollo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccione un estado" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Floración">Floración</SelectItem>
-                            <SelectItem value="Fructificación">Fructificación</SelectItem>
-                            <SelectItem value="Maduración">Maduración</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <FormLabel>Notas</FormLabel>
+                    <FormControl>
+                        <Textarea
+                        placeholder="Describa el vigor, color de hojas, síntomas, etc."
+                        className="resize-none"
+                        {...field}
+                        disabled={!canManage}
+                        />
+                    </FormControl>
                     <FormMessage />
                     </FormItem>
                 )}
                 />
-            <div className="grid md:grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="flowerCount"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Nº Flores (aprox.)</FormLabel>
-                        <FormControl>
-                        <Input type="number" {...field} disabled={!canManage} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="fruitCount"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Nº Frutos (aprox.)</FormLabel>
-                        <FormControl>
-                        <Input type="number" {...field} disabled={!canManage} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Describa el vigor, color de hojas, síntomas, etc."
-                      className="resize-none"
-                      {...field}
-                      disabled={!canManage}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {/* Note: Image editing is not implemented in this version for simplicity */}
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button type="button" variant="secondary">Cancelar</Button>
-              </DialogClose>
-              <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
+                {/* Note: Image editing is not implemented in this version for simplicity */}
+                <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
+                </DialogFooter>
+            </form>
+            </Form>
+        </DialogContent>
     </Dialog>
+
+    {/* Detail View Dialog */}
+     <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="sm:max-w-lg">
+           {selectedLog && (() => {
+              const stateInfo = getStateInfo(selectedLog.developmentState);
+              return (
+                 <>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                           <stateInfo.icon className="h-5 w-5" />
+                           Detalle del Registro de Fenología
+                        </DialogTitle>
+                        <DialogDescription>
+                           Revisión de la entrada de la bitácora.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <Calendar className="h-4 w-4" />
+                            <span>{new Date(selectedLog.date).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</span>
+                        </div>
+                        <Card>
+                            <CardContent className="p-4 space-y-4">
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Estado del Cultivo</p>
+                                    <Badge variant={stateInfo.variant as any}>{stateInfo.label}</Badge>
+                                </div>
+
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-muted-foreground">Nº Flores (aprox.)</p>
+                                        <p className="font-semibold">{selectedLog.flowerCount ?? 'No registrado'}</p>
+                                    </div>
+                                     <div className="space-y-1">
+                                        <p className="text-sm font-medium text-muted-foreground">Nº Frutos (aprox.)</p>
+                                        <p className="font-semibold">{selectedLog.fruitCount ?? 'No registrado'}</p>
+                                    </div>
+                                 </div>
+                                
+                                <div className="space-y-1">
+                                    <p className="text-sm font-medium text-muted-foreground">Notas</p>
+                                    <p className="text-foreground whitespace-pre-wrap">{selectedLog.notes}</p>
+                                </div>
+                                
+                                {selectedLog.imageUrl && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm font-medium text-muted-foreground">Imagen Adjunta</p>
+                                        <div className="relative w-full aspect-video rounded-md overflow-hidden border">
+                                            <Image
+                                                src={selectedLog.imageUrl}
+                                                alt={selectedLog.notes}
+                                                fill
+                                                className="object-cover"
+                                                data-ai-hint={selectedLog.imageHint}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <DialogFooter>
+                        <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
+                    </DialogFooter>
+                 </>
+              );
+           })()}
+        </DialogContent>
+     </Dialog>
+    </>
   )
 }
