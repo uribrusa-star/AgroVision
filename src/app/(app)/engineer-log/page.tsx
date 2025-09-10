@@ -87,7 +87,7 @@ export default function EngineerLogPage() {
         </Card>
       </div>
 
-       <Tabs defaultValue="applications">
+       <Tabs defaultValue="applications" className="mb-8">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
           <TabsTrigger value="applications">
             <Sprout className="mr-2" />
@@ -106,8 +106,8 @@ export default function EngineerLogPage() {
         </TabsContent>
         <TabsContent value="batches" className="mb-8">
            <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-4">
-            {canManageBatches ? <BatchLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para pre-cargar lotes.</p></CardContent></CardHeader></Card>}
             <BatchHistory />
+            {canManageBatches ? <BatchLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para pre-cargar lotes.</p></CardContent></CardHeader></Card>}
           </div>
         </TabsContent>
       </Tabs>
