@@ -34,7 +34,7 @@ export function ProductionForm() {
   const { loading, collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const [isPending, startTransition] = useTransition();
   
-  const canManage = currentUser.role === 'Productor';
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
 
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),

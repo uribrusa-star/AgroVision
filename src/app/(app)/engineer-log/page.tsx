@@ -9,12 +9,9 @@ import { DollarSign, HardHat, Package, Sprout, BarChart, Weight } from 'lucide-r
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import { ApplicationLogForm } from './application-log-form';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BatchLogForm } from './batch-log-form';
 import { HarvestSummary } from './harvest-summary';
 import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
-import { BatchHistory } from './batch-history';
 
 
 export default function EngineerLogPage() {
@@ -33,15 +30,14 @@ export default function EngineerLogPage() {
   
   const averageYieldPerBatch = harvestedBatchIds.length > 0 ? totalKgInHarvestedBatches / harvestedBatchIds.length : 0;
   
-  const canManageApplications = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
-  const canManageBatches = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canManageApplications = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
 
   return (
     <>
       <PageHeader
         title="Bitácora del Agrónomo"
-        description="Gestión de aplicaciones, lotes y visión general de la producción."
+        description="Gestión de aplicaciones y visión general de la producción."
       />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -87,30 +83,12 @@ export default function EngineerLogPage() {
         </Card>
       </div>
 
-       <Tabs defaultValue="applications" className="mb-8">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
-          <TabsTrigger value="applications">
-            <Sprout className="mr-2" />
-            Gestión de Aplicaciones
-          </TabsTrigger>
-          <TabsTrigger value="batches">
-            <Package className="mr-2" />
-            Gestión de Lotes
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="applications" className="mb-8">
+       <div className="mb-8">
           <div className="grid grid-cols-1 gap-8 mt-4">
             {canManageApplications ? <ApplicationLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
             <ApplicationHistory />
           </div>
-        </TabsContent>
-        <TabsContent value="batches" className="mb-8">
-           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-4">
-            <BatchHistory />
-            {canManageBatches ? <BatchLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para pre-cargar lotes.</p></CardContent></CardHeader></Card>}
-          </div>
-        </TabsContent>
-      </Tabs>
+        </div>
       
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mb-8">
         <div className="lg:col-span-2">

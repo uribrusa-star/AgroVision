@@ -39,7 +39,7 @@ export function ApplicationHistory() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AgronomistLog | null>(null);
 
-  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),

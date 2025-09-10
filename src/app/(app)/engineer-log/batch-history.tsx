@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext } from 'react';
@@ -14,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 export function BatchHistory() {
   const { loading, batches, deleteBatch, currentUser, harvests } = useContext(AppDataContext);
   const { toast } = useToast();
-  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const handleDelete = (batchId: string) => {
     deleteBatch(batchId);

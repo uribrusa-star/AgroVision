@@ -55,7 +55,6 @@ const allNavItems = [
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
-  { href: '/lots', label: 'Lotes', icon: PackageSearch, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
 ];
 
 const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
@@ -291,7 +290,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AppContextProvider value={appData}>
       <SidebarProvider>
         <div className="flex min-h-screen">
-          <Sidebar>
+          <Sidebar collapsible='offcanvas'>
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
                 <Link href="/" className="flex items-center gap-2">

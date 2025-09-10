@@ -1,3 +1,4 @@
+
 'use client';
 
 import Image from 'next/image';
@@ -79,7 +80,7 @@ export default function CollectorsPage() {
     form.reset({ name: '' });
   };
 
-  const canManage = currentUser.role === 'Productor';
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
 
 
   return (

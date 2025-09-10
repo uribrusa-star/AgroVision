@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext, useTransition } from 'react';
@@ -22,7 +23,7 @@ export function BatchLogForm() {
   const { addBatch, batches, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const form = useForm<BatchLogFormValues>({
     resolver: zodResolver(BatchLogSchema),

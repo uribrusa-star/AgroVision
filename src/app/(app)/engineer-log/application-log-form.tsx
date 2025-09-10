@@ -33,7 +33,7 @@ export function ApplicationLogForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
-  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
