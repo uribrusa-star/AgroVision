@@ -55,7 +55,8 @@ export function ProductionForm() {
         form.reset();
       }
     }
-  }, [state, toast, form, addHarvest]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, toast, form]);
 
   return (
     <Card>
