@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HardHat, Leaf, LayoutDashboard } from 'lucide-react';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   SidebarProvider,
@@ -40,11 +40,39 @@ const navItems = [
   { href: '/collectors', label: 'Recolectores', icon: HardHat },
 ];
 
+const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+  const [state, setState] = useState<T>(() => {
+    // We can't use localStorage on the server, so we return the initial value.
+    if (typeof window === 'undefined') {
+      return initialValue;
+    }
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(key, JSON.stringify(state));
+    } catch (error) {
+      console.warn(`Error setting localStorage key “${key}”:`, error);
+    }
+  }, [key, state]);
+
+  return [state, setState];
+}
+
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [harvests, setHarvests] = React.useState(initialHarvests);
-  const [collectors, setCollectors] = React.useState(initialCollectors);
-  const [agronomistLogs, setAgronomistLogs] = React.useState(initialAgronomistLogs);
+  const [harvests, setHarvests] = usePersistentState<Harvest[]>('harvests', initialHarvests);
+  const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
+  const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
+
 
   const addHarvest = (harvest: Harvest) => {
     setHarvests(prevHarvests => [harvest, ...prevHarvests]);
@@ -52,7 +80,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       if (c.id === harvest.collector.id) {
         const newTotalHarvested = c.totalHarvested + harvest.kilograms;
         // Assuming some fixed hours for simplicity
-        const newHoursWorked = c.hoursWorked + 4; 
+        const newHoursWorked = c.hoursWorked + 4;
         return {
           ...c,
           totalHarvested: newTotalHarvested,
@@ -81,7 +109,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const addCollector = (collector: Collector) => {
     setCollectors(prevCollectors => [collector, ...prevCollectors]);
   };
-  
+
   const appData: AppData = {
     harvests,
     collectors,
