@@ -14,6 +14,7 @@ import { AppDataContext } from '@/context/app-data-context';
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
 import { useToast } from '@/hooks/use-toast';
 import { AgroVisionLogo } from '@/components/icons';
+import { MonthlyHarvestChart } from '../monthly-harvest-chart';
 
 
 // Extend jsPDF with autoTable
@@ -23,7 +24,6 @@ interface jsPDFWithAutoTable extends jsPDF {
 }
 
 // Chart configurations
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))"];
 const costChartConfig = {
   costs: {
     label: "Costos",
@@ -71,14 +71,14 @@ export function HarvestSummary() {
     ].filter(item => item.value > 0);
 
 
-  const addPageHeader = (doc: jsPDF, logoPngDataUri: string, title: string) => {
+  const addPageHeader = (doc: jsPDF, logoPngDataUri: string) => {
     if (logoPngDataUri) {
       doc.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
     }
     doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(40);
-    doc.text(title, doc.internal.pageSize.width / 2, 22, { align: 'center' });
+    doc.text("Informe de Producción de Frutilla", doc.internal.pageSize.width / 2, 22, { align: 'center' });
     doc.setDrawColor(180);
     doc.line(15, 30, doc.internal.pageSize.width - 15, 30);
   };
@@ -117,28 +117,10 @@ export function HarvestSummary() {
         let logoPngDataUri = '';
 
         // --- Logo Conversion ---
-        const logoSvg = document.getElementById('ag-logo-svg');
-        if (logoSvg) {
-            const svgData = new XMLSerializer().serializeToString(logoSvg);
-            const img = new Image();
-            const svgBase64 = 'data:image/svg+xml;base64,' + btoa(svgData);
-            
-            await new Promise<void>(resolve => {
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                    const ctx = canvas.getContext('2d');
-                    ctx!.drawImage(img, 0, 0);
-                    logoPngDataUri = canvas.toDataURL('image/png');
-                    resolve();
-                };
-                img.onerror = () => {
-                    console.error("Failed to load SVG as image for conversion.");
-                    resolve(); 
-                }
-                img.src = svgBase64;
-            });
+        const logoSvgElement = document.getElementById('ag-logo-svg-for-pdf');
+        if (logoSvgElement) {
+            const canvas = await html2canvas(logoSvgElement, {backgroundColor: null});
+            logoPngDataUri = canvas.toDataURL('image/png');
         }
         
         // --- COVER PAGE ---
@@ -167,10 +149,13 @@ export function HarvestSummary() {
         
         let yPos = 40;
         const addSection = (title: string, content: string) => {
-            if (yPos > pageHeight - 50) { // Margin bottom
+            const splitContent = doc.splitTextToSize(content, pageWidth - 30);
+            const contentHeight = (splitContent.length * 5) + 18; // title height + content height
+
+            if (yPos + contentHeight > pageHeight - 25) { // Margin bottom
                 addPageFooter(doc);
                 doc.addPage();
-                addPageHeader(doc, logoPngDataUri, "Informe de Producción de Frutilla");
+                addPageHeader(doc, logoPngDataUri);
                 yPos = 40;
             }
             doc.setFontSize(14);
@@ -182,17 +167,16 @@ export function HarvestSummary() {
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(80);
-            const splitContent = doc.splitTextToSize(content, pageWidth - 30);
             doc.text(splitContent, 15, yPos, { align: 'justify' });
             yPos += splitContent.length * 5 + 10;
         };
 
         const addTable = (title: string, head: any, body: any) => {
-            const tableHeight = (body.length + 1) * 10; // Simple height estimation
+            const tableHeight = (body.length + 1) * 10 + 15; // Simple height estimation
             if (yPos + tableHeight > pageHeight - 20) {
                  addPageFooter(doc);
                  doc.addPage();
-                 addPageHeader(doc, logoPngDataUri, "Informe de Producción de Frutilla");
+                 addPageHeader(doc, logoPngDataUri);
                  yPos = 40;
             }
              doc.setFontSize(14);
@@ -214,15 +198,15 @@ export function HarvestSummary() {
         }
 
         const addCharts = async () => {
-             const monthlyChartElement = document.getElementById('monthly-harvest-chart-container');
-             const costChartElement = document.getElementById('cost-distribution-chart-container');
+             const monthlyChartElement = document.getElementById('monthly-harvest-chart-for-pdf');
+             const costChartElement = document.getElementById('cost-distribution-chart-for-pdf');
 
              if (!monthlyChartElement || !costChartElement) return;
 
              if (yPos > pageHeight - 110) { // Need space for charts
                 addPageFooter(doc);
                 doc.addPage();
-                addPageHeader(doc, logoPngDataUri, "Informe de Producción de Frutilla");
+                addPageHeader(doc, logoPngDataUri);
                 yPos = 40;
             }
             
@@ -248,7 +232,7 @@ export function HarvestSummary() {
 
         // --- REPORT CONTENT ---
         doc.addPage();
-        addPageHeader(doc, logoPngDataUri, "Informe de Producción de Frutilla");
+        addPageHeader(doc, logoPngDataUri);
         
         // Section: Producer Data
         addTable("Datos Generales del Productor", 
@@ -322,19 +306,19 @@ export function HarvestSummary() {
             </p>
             {/* Hidden elements for rendering and capturing */}
             <div className="absolute -z-50 -left-[9999px] top-0" aria-hidden="true">
-              <AgroVisionLogo id="ag-logo-svg" className="w-8 h-8"/>
-              <div id="cost-distribution-chart-container" className='p-4 bg-card'>
+              <AgroVisionLogo id="ag-logo-svg-for-pdf" className="w-16 h-16"/>
+              <div id="cost-distribution-chart-for-pdf" className='p-4 bg-card w-[450px]'>
                 <Card>
                   <CardHeader>
                       <CardTitle>Distribución de Costos</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer config={costChartConfig} className="h-[250px] w-[400px]">
+                    <ChartContainer config={costChartConfig} className="h-[250px] w-full">
                       <RechartsPieChart>
                           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                          <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50}>
-                              {costDistributionData.map((entry, index) => (
-                                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                          <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                              {costDistributionData.map((entry) => (
+                                  <Cell key={`cell-${entry.name}`} fill={`var(--color-${entry.name.split(' ')[0].toLowerCase()})`} />
                               ))}
                           </Pie>
                       </RechartsPieChart>
@@ -342,6 +326,9 @@ export function HarvestSummary() {
                   </CardContent>
                 </Card>
               </div>
+               <div id="monthly-harvest-chart-for-pdf" className="p-4 bg-card w-[450px]">
+                   <MonthlyHarvestChart harvests={harvests} />
+               </div>
             </div>
         </CardContent>
         <CardFooter>
@@ -353,3 +340,5 @@ export function HarvestSummary() {
     </>
   )
 }
+
+    
