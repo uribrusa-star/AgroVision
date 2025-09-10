@@ -79,8 +79,8 @@ export function HarvestSummary() {
     if (logoPngDataUri) {
       doc.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
     }
-    doc.setFontSize(16);
     doc.setFont('helvetica', 'bold');
+    doc.setFontSize(16);
     doc.setTextColor(40);
     doc.text("Informe de Producción de Frutilla", doc.internal.pageSize.width / 2, 22, { align: 'center' });
     doc.setDrawColor(180);
@@ -91,6 +91,7 @@ export function HarvestSummary() {
     const pageCount = doc.internal.getNumberOfPages();
     for(let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.setTextColor(150);
         doc.text(`Página ${i} de ${pageCount}`, doc.internal.pageSize.width - 15, doc.internal.pageSize.height - 10, { align: 'right'});
@@ -152,26 +153,35 @@ export function HarvestSummary() {
         
         let yPos = 40;
         const addSection = (title: string, content: string) => {
-            const splitContent = doc.splitTextToSize(content, pageWidth - 30);
-            const contentHeight = (splitContent.length * 5) + 18; // title height + content height
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(40);
 
-            if (yPos + contentHeight > pageHeight - 25) { // Margin bottom
+            if (yPos + 18 > pageHeight - 25) { // Check space for title
                 addPageFooter(doc);
                 doc.addPage();
                 addPageHeader(doc, logoPngDataUri);
                 yPos = 40;
             }
-            doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
-            doc.setTextColor(40);
             doc.text(title, 15, yPos);
             yPos += 8;
             
             doc.setFontSize(10);
             doc.setFont('helvetica', 'normal');
             doc.setTextColor(80);
-            doc.text(splitContent, 15, yPos, { align: 'justify' });
-            yPos += splitContent.length * 5 + 10;
+            
+            const splitContent = doc.splitTextToSize(content, pageWidth - 30);
+            splitContent.forEach((line: string) => {
+                if (yPos + 5 > pageHeight - 25) { // Check space for each line
+                    addPageFooter(doc);
+                    doc.addPage();
+                    addPageHeader(doc, logoPngDataUri);
+                    yPos = 40;
+                }
+                doc.text(line, 15, yPos, { align: 'justify' });
+                yPos += 5;
+            });
+            yPos += 10; // Extra space after section
         };
 
         const addTable = (title: string, head: any, body: any) => {
@@ -182,8 +192,8 @@ export function HarvestSummary() {
                  addPageHeader(doc, logoPngDataUri);
                  yPos = 40;
             }
-             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
             doc.setTextColor(40);
             doc.text(title, 15, yPos);
             yPos += 8;
@@ -193,8 +203,8 @@ export function HarvestSummary() {
                 body,
                 startY: yPos,
                 theme: 'grid',
-                headStyles: { fillColor: [38, 70, 83], textColor: 255, fontStyle: 'bold', halign: 'center' },
-                bodyStyles: { textColor: 80, halign: 'center' },
+                headStyles: { fillColor: [38, 70, 83], textColor: 255, font: 'helvetica', fontStyle: 'bold', halign: 'center' },
+                bodyStyles: { textColor: 80, font: 'helvetica', halign: 'center' },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
             });
             yPos = doc.lastAutoTable.finalY + 15;
@@ -210,8 +220,8 @@ export function HarvestSummary() {
                 yPos = 40;
             }
             
-            doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
             doc.setTextColor(40);
             doc.text("Análisis Gráfico", 15, yPos);
             yPos += 10;
@@ -258,6 +268,14 @@ export function HarvestSummary() {
                 `$${totalCost.toLocaleString('es-ES', {maximumFractionDigits: 2})}`
             ]]
         );
+        
+        if (yPos + 50 > pageHeight - 25) { // Check space for next table
+            addPageFooter(doc);
+            doc.addPage();
+            addPageHeader(doc, logoPngDataUri);
+            yPos = 40;
+        }
+
         addTable("Proyección Financiera (Estimada)",
             [['Ingresos Totales', 'Costos Totales', 'Margen Bruto']],
             [[
@@ -342,7 +360,3 @@ export function HarvestSummary() {
     </>
   )
 }
-
-    
-
-    
