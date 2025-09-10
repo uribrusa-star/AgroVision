@@ -65,6 +65,18 @@ export function ApplicationLogForm() {
       form.reset();
     });
   };
+  
+  const getDisplayImageUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined;
+    if (url.includes('imgur.com') && !url.includes('i.imgur.com')) {
+      const parts = url.split('/');
+      const hash = parts.pop();
+      return `https://i.imgur.com/${hash}.jpg`;
+    }
+    return url;
+  }
+  
+  const displayImageUrl = getDisplayImageUrl(imageUrl);
 
   return (
     <Card>
@@ -147,11 +159,11 @@ export function ApplicationLogForm() {
                 </FormItem>
               )}
             />
-            {imageUrl && (
+            {displayImageUrl && (
                 <div className="flex justify-center p-4 border-dashed border-2 border-muted rounded-md">
                     <div className="relative w-full max-w-xs aspect-video">
                         <Image
-                        src={imageUrl}
+                        src={displayImageUrl}
                         alt="Vista previa de la imagen"
                         fill
                         className="object-contain rounded-md"
