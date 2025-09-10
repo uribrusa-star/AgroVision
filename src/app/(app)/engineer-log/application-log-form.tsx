@@ -44,7 +44,6 @@ export function ApplicationLogForm() {
       product: '',
       notes: '',
     },
-    disabled: !canManage || isPending,
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +121,7 @@ export function ApplicationLogForm() {
                     <FormItem>
                         <FormLabel>Producto Utilizado (Opcional)</FormLabel>
                         <FormControl>
-                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={isPending} />
+                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage || isPending} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -140,7 +139,7 @@ export function ApplicationLogForm() {
                       placeholder="Describa la aplicación, dosis, observaciones, etc."
                       className="resize-none"
                       {...field}
-                      disabled={isPending}
+                      disabled={!canManage || isPending}
                     />
                   </FormControl>
                   <FormMessage />
@@ -187,7 +186,7 @@ export function ApplicationLogForm() {
           </CardContent>
           {canManage && (
             <CardFooter>
-                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
+                <Button type="submit" disabled={isPending || !canManage}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
             </CardFooter>
           )}
         </form>
