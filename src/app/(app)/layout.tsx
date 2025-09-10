@@ -287,7 +287,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <AppContextProvider value={appData}>
       <SidebarProvider>
         <div className="flex min-h-screen">
-          <aside className="w-64 flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col">
+          <Sidebar>
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
                 <Link href="/" className="flex items-center gap-2">
@@ -367,7 +367,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarFooter>
-          </aside>
+          </Sidebar>
           <div className="flex-1 flex flex-col">
             <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
                 <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(o => !o)}>
