@@ -285,108 +285,135 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContextProvider value={appData}>
-      <SidebarProvider open={isSidebarOpen} onOpenChange={setIsSidebarOpen}>
-        <Sidebar collapsible="none">
-          <SidebarHeader className="p-4">
-            <div className="flex items-center gap-2">
-              <Link href="/" className="flex items-center gap-2">
-                <AgroVisionLogo className="w-8 h-8 text-primary" />
-                <span className="text-xl font-headline text-sidebar-foreground">AgroVision</span>
-              </Link>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={pathname === item.href}
-                    tooltip={item.label}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter className="p-4">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
-                     {isClient ? (
-                        <>
-                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
-                            <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="text-left">
-                            <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
-                            <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-                        </div>
-                        </>
-                    ) : (
-                        <div className="flex items-center gap-2 w-full">
-                           <Skeleton className="h-8 w-8 rounded-full" />
-                           <div className="flex flex-col gap-1 w-full">
-                            <Skeleton className="h-4 w-2/3" />
-                            <Skeleton className="h-3 w-full" />
-                           </div>
-                        </div>
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" align="start" className="w-56">
-                  <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuRadioGroup
-                    value={currentUser.id}
-                    onValueChange={(userId) => {
-                        const user = availableUsers.find(u => u.id === userId);
-                        if (user) {
-                            setCurrentUser(user);
-                        }
-                    }}
-                  >
-                    {availableUsers.map(user => (
-                        <DropdownMenuRadioItem key={user.id} value={user.id} className="gap-2">
-                            <Avatar className="h-6 w-6">
-                                <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/40/40`} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                           <span>{user.name}</span>
-                        </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled>Cerrar Sesión</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-          </SidebarFooter>
-        </Sidebar>
-        <SidebarInset>
-          <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
-              <SidebarTrigger onClick={() => setIsSidebarOpen(prev => !prev)} />
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+          <aside className="w-64 flex-shrink-0 bg-sidebar text-sidebar-foreground flex flex-col">
+            <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
-                <AgroVisionLogo className="w-6 h-6 text-primary" />
-                <span className="text-lg font-headline">AgroVision</span>
+                <Link href="/" className="flex items-center gap-2">
+                  <AgroVisionLogo className="w-8 h-8 text-primary" />
+                  <span className="text-xl font-headline text-sidebar-foreground">AgroVision</span>
+                </Link>
               </div>
-          </header>
-          <main className="flex-1 p-4 md:p-6 lg:p-8">
-              {loading ? (
-                <div className="flex items-center justify-center h-full">
-                  <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-muted-foreground">Cargando datos...</p>
-                  </div>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                      tooltip={item.label}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter className="p-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
+                      {isClient ? (
+                          <>
+                          <Avatar className="h-8 w-8">
+                              <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
+                              <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <div className="text-left">
+                              <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+                              <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                          </div>
+                          </>
+                      ) : (
+                          <div className="flex items-center gap-2 w-full">
+                            <Skeleton className="h-8 w-8 rounded-full" />
+                            <div className="flex flex-col gap-1 w-full">
+                              <Skeleton className="h-4 w-2/3" />
+                              <Skeleton className="h-3 w-full" />
+                            </div>
+                          </div>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" align="start" className="w-56">
+                    <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuRadioGroup
+                      value={currentUser.id}
+                      onValueChange={(userId) => {
+                          const user = availableUsers.find(u => u.id === userId);
+                          if (user) {
+                              setCurrentUser(user);
+                          }
+                      }}
+                    >
+                      {availableUsers.map(user => (
+                          <DropdownMenuRadioItem key={user.id} value={user.id} className="gap-2">
+                              <Avatar className="h-6 w-6">
+                                  <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/40/40`} alt={user.name} />
+                                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                            <span>{user.name}</span>
+                          </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem disabled>Cerrar Sesión</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarFooter>
+          </aside>
+          <div className="flex-1 flex flex-col">
+            <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
+                <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(o => !o)}>
+                  <MenuIcon className="h-6 w-6" />
+                  <span className="sr-only">Toggle Menu</span>
+                </Button>
+                <div className="flex items-center gap-2">
+                  <AgroVisionLogo className="w-6 h-6 text-primary" />
+                  <span className="text-lg font-headline">AgroVision</span>
                 </div>
-              ) : children}
-          </main>
-        </SidebarInset>
+            </header>
+            <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
+                {loading ? (
+                  <div className="flex items-center justify-center h-full">
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-muted-foreground">Cargando datos...</p>
+                    </div>
+                  </div>
+                ) : children}
+            </main>
+          </div>
+        </div>
       </SidebarProvider>
     </AppContextProvider>
+  );
+}
+
+// Dummy MenuIcon for mobile toggle, as lucide-react's Menu might not be in scope.
+function MenuIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="4" x2="20" y1="12" y2="12" />
+      <line x1="4" x2="20" y1="6" y2="6" />
+      <line x1="4" x2="20" y1="18" y2="18" />
+    </svg>
   );
 }
