@@ -27,14 +27,9 @@ export function HarvestSummary() {
   const { toast } = useToast();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
-  const addPageHeader = (doc: jsPDFWithAutoTable) => {
-    const logoSvg = document.getElementById('ag-logo-svg');
-    if (logoSvg) {
-        const svgData = new XMLSerializer().serializeToString(logoSvg);
-        const img = new Image();
-        img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-        // This is a synchronous operation with data URI
-        doc.addImage(img, 'PNG', 14, 15, 30, 30);
+  const addPageHeader = (doc: jsPDFWithAutoTable, logoPngDataUri: string) => {
+    if (logoPngDataUri) {
+        doc.addImage(logoPngDataUri, 'PNG', 14, 15, 30, 30);
     }
     
     doc.setFontSize(10);
@@ -65,23 +60,32 @@ export function HarvestSummary() {
         const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4'}) as jsPDFWithAutoTable;
         const pageHeight = doc.internal.pageSize.height;
         const pageWidth = doc.internal.pageSize.width;
+        let logoPngDataUri = '';
 
         // --- COVER PAGE ---
         const logoSvg = document.getElementById('ag-logo-svg');
         if (logoSvg) {
-            const svgData = new XMLSerializer().serializeToString(logoSvg);
-            const img = new Image();
-            img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
-            await new Promise(resolve => {
+            await new Promise<void>(resolve => {
+                const svgData = new XMLSerializer().serializeToString(logoSvg);
+                const img = new Image();
+                img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
                 img.onload = () => {
                     const canvas = document.createElement('canvas');
-                    canvas.width = 800; // Increased resolution
-                    canvas.height = 800;
+                    // Set canvas dimensions to match the desired image dimensions for quality
+                    const desiredWidth = 800;
+                    const desiredHeight = 800;
+                    canvas.width = desiredWidth;
+                    canvas.height = desiredHeight;
                     const ctx = canvas.getContext('2d');
-                    ctx!.drawImage(img, 0, 0, 800, 800);
-                    const pngDataUri = canvas.toDataURL('image/png');
-                    doc.addImage(pngDataUri, 'PNG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
-                    resolve(true);
+                    ctx!.drawImage(img, 0, 0, desiredWidth, desiredHeight);
+                    logoPngDataUri = canvas.toDataURL('image/png');
+                    
+                    doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 40, pageHeight / 3 - 50, 80, 80);
+                    resolve();
+                }
+                img.onerror = () => {
+                    console.error("Failed to load SVG as image");
+                    resolve(); // Resolve anyway to not block PDF generation
                 }
             });
         }
@@ -123,7 +127,7 @@ export function HarvestSummary() {
 
         // --- AI SUMMARY PAGE ---
         doc.addPage();
-        addPageHeader(doc);
+        addPageHeader(doc, logoPngDataUri);
         doc.setFontSize(18);
         doc.setTextColor(40);
         doc.setFont('helvetica', 'bold');
@@ -141,7 +145,7 @@ export function HarvestSummary() {
             if (yPos > pageHeight - 60) {
               addPageFooter(doc);
               doc.addPage();
-              addPageHeader(doc);
+              addPageHeader(doc, logoPngDataUri);
               yPos = 80;
             }
 
@@ -162,7 +166,7 @@ export function HarvestSummary() {
         // --- CHARTS PAGE ---
         if(yieldChartImage || monthlyChartImage) {
            doc.addPage();
-           addPageHeader(doc);
+           addPageHeader(doc, logoPngDataUri);
            doc.setFontSize(18);
            doc.setTextColor(40);
            doc.setFont('helvetica', 'bold');
@@ -182,7 +186,7 @@ export function HarvestSummary() {
                if (chartYPos + (chartWidth * (300/600)) > pageHeight - 60) {
                   addPageFooter(doc);
                   doc.addPage();
-                  addPageHeader(doc);
+                  addPageHeader(doc, logoPngDataUri);
                   doc.setFontSize(18);
                   doc.setTextColor(40);
                   doc.setFont('helvetica', 'bold');
@@ -204,7 +208,7 @@ export function HarvestSummary() {
             footStyles: { fillColor: [230, 230, 230], textColor: 40, fontStyle: 'bold' },
             theme: 'grid',
             didDrawPage: (data: any) => {
-              addPageHeader(doc);
+              addPageHeader(doc, logoPngDataUri);
             }
         };
 
@@ -304,5 +308,3 @@ export function HarvestSummary() {
     </Card>
   )
 }
-
-    
