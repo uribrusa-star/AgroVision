@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useContext } from 'react';
+import React, { useContext, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -13,7 +13,7 @@ import type { Batch } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 const BatchLogSchema = z.object({
-  batchId: z.string().regex(/^L\d{3}$/, "El ID del lote debe tener el formato L000 (ej., L014)."),
+  id: z.string().regex(/^L\d{3}$/, "El ID del lote debe tener el formato L000 (ej., L014)."),
 });
 
 type BatchLogFormValues = z.infer<typeof BatchLogSchema>;
@@ -21,32 +21,35 @@ type BatchLogFormValues = z.infer<typeof BatchLogSchema>;
 export function BatchLogForm() {
   const { addBatch, batches, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   const form = useForm<BatchLogFormValues>({
     resolver: zodResolver(BatchLogSchema),
     defaultValues: {
-      batchId: '',
+      id: '',
     },
-    disabled: !canManage,
+    disabled: !canManage || isPending,
   });
 
   const onSubmit = (data: BatchLogFormValues) => {
-    if (batches.some(b => b.id === data.batchId)) {
-        form.setError("batchId", { type: "manual", message: "Este ID de lote ya existe." });
+    if (batches.some(b => b.id === data.id)) {
+        form.setError("id", { type: "manual", message: "Este ID de lote ya existe." });
         return;
     }
-    const newBatch: Batch = {
-      id: data.batchId,
-      preloadedDate: new Date().toISOString(),
-      status: 'pending',
-    };
-    addBatch(newBatch);
-    toast({
-      title: "¡Lote Pre-cargado!",
-      description: `El lote ${data.batchId} está listo para ser cosechado.`,
+    startTransition(async () => {
+      const newBatch: Omit<Batch, 'id'> = {
+        id: data.id, // Keep the user-provided ID
+        preloadedDate: new Date().toISOString(),
+        status: 'pending',
+      };
+      await addBatch(newBatch);
+      toast({
+        title: "¡Lote Pre-cargado!",
+        description: `El lote ${data.id} está listo para ser cosechado.`,
+      });
+      form.reset();
     });
-    form.reset();
   };
 
   return (
@@ -60,7 +63,7 @@ export function BatchLogForm() {
           <CardContent>
             <FormField
               control={form.control}
-              name="batchId"
+              name="id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Nuevo ID de Lote</FormLabel>
@@ -77,7 +80,7 @@ export function BatchLogForm() {
           </CardContent>
           {canManage && (
             <CardFooter>
-                <Button type="submit">Agregar Lote</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Agregando...' : 'Agregar Lote'}</Button>
             </CardFooter>
           )}
         </form>

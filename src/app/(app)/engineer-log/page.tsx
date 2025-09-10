@@ -47,43 +47,29 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 function HarvestSummary() {
-  const [state, formAction] = useActionState(handleSummarizeHarvest, initialState);
-  const [showSummary, setShowSummary] = useState(false);
+  const [state, formAction, isPending] = useActionState(handleSummarizeHarvest, initialState);
   const { harvests, currentUser } = useContext(AppDataContext);
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
-  const handleSubmit = () => {
-    setShowSummary(true);
-  };
-
   return (
     <Card>
-      <form action={formAction} onSubmit={handleSubmit}>
+      <form action={formAction}>
         <CardHeader>
           <CardTitle>Resumen de Cosecha con IA</CardTitle>
           <CardDescription>Genere un resumen completo de todos los datos de cosecha utilizando IA para identificar tendencias y perspectivas.</CardDescription>
         </CardHeader>
         <input type="hidden" name="harvests" value={JSON.stringify(harvests)} />
-        {showSummary && (
+        {state.summary && (
           <CardContent>
-            {state.loading && (
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-[75%]" />
-              </div>
-            )}
-            {state.summary && (
-              <Alert>
-                <AlertTitle>Resumen Generado</AlertTitle>
-                <AlertDescription className="whitespace-pre-wrap">{state.summary}</AlertDescription>
-              </Alert>
-            )}
+            <Alert>
+              <AlertTitle>Resumen Generado</AlertTitle>
+              <AlertDescription className="whitespace-pre-wrap">{state.summary}</AlertDescription>
+            </Alert>
           </CardContent>
         )}
         <CardFooter>
-          <Button type="submit" disabled={state.loading || !canManage}>
-            {state.loading ? 'Generando...' : 'Generar Resumen'}
+          <Button type="submit" disabled={isPending || !canManage}>
+            {isPending ? 'Generando...' : 'Generar Resumen'}
           </Button>
         </CardFooter>
       </form>
@@ -92,9 +78,8 @@ function HarvestSummary() {
 }
 
 function ApplicationHistory() {
-  const { agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser } = useContext(AppDataContext);
+  const { loading, agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AgronomistLog | null>(null);
 
@@ -104,10 +89,6 @@ function ApplicationHistory() {
     resolver: zodResolver(LogSchema),
     disabled: !canManage,
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     if (selectedLog) {
@@ -177,19 +158,19 @@ function ApplicationHistory() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {!isClient && (
+                {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 5: 4} className="h-24 text-center">
-                      Cargando registros...
+                    <TableCell colSpan={canManage ? 5: 4}>
+                      <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
-                {isClient && agronomistLogs.length === 0 && (
+                {!loading && agronomistLogs.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de aplicaciones.</TableCell>
                   </TableRow>
                 )}
-                {isClient && agronomistLogs.map((log) => (
+                {!loading && agronomistLogs.map((log) => (
                     <TableRow key={log.id}>
                         <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                         <TableCell><Badge variant={getTypeVariant(log.type)}>{log.type}</Badge></TableCell>
@@ -327,14 +308,9 @@ function ApplicationHistory() {
 }
 
 function BatchHistory() {
-  const { batches, deleteBatch, currentUser } = useContext(AppDataContext);
+  const { loading, batches, deleteBatch, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const handleDelete = (batchId: string) => {
     deleteBatch(batchId);
@@ -363,19 +339,19 @@ function BatchHistory() {
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {!isClient && (
+                  {loading && (
                     <TableRow>
-                      <TableCell colSpan={canManage ? 4 : 3} className="h-24 text-center">
-                        Cargando lotes...
+                      <TableCell colSpan={canManage ? 4 : 3}>
+                        <Skeleton className="h-8 w-full" />
                       </TableCell>
                     </TableRow>
                   )}
-                  {isClient && sortedBatches.length === 0 && (
+                  {!loading && sortedBatches.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={canManage ? 4 : 3} className="text-center">No hay lotes registrados.</TableCell>
                     </TableRow>
                   )}
-                  {isClient && sortedBatches.map((batch) => (
+                  {!loading && sortedBatches.map((batch) => (
                       <TableRow key={batch.id}>
                           <TableCell className="font-medium">{batch.id}</TableCell>
                           <TableCell>
@@ -425,12 +401,7 @@ const chartConfig = {
 };
 
 function BatchYieldChart() {
-  const { harvests, batches } = useContext(AppDataContext);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const { loading, harvests, batches } = useContext(AppDataContext);
 
   const completedBatches = batches.filter(b => b.status === 'completed')
     .sort((a, b) => new Date(b.completionDate!).getTime() - new Date(a.completionDate!).getTime())
@@ -445,7 +416,7 @@ function BatchYieldChart() {
     };
   }).reverse(); // reverse to show chronologically
 
-  if (!isClient) {
+  if (loading) {
     return <Skeleton className="h-[400px] w-full" />;
   }
 
@@ -491,12 +462,7 @@ function BatchYieldChart() {
 
 
 export default function EngineerLogPage() {
-  const { collectors, harvests, collectorPaymentLogs, batches, currentUser } = useContext(AppDataContext);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const { loading, collectors, harvests, collectorPaymentLogs, batches, currentUser } = useContext(AppDataContext);
   
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
   const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
@@ -527,7 +493,7 @@ export default function EngineerLogPage() {
             <Weight className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient ? totalProduction.toLocaleString('es-ES') : 'Cargando...'} kg</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${totalProduction.toLocaleString('es-ES')} kg`}</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>
@@ -537,7 +503,7 @@ export default function EngineerLogPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${isClient ? totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : 'Cargando...'}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}</div>
             <p className="text-xs text-muted-foreground">Basado en pagos registrados</p>
           </CardContent>
         </Card>
@@ -547,7 +513,7 @@ export default function EngineerLogPage() {
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient ? averageYieldPerBatch.toFixed(1) : '...'} kg</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${averageYieldPerBatch.toFixed(1)} kg`}</div>
             <p className="text-xs text-muted-foreground">Promedio en lotes completados</p>
           </CardContent>
         </Card>
@@ -557,7 +523,7 @@ export default function EngineerLogPage() {
             <HardHat className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient ? collectors.length : '...'}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : collectors.length}</div>
             <p className="text-xs text-muted-foreground">Activos esta temporada</p>
           </CardContent>
         </Card>
@@ -615,7 +581,12 @@ export default function EngineerLogPage() {
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {isClient && collectors.map((collector) => (
+                        {loading && (
+                           <TableRow>
+                            <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                           </TableRow>
+                        )}
+                        {!loading && collectors.map((collector) => (
                             <TableRow key={collector.id}>
                             <TableCell className="font-medium">{collector.name}</TableCell>
                             <TableCell className="text-right">{collector.totalHarvested.toLocaleString('es-ES')}</TableCell>

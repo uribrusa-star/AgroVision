@@ -9,15 +9,11 @@ import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-re
 import { MonthlyHarvestChart } from "./monthly-harvest-chart";
 import { AppDataContext } from '@/context/app-data-context';
 import type { Harvest } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function DashboardPage() {
-  const { harvests, collectors } = React.useContext(AppDataContext);
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  const { loading, harvests, collectors } = React.useContext(AppDataContext);
 
   const calculateDashboardStats = (harvests: Harvest[]) => {
     if (harvests.length === 0) {
@@ -65,7 +61,7 @@ export default function DashboardPage() {
             <Weight className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient ? dashboardStats.totalHarvest.toLocaleString('es-ES', { maximumFractionDigits: 0 }) : 'Cargando...'} kg</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${dashboardStats.totalHarvest.toLocaleString('es-ES', { maximumFractionDigits: 0 })} kg`}</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>
@@ -75,7 +71,7 @@ export default function DashboardPage() {
             <BarChartIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient ? dashboardStats.averageYield.toLocaleString('es-ES', { maximumFractionDigits: 1 }) : 'Cargando...'} kg/lote</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${dashboardStats.averageYield.toLocaleString('es-ES', { maximumFractionDigits: 1 })} kg/lote`}</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
           </CardContent>
         </Card>
@@ -85,7 +81,7 @@ export default function DashboardPage() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+{isClient ? dashboardStats.activeCollectors.toLocaleString('es-ES') : 'Cargando...'}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : `+${dashboardStats.activeCollectors.toLocaleString('es-ES')}`}</div>
             <p className="text-xs text-muted-foreground">Actualmente en el campo</p>
           </CardContent>
         </Card>
@@ -95,7 +91,7 @@ export default function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{isClient && dashboardStats.peakDay ? new Date(dashboardStats.peakDay).toLocaleDateString('es-ES') : 'N/A'}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : (dashboardStats.peakDay ? new Date(dashboardStats.peakDay).toLocaleDateString('es-ES') : 'N/A')}</div>
             <p className="text-xs text-muted-foreground">Cosecha más alta esta temporada</p>
           </CardContent>
         </Card>
@@ -120,19 +116,17 @@ export default function DashboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {!isClient && (
+                {loading && (
                   <TableRow>
-                    <TableCell colSpan={4} className="h-24 text-center">
-                      Cargando cosechas...
-                    </TableCell>
+                    <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
                   </TableRow>
                 )}
-                {isClient && harvests.length === 0 && (
+                {!loading && harvests.length === 0 && (
                     <TableRow>
                         <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
                     </TableRow>
                 )}
-                {isClient && harvests.slice(0, 5).map((harvest) => (
+                {!loading && harvests.slice(0, 5).map((harvest) => (
                   <TableRow key={harvest.id}>
                     <TableCell>
                       <Badge variant="outline">{harvest.batchNumber}</Badge>

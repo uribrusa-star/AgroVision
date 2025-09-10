@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useContext, useMemo, useState } from 'react';
+import { useActionState, useEffect, useContext, useMemo, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,6 +17,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Trash2 } from 'lucide-react';
+import type { CollectorPaymentLog, Harvest } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, "El ID del lote es requerido."),
@@ -27,24 +29,13 @@ const ProductionSchema = z.object({
 
 type ProductionFormValues = z.infer<typeof ProductionSchema>;
 
-const initialState = {
-  message: '',
-  success: false,
-  newHarvest: undefined,
-  newPaymentLog: undefined,
-};
 
 export function ProductionForm() {
-  const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
-  const { collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
-  const [isClient, setIsClient] = useState(false);
+  const { loading, collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
+  const [isPending, startTransition] = useTransition();
   
   const canManage = currentUser.role === 'Productor';
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const form = useForm<ProductionFormValues>({
     resolver: zodResolver(ProductionSchema),
@@ -54,51 +45,84 @@ export function ProductionForm() {
       farmerId: '',
       ratePerKg: 0.45,
     },
-    disabled: !canManage,
+    disabled: !canManage || isPending,
   });
   
   const availableBatches = useMemo(() => batches.filter(b => b.status === 'pending'), [batches]);
 
-  useEffect(() => {
-    if (state.message) {
-      toast({
-        title: state.success ? '¡Éxito!' : '¡Error!',
-        description: state.message,
-        variant: state.success ? 'default' : 'destructive',
-      });
-      if (state.success) {
-          if (state.newHarvest) addHarvest(state.newHarvest);
-          if (state.newPaymentLog) addCollectorPaymentLog(state.newPaymentLog);
-          form.reset({
-            batchId: '',
-            kilosPerBatch: 0,
-            farmerId: '',
-            ratePerKg: 0.45,
-          });
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, toast, form]);
+  const onSubmit = (values: ProductionFormValues) => {
+    startTransition(async () => {
+        const farmer = collectors.find(c => c.id === values.farmerId);
+        if (!farmer) {
+            toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
+            return;
+        }
+
+        try {
+            const newHarvestData: Omit<Harvest, 'id'> = {
+                date: new Date().toISOString(),
+                batchNumber: values.batchId,
+                kilograms: values.kilosPerBatch,
+                collector: {
+                    id: values.farmerId,
+                    name: farmer.name,
+                }
+            };
+            
+            // In a real app, you would get the new harvest ID from the addHarvest call
+            const tempHarvestId = `H${Date.now()}`;
+            const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+            const hoursWorked = 4; // For simplicity, we assume fixed hours
+
+            const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
+              harvestId: tempHarvestId, 
+              date: new Date().toISOString(),
+              collectorId: values.farmerId,
+              collectorName: farmer.name,
+              kilograms: values.kilosPerBatch,
+              hours: hoursWorked,
+              ratePerKg: values.ratePerKg,
+              payment: calculatedPayment,
+            };
+
+            // We are not awaiting these to prevent blocking UI, context will refetch
+            addHarvest(newHarvestData);
+            addCollectorPaymentLog(newPaymentLogData);
+
+            toast({
+                title: '¡Éxito!',
+                description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
+            });
+
+            form.reset({
+                batchId: '',
+                kilosPerBatch: 0,
+                farmerId: '',
+                ratePerKg: 0.45,
+            });
+
+        } catch (error) {
+            console.error(error);
+            toast({
+                title: 'Error',
+                description: 'Ocurrió un error inesperado al guardar los datos.',
+                variant: 'destructive',
+            });
+        }
+    });
+  }
 
   const handleDelete = (logId: string) => {
-    deleteCollectorPaymentLog(logId);
-    toast({
-        title: "Registro Eliminado",
-        description: "El registro de producción y pago ha sido eliminado exitosamente.",
+    startTransition(async () => {
+      await deleteCollectorPaymentLog(logId);
+      toast({
+          title: "Registro Eliminado",
+          description: "El registro de producción y pago ha sido eliminado exitosamente.",
+      });
     });
   }
   
   const sortedLogs = [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-
-  const onSubmit = (values: ProductionFormValues) => {
-    const formData = new FormData();
-    formData.set('batchId', values.batchId);
-    formData.set('kilosPerBatch', values.kilosPerBatch.toString());
-    formData.set('farmerId', values.farmerId);
-    formData.set('ratePerKg', values.ratePerKg.toString());
-    formData.set('collectors', JSON.stringify(collectors));
-    formAction(formData);
-  }
 
   return (
     <div className="grid lg:grid-cols-2 gap-8">
@@ -116,7 +140,7 @@ export function ProductionForm() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>ID del Lote</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                      <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                           <FormControl>
                           <SelectTrigger>
                               <SelectValue placeholder="Seleccione un lote" />
@@ -144,7 +168,7 @@ export function ProductionForm() {
                     <FormItem>
                       <FormLabel>Kilos por Lote</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="ej., 125.5" {...field} />
+                        <Input type="number" placeholder="ej., 125.5" {...field} disabled={isPending} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -157,7 +181,7 @@ export function ProductionForm() {
                       <FormItem>
                         <FormLabel>Tarifa por kg ($)</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" {...field} />
+                          <Input type="number" step="0.01" {...field} disabled={isPending}/>
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -170,7 +194,7 @@ export function ProductionForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Recolector</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage}>
+                    <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage || isPending}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Seleccione un recolector" />
@@ -189,7 +213,9 @@ export function ProductionForm() {
             </CardContent>
             {canManage && (
                 <CardFooter>
-                    <Button type="submit">Guardar Producción y Pago</Button>
+                    <Button type="submit" disabled={isPending}>
+                        {isPending ? 'Guardando...' : 'Guardar Producción y Pago'}
+                    </Button>
                 </CardFooter>
             )}
           </form>
@@ -212,19 +238,19 @@ export function ProductionForm() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!isClient && (
+              {loading && (
                 <TableRow>
-                  <TableCell colSpan={canManage ? 5 : 4} className="h-24 text-center">
-                    Cargando historial...
+                  <TableCell colSpan={canManage ? 5 : 4}>
+                      <Skeleton className="h-8 w-full" />
                   </TableCell>
                 </TableRow>
               )}
-              {isClient && sortedLogs.length === 0 && (
+              {!loading && sortedLogs.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={canManage ? 5 : 4} className="text-center">No hay registros de producción.</TableCell>
                 </TableRow>
               )}
-              {isClient && sortedLogs.map(log => {
+              {!loading && sortedLogs.map(log => {
                 const harvest = harvests.find(h => h.id === log.harvestId);
                 const batchNum = harvest ? harvest.batchNumber : "L???";
                 return (
@@ -237,7 +263,7 @@ export function ProductionForm() {
                         <TableCell className="text-right">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isPending}>
                                     <Trash2 className="h-4 w-4" />
                                     <span className="sr-only">Eliminar</span>
                                 </Button>

@@ -71,6 +71,7 @@ export type CollectorPaymentLog = {
 }
 
 export type AppData = {
+  loading: boolean;
   currentUser: User;
   users: User[];
   setCurrentUser: (user: User) => void;
@@ -79,15 +80,15 @@ export type AppData = {
   agronomistLogs: AgronomistLog[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
-  addHarvest: (harvest: Harvest) => void;
-  editCollector: (collector: Collector) => void;
-  deleteCollector: (collectorId: string) => void;
-  addAgronomistLog: (log: AgronomistLog) => void;
-  editAgronomistLog: (log: AgronomistLog) => void;
-  deleteAgronomistLog: (logId: string) => void;
-  addCollector: (collector: Collector) => void;
-  addBatch: (batch: Batch) => void;
-  deleteBatch: (batchId: string) => void;
-  addCollectorPaymentLog: (log: CollectorPaymentLog) => void;
-  deleteCollectorPaymentLog: (logId: string) => void;
+  addHarvest: (harvest: Omit<Harvest, 'id'>) => Promise<void>;
+  editCollector: (collector: Collector) => Promise<void>;
+  deleteCollector: (collectorId: string) => Promise<void>;
+  addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => Promise<void>;
+  editAgronomistLog: (log: AgronomistLog) => Promise<void>;
+  deleteAgronomistLog: (logId: string) => Promise<void>;
+  addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
+  addBatch: (batch: Omit<Batch, 'id'>) => Promise<void>;
+  deleteBatch: (batchId: string) => Promise<void>;
+  addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
+  deleteCollectorPaymentLog: (logId: string) => Promise<void>;
 };

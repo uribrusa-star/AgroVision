@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -32,6 +32,7 @@ export function ApplicationLogForm() {
   const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
@@ -43,7 +44,7 @@ export function ApplicationLogForm() {
       product: '',
       notes: '',
     },
-    disabled: !canManage,
+    disabled: !canManage || isPending,
   });
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,25 +61,26 @@ export function ApplicationLogForm() {
   };
 
   const onSubmit = (data: LogFormValues) => {
-    const newLog: AgronomistLog = {
-      id: `LOG${Date.now()}`,
-      date: new Date().toISOString(),
-      type: data.type,
-      product: data.product,
-      notes: data.notes,
-      imageUrl: imagePreview || undefined,
-      imageHint: imagePreview ? 'field application' : undefined,
-    };
-    addAgronomistLog(newLog);
-    toast({
-      title: "¡Registro Exitoso!",
-      description: `Se ha agregado una nueva entrada de tipo "${data.type}".`,
+    startTransition(async () => {
+      const newLog: Omit<AgronomistLog, 'id'> = {
+        date: new Date().toISOString(),
+        type: data.type,
+        product: data.product,
+        notes: data.notes,
+        imageUrl: imagePreview || undefined,
+        imageHint: imagePreview ? 'field application' : undefined,
+      };
+      await addAgronomistLog(newLog);
+      toast({
+        title: "¡Registro Exitoso!",
+        description: `Se ha agregado una nueva entrada de tipo "${data.type}".`,
+      });
+      form.reset();
+      setImagePreview(null);
+      if(fileInputRef.current) {
+          fileInputRef.current.value = '';
+      }
     });
-    form.reset();
-    setImagePreview(null);
-    if(fileInputRef.current) {
-        fileInputRef.current.value = '';
-    }
   };
 
   return (
@@ -97,7 +99,7 @@ export function ApplicationLogForm() {
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Tipo de Aplicación</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Seleccione un tipo" />
@@ -120,7 +122,7 @@ export function ApplicationLogForm() {
                     <FormItem>
                         <FormLabel>Producto Utilizado (Opcional)</FormLabel>
                         <FormControl>
-                        <Input placeholder="ej., Nitrato de Calcio" {...field} />
+                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={isPending} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -138,6 +140,7 @@ export function ApplicationLogForm() {
                       placeholder="Describa la aplicación, dosis, observaciones, etc."
                       className="resize-none"
                       {...field}
+                      disabled={isPending}
                     />
                   </FormControl>
                   <FormMessage />
@@ -161,7 +164,7 @@ export function ApplicationLogForm() {
                           field.onChange(e.target.files);
                           handleImageChange(e);
                         }}
-                        disabled={!canManage}
+                        disabled={!canManage || isPending}
                       />
                     </div>
                   </FormControl>
@@ -184,7 +187,7 @@ export function ApplicationLogForm() {
           </CardContent>
           {canManage && (
             <CardFooter>
-                <Button type="submit">Guardar Registro</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
             </CardFooter>
           )}
         </form>

@@ -27,8 +27,7 @@ const CollectorSchema = z.object({
 });
 
 export default function CollectorsPage() {
-  const { collectors, harvests, addCollector, editCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
-  const [isClient, setIsClient] = useState(false);
+  const { loading, collectors, harvests, addCollector, editCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -37,10 +36,6 @@ export default function CollectorsPage() {
     resolver: zodResolver(CollectorSchema),
     defaultValues: { name: '' },
   });
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     if (selectedCollector) {
@@ -71,8 +66,7 @@ export default function CollectorsPage() {
   };
 
   const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
-    const newCollector: Collector = {
-      id: `C${Date.now()}`,
+    const newCollector = {
       name: values.name,
       avatar: `${collectors.length + 1}`,
       totalHarvested: 0,
@@ -150,7 +144,7 @@ export default function CollectorsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!isClient && (
+              {loading && (
                 <TableRow>
                   <TableCell colSpan={canManage ? 5 : 4}>
                     <div className="flex items-center gap-3">
@@ -176,7 +170,7 @@ export default function CollectorsPage() {
                   )}
                 </TableRow>
               )}
-              {isClient && collectors.map((collector) => (
+              {!loading && collectors.map((collector) => (
                 <TableRow key={collector.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

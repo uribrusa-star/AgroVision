@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2 } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy, writeBatch } from 'firebase/firestore';
 
 import {
   SidebarProvider,
@@ -31,9 +32,10 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext, AppContextProvider } from '@/context/app-data-context';
-import { harvests as initialHarvests, collectors as initialCollectors, agronomistLogs as initialAgronomistLogs, batches as initialBatches, collectorPaymentLogs as initialCollectorPaymentLogs, users as availableUsers } from '@/lib/data';
+import { users as availableUsers } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User } from '@/lib/types';
-
+import { db } from '@/lib/firebase';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const allNavItems = [
   { href: '/', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
@@ -44,7 +46,6 @@ const allNavItems = [
 
 const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
   const [state, setState] = useState<T>(() => {
-    // We can't use localStorage on the server, so we return the initial value.
     if (typeof window === 'undefined') {
       return initialValue;
     }
@@ -72,72 +73,146 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = usePersistentState<User>('currentUser', availableUsers.find(u => u.role === 'Productor')!);
-  const [harvests, setHarvests] = usePersistentState<Harvest[]>('harvests', initialHarvests);
-  const [collectors, setCollectors] = usePersistentState<Collector[]>('collectors', initialCollectors);
-  const [agronomistLogs, setAgronomistLogs] = usePersistentState<AgronomistLog[]>('agronomistLogs', initialAgronomistLogs);
-  const [batches, setBatches] = usePersistentState<Batch[]>('batches', initialBatches);
-  const [collectorPaymentLogs, setCollectorPaymentLogs] = usePersistentState<CollectorPaymentLog[]>('collectorPaymentLogs', initialCollectorPaymentLogs);
+  const [harvests, setHarvests] = useState<Harvest[]>([]);
+  const [collectors, setCollectors] = useState<Collector[]>([]);
+  const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
+  const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [collectorsSnapshot, harvestsSnapshot, agronomistLogsSnapshot, batchesSnapshot, paymentLogsSnapshot] = await Promise.all([
+        getDocs(query(collection(db, "collectors"), orderBy("joinDate", "desc"))),
+        getDocs(query(collection(db, "harvests"), orderBy("date", "desc"))),
+        getDocs(query(collection(db, "agronomistLogs"), orderBy("date", "desc"))),
+        getDocs(query(collection(db, "batches"), orderBy("preloadedDate", "desc"))),
+        getDocs(query(collection(db, "collectorPaymentLogs"), orderBy("date", "desc"))),
+      ]);
+
+      setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Collector)));
+      setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Harvest)));
+      setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as AgronomistLog)));
+      setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Batch)));
+      setCollectorPaymentLogs(paymentLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CollectorPaymentLog)));
+
+    } catch (error) {
+      console.error("Error fetching data from Firestore:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
 
-  const addHarvest = (harvest: Harvest) => {
-    setHarvests(prevHarvests => [harvest, ...prevHarvests]);
-    setCollectors(prevCollectors => prevCollectors.map(c => {
-      if (c.id === harvest.collector.id) {
-        const newTotalHarvested = c.totalHarvested + harvest.kilograms;
-        // Assuming some fixed hours for simplicity
-        const newHoursWorked = c.hoursWorked + 4;
-        return {
-          ...c,
+  const addHarvest = async (harvest: Omit<Harvest, 'id'>) => {
+    const docRef = await addDoc(collection(db, "harvests"), harvest);
+    const newHarvest = { id: docRef.id, ...harvest } as Harvest;
+    setHarvests(prev => [newHarvest, ...prev]);
+
+    const collectorRef = doc(db, "collectors", harvest.collector.id);
+    const collector = collectors.find(c => c.id === harvest.collector.id);
+    if(collector) {
+      const newTotalHarvested = collector.totalHarvested + harvest.kilograms;
+      const newHoursWorked = collector.hoursWorked + 4; // Assuming 4 hours per harvest
+      const newProductivity = newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0;
+      await updateDoc(collectorRef, { 
           totalHarvested: newTotalHarvested,
           hoursWorked: newHoursWorked,
-          productivity: newTotalHarvested / newHoursWorked
-        };
-      }
-      return c;
-    }));
-  };
-
-  const editCollector = (updatedCollector: Collector) => {
-    setCollectors(prevCollectors => prevCollectors.map(c => c.id === updatedCollector.id ? updatedCollector : c));
-  };
-
-  const deleteCollector = (collectorId: string) => {
-    setCollectors(prevCollectors => prevCollectors.filter(c => c.id !== collectorId));
-    // Optional: also remove harvests associated with the deleted collector
-    setHarvests(prevHarvests => prevHarvests.filter(h => h.collector.id !== collectorId));
-  };
-
-  const addAgronomistLog = (log: AgronomistLog) => {
-    setAgronomistLogs(prevLogs => [log, ...prevLogs]);
-  };
-
-  const editAgronomistLog = (updatedLog: AgronomistLog) => {
-    setAgronomistLogs(prevLogs => prevLogs.map(l => l.id === updatedLog.id ? updatedLog : l));
-  };
-
-  const deleteAgronomistLog = (logId: string) => {
-    setAgronomistLogs(prevLogs => prevLogs.filter(l => l.id !== logId));
-  };
-
-  const addCollector = (collector: Collector) => {
-    setCollectors(prevCollectors => [collector, ...prevCollectors]);
-  };
-
-  const addBatch = (batch: Batch) => {
-    setBatches(prevBatches => [batch, ...prevBatches]);
+          productivity: newProductivity,
+      });
+      fetchData(); // Re-fetch to get updated state
+    }
   };
   
-  const deleteBatch = (batchId: string) => {
-    setBatches(prevBatches => prevBatches.filter(b => b.id !== batchId));
-  }
+  const editCollector = async (updatedCollector: Collector) => {
+    const { id, ...dataToUpdate } = updatedCollector;
+    await updateDoc(doc(db, "collectors", id), dataToUpdate);
+    fetchData();
+  };
 
-  const addCollectorPaymentLog = (log: CollectorPaymentLog) => {
-    setCollectorPaymentLogs(prevLogs => [log, ...prevLogs]);
-  }
+  const deleteCollector = async (collectorId: string) => {
+    const batch = writeBatch(db);
 
-  const deleteCollectorPaymentLog = (logId: string) => {
-    setCollectorPaymentLogs(prevLogs => prevLogs.filter(l => l.id !== logId));
-  }
+    // Delete the collector
+    const collectorRef = doc(db, "collectors", collectorId);
+    batch.delete(collectorRef);
+
+    // Find and delete associated harvests
+    const associatedHarvests = harvests.filter(h => h.collector.id === collectorId);
+    associatedHarvests.forEach(h => {
+        const harvestRef = doc(db, "harvests", h.id);
+        batch.delete(harvestRef);
+    });
+
+    // Find and delete associated payment logs
+    const associatedPayments = collectorPaymentLogs.filter(p => p.collectorId === collectorId);
+    associatedPayments.forEach(p => {
+        const paymentRef = doc(db, "collectorPaymentLogs", p.id);
+        batch.delete(paymentRef);
+    });
+
+    await batch.commit();
+    fetchData();
+  };
+
+  const addCollector = async (collector: Omit<Collector, 'id'>) => {
+    await addDoc(collection(db, "collectors"), collector);
+    fetchData();
+  };
+  
+  const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
+    await addDoc(collection(db, "agronomistLogs"), log);
+    fetchData();
+  };
+
+  const editAgronomistLog = async (updatedLog: AgronomistLog) => {
+    const { id, ...dataToUpdate } = updatedLog;
+    await updateDoc(doc(db, "agronomistLogs", id), dataToUpdate);
+    fetchData();
+  };
+
+  const deleteAgronomistLog = async (logId: string) => {
+    await deleteDoc(doc(db, "agronomistLogs", logId));
+    fetchData();
+  };
+
+  const addBatch = async (batch: Omit<Batch, 'id'>) => {
+    await addDoc(collection(db, "batches"), batch);
+    fetchData();
+  };
+  
+  const deleteBatch = async (batchId: string) => {
+    await deleteDoc(doc(db, "batches", batchId));
+    fetchData();
+  };
+
+  const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
+    await addDoc(collection(db, "collectorPaymentLogs"), log);
+    fetchData();
+  };
+
+  const deleteCollectorPaymentLog = async (logId: string) => {
+    const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
+    if (!logToDelete) return;
+
+    const batch = writeBatch(db);
+
+    // Delete payment log
+    const paymentLogRef = doc(db, "collectorPaymentLogs", logId);
+    batch.delete(paymentLogRef);
+    
+    // Delete associated harvest
+    const harvestRef = doc(db, "harvests", logToDelete.harvestId);
+    batch.delete(harvestRef);
+
+    await batch.commit();
+    fetchData();
+  };
 
   const handleSetCurrentUser = (user: User) => {
     setCurrentUser(user);
@@ -147,6 +222,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
 
   const appData: AppData = {
+    loading,
     currentUser,
     users: availableUsers,
     setCurrentUser: handleSetCurrentUser,
@@ -249,7 +325,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
           </header>
           <main className="flex-1 p-4 md:p-6 lg:p-8">
-              {children}
+              {loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-muted-foreground">Cargando datos desde la nube...</p>
+                  </div>
+                </div>
+              ) : children}
           </main>
         </SidebarInset>
       </SidebarProvider>
