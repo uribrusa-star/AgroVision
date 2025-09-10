@@ -51,6 +51,7 @@ export type AgronomistLog = {
 export type CollectorPaymentLog = {
   id: string;
   date: string;
+  harvestId: string;
   collectorId: string;
   collectorName: string;
   kilograms: number;
@@ -75,4 +76,5 @@ export type AppData = {
   addBatch: (batch: Batch) => void;
   deleteBatch: (batchId: string) => void;
   addCollectorPaymentLog: (log: CollectorPaymentLog) => void;
+  deleteCollectorPaymentLog: (logId: string) => void;
 };

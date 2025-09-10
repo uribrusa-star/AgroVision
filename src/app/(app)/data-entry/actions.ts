@@ -56,7 +56,8 @@ export async function handleProductionUpload(prevState: State, formData: FormDat
     const hoursWorked = 4;
 
     const newPaymentLog: CollectorPaymentLog = {
-      id: `PAY${Date.now()}-${newHarvest.id}`,
+      id: `PAY${Date.now()}`,
+      harvestId: newHarvest.id,
       date: new Date().toISOString(),
       collectorId: farmerId,
       collectorName: farmer.name,

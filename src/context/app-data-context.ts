@@ -18,6 +18,7 @@ export const AppDataContext = React.createContext<AppData>({
   addBatch: () => {},
   deleteBatch: () => {},
   addCollectorPaymentLog: () => {},
+  deleteCollectorPaymentLog: () => {},
 });
 
 export const AppContextProvider = AppDataContext.Provider;

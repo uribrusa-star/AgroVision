@@ -137,6 +137,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     setCollectorPaymentLogs(prevLogs => [log, ...prevLogs]);
   }
 
+  const deleteCollectorPaymentLog = (logId: string) => {
+    setCollectorPaymentLogs(prevLogs => prevLogs.filter(l => l.id !== logId));
+  }
+
   const appData: AppData = {
     harvests,
     collectors,
@@ -153,6 +157,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     addBatch,
     deleteBatch,
     addCollectorPaymentLog,
+    deleteCollectorPaymentLog,
   };
 
   return (

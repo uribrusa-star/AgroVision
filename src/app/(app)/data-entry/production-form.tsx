@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AppDataContext } from '@/context/app-data-context';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Trash2 } from 'lucide-react';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, "El ID del lote es requerido."),
@@ -35,7 +37,7 @@ const initialState = {
 export function ProductionForm() {
   const [state, formAction] = useActionState(handleProductionUpload, initialState);
   const { toast } = useToast();
-  const { collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs } = useContext(AppDataContext);
+  const { collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests } = useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -74,6 +76,14 @@ export function ProductionForm() {
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, toast]);
+
+  const handleDelete = (logId: string) => {
+    deleteCollectorPaymentLog(logId);
+    toast({
+        title: "Registro Eliminado",
+        description: "El registro de producción y pago ha sido eliminado exitosamente.",
+    });
+  }
   
   const sortedLogs = [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
@@ -194,30 +204,53 @@ export function ProductionForm() {
                 <TableHead>Recolector</TableHead>
                 <TableHead>Kg</TableHead>
                 <TableHead className="text-right">Pago</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {!isClient && (
                 <TableRow>
-                  <TableCell colSpan={4} className="h-24 text-center">
+                  <TableCell colSpan={5} className="h-24 text-center">
                     Cargando historial...
                   </TableCell>
                 </TableRow>
               )}
               {isClient && sortedLogs.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center">No hay registros de producción.</TableCell>
+                  <TableCell colSpan={5} className="text-center">No hay registros de producción.</TableCell>
                 </TableRow>
               )}
               {isClient && sortedLogs.map(log => {
-                const harvest = state.newHarvest;
-                const batchNum = harvest && log.id.endsWith(harvest.id) ? harvest.batchNumber : "L???";
+                const harvest = harvests.find(h => h.id === log.harvestId);
+                const batchNum = harvest ? harvest.batchNumber : "L???";
                 return (
                   <TableRow key={log.id}>
                     <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
                     <TableCell className="font-medium">{log.collectorName}</TableCell>
                     <TableCell>{log.kilograms.toLocaleString('es-AR')}</TableCell>
                     <TableCell className="text-right font-bold">${log.payment.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                       <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Eliminar</span>
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                      Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y pago.
+                                  </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 )
               })}
