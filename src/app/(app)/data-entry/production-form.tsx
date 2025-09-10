@@ -278,7 +278,6 @@ export function ProductionForm() {
                 <TableRow>
                   <TableHead>Lote</TableHead>
                   <TableHead>Recolector</TableHead>
-                  <TableHead>Kg</TableHead>
                   <TableHead className="text-right">Pago</TableHead>
                   {canManage && <TableHead className="text-right">Acciones</TableHead>}
                 </TableRow>
@@ -286,14 +285,14 @@ export function ProductionForm() {
               <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 5 : 4}>
+                    <TableCell colSpan={canManage ? 4 : 3}>
                         <Skeleton className="h-8 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!loading && sortedLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 5 : 4} className="text-center">No hay registros de producción.</TableCell>
+                    <TableCell colSpan={canManage ? 4 : 3} className="text-center">No hay registros de producción.</TableCell>
                   </TableRow>
                 )}
                 {!loading && sortedLogs.map(log => {
@@ -303,7 +302,6 @@ export function ProductionForm() {
                     <TableRow key={log.id}>
                       <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
                       <TableCell className="font-medium">{log.collectorName}</TableCell>
-                      <TableCell>{log.kilograms.toLocaleString('es-AR')}</TableCell>
                       <TableCell className="text-right font-bold">${log.payment.toFixed(2)}</TableCell>
                       {canManage && (
                           <TableCell className="text-right">
@@ -357,7 +355,3 @@ export function ProductionForm() {
     </div>
   );
 }
-
-    
-
-    
