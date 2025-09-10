@@ -52,21 +52,18 @@ function HarvestSummary() {
   const { harvests, currentUser } = useContext(AppDataContext);
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = () => {
     setShowSummary(true);
-    const formData = new FormData();
-    formData.set('harvests', JSON.stringify(harvests));
-    formAction(formData);
   };
 
   return (
     <Card>
-      <form onSubmit={handleSubmit}>
+      <form action={formAction} onSubmit={handleSubmit}>
         <CardHeader>
           <CardTitle>Resumen de Cosecha con IA</CardTitle>
           <CardDescription>Genere un resumen completo de todos los datos de cosecha utilizando IA para identificar tendencias y perspectivas.</CardDescription>
         </CardHeader>
+        <input type="hidden" name="harvests" value={JSON.stringify(harvests)} />
         {showSummary && (
           <CardContent>
             {state.loading && (
