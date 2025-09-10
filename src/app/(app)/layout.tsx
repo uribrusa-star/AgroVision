@@ -45,26 +45,31 @@ const allNavItems = [
 ];
 
 const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
-  const [state, setState] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return initialValue;
-    }
-  });
+  const [state, setState] = useState<T>(initialValue);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem(key, JSON.stringify(state));
+      const item = window.localStorage.getItem(key);
+      if (item) {
+        setState(JSON.parse(item));
+      }
     } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
+      console.warn(`Error reading localStorage key “${key}”:`, error);
+    } finally {
+      setIsInitialized(true);
     }
-  }, [key, state]);
+  }, [key]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      try {
+        window.localStorage.setItem(key, JSON.stringify(state));
+      } catch (error) {
+        console.warn(`Error setting localStorage key “${key}”:`, error);
+      }
+    }
+  }, [key, state, isInitialized]);
 
   return [state, setState];
 }
