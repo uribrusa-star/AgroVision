@@ -12,6 +12,7 @@ import { AppDataContext } from '@/context/app-data-context';
 import type { Harvest } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from './engineer-log/batch-yield-chart';
+import { ProductionPaymentHistory } from './production-payment-history';
 
 
 export default function DashboardPage() {
@@ -169,6 +170,9 @@ export default function DashboardPage() {
                 </div>
             </CardContent>
             </Card>
+        </div>
+        <div className="lg:col-span-2">
+          <ProductionPaymentHistory />
         </div>
         <div className="lg:col-span-2">
             <Card>

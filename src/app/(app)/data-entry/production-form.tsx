@@ -12,13 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import type { CollectorPaymentLog, Harvest } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
 import { validateProductionData } from '@/ai/flows/validate-production-data';
+import { ProductionPaymentHistory } from '../production-payment-history';
 
 const ProductionSchema = z.object({
   batchId: z.string().min(1, "El ID del lote es requerido."),
@@ -31,7 +28,7 @@ type ProductionFormValues = z.infer<typeof ProductionSchema>;
 
 export function ProductionForm() {
   const { toast } = useToast();
-  const { loading, collectors, batches, addHarvest, addCollectorPaymentLog, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
+  const { collectors, batches, addHarvest, addCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const [isPending, startTransition] = useTransition();
   const [validationAlert, setValidationAlert] = useState<{ open: boolean; reason: string; data: ProductionFormValues | null }>({ open: false, reason: '', data: null });
   
@@ -154,21 +151,6 @@ export function ProductionForm() {
     }
   };
 
-  const handleDelete = (logId: string) => {
-    startTransition(async () => {
-      await deleteCollectorPaymentLog(logId);
-      toast({
-          title: "Registro Eliminado",
-          description: "El registro de producción y pago ha sido eliminado exitosamente.",
-      });
-    });
-  }
-  
-  const sortedLogs = useMemo(() => 
-    [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [collectorPaymentLogs]
-  );
-
   return (
     <div className="grid lg:grid-cols-2 gap-8">
       <Card>
@@ -266,77 +248,7 @@ export function ProductionForm() {
           </form>
         </Form>
       </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Historial de Producción y Pagos</CardTitle>
-          <CardDescription>Un registro de todas las cosechas y los pagos calculados.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="max-h-[400px] overflow-auto">
-            <div className="relative w-full overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Lote</TableHead>
-                    <TableHead>Recolector</TableHead>
-                    <TableHead className="text-right">Pago</TableHead>
-                    {canManage && <TableHead className="text-right">Acciones</TableHead>}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading && (
-                    <TableRow>
-                      <TableCell colSpan={canManage ? 4 : 3}>
-                          <Skeleton className="h-8 w-full" />
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {!loading && sortedLogs.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={canManage ? 4 : 3} className="text-center">No hay registros de producción.</TableCell>
-                    </TableRow>
-                  )}
-                  {!loading && sortedLogs.map(log => {
-                    const harvest = harvests.find(h => h.id === log.harvestId);
-                    const batchNum = harvest ? harvest.batchNumber : "L???";
-                    return (
-                      <TableRow key={log.id}>
-                        <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
-                        <TableCell className="font-medium">{log.collectorName}</TableCell>
-                        <TableCell className="text-right font-bold">${log.payment.toLocaleString('es-AR', {minimumFractionDigits: 2})}</TableCell>
-                        {canManage && (
-                            <TableCell className="text-right">
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={isPending}>
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="sr-only">Eliminar</span>
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y pago.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(log.id)}>Continuar</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                                </AlertDialog>
-                            </TableCell>
-                        )}
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <ProductionPaymentHistory />
 
       <AlertDialog open={validationAlert.open} onOpenChange={(open) => setValidationAlert(prev => ({...prev, open}))}>
         <AlertDialogContent>
