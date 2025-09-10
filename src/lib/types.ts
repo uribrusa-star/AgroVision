@@ -1,6 +1,7 @@
 
 
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -9,6 +10,7 @@ export type User = {
   email: string;
   avatar: string;
   role: UserRole;
+  password?: string; // Added for mock authentication
 };
 
 export type Collector = {

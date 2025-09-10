@@ -1,24 +1,60 @@
 
 'use client';
 
-import React from 'react';
+import React, { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { AgroVisionLogo } from '@/components/icons';
-import { AppDataContext } from '@/context/app-data-context';
-import { users } from '@/lib/data';
-import type { User } from '@/lib/types';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { AgroVisionLogo } from '@/components/icons';
+import { AppDataContext } from '@/context/app-data-context.tsx';
+import { useToast } from '@/hooks/use-toast';
+
+const LoginSchema = z.object({
+  email: z.string().email("Debe ser un email válido."),
+  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+});
+
+type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
-  const { setCurrentUser } = React.useContext(AppDataContext);
+  const { setCurrentUser, users } = React.useContext(AppDataContext);
   const router = useRouter();
+  const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    router.push('/dashboard');
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(LoginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
+    startTransition(() => {
+      const user = users.find(u => u.email === data.email);
+
+      if (user && user.password === data.password) {
+        toast({
+          title: `¡Bienvenido, ${user.name}!`,
+          description: "Iniciando sesión en su cuenta.",
+        });
+        setCurrentUser(user);
+        router.push('/dashboard');
+      } else {
+        toast({
+          title: "Error de Autenticación",
+          description: "El email o la contraseña son incorrectos.",
+          variant: "destructive",
+        });
+      }
+    });
   };
 
   return (
@@ -27,31 +63,64 @@ export default function LoginPage() {
         <AgroVisionLogo className="w-16 h-16 text-primary" />
         <h1 className="text-4xl font-headline text-foreground">Bienvenido a AgroVision</h1>
         <p className="text-muted-foreground max-w-md text-center">
-          Su asistente digital para la gestión de la producción de frutilla. Por favor, seleccione su perfil para continuar.
+          Su asistente digital para la gestión de la producción de frutilla.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
-        {users.map((user) => (
-          <Card key={user.id} className="text-center flex flex-col items-center p-6 hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <Avatar className="h-20 w-20 mx-auto mb-4">
-                <AvatarImage src={`https://picsum.photos/seed/${user.avatar}/80/80`} alt={user.name} data-ai-hint="person portrait" />
-                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <CardTitle>{user.name}</CardTitle>
-              <CardDescription>{user.role}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex-grow flex items-end">
-              <Button onClick={() => handleLogin(user)}>Ingresar como {user.role}</Button>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Iniciar Sesión</CardTitle>
+          <CardDescription>Ingrese sus credenciales para acceder a su panel.</CardDescription>
+        </CardHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="ejemplo@agrovision.co" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contraseña</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
-          </Card>
-        ))}
+            <CardFooter>
+              <Button type="submit" className="w-full" disabled={isPending}>
+                {isPending ? 'Iniciando Sesión...' : 'Ingresar'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Form>
+      </Card>
+      
+      <div className="text-xs text-center text-muted-foreground mt-4 space-y-1">
+          <p className="font-bold">Usuarios de Demostración:</p>
+          <p>productor@agrovision.co (pass: productor123)</p>
+          <p>agronomo@agrovision.co (pass: ingeniero123)</p>
+          <p>encargado@agrovision.co (pass: encargado123)</p>
       </div>
 
-       <footer className="mt-12 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} AgroVision. Todos los derechos reservados.</p>
-       </footer>
+      <footer className="mt-8 text-center text-sm text-muted-foreground">
+        <p>&copy; {new Date().getFullYear()} AgroVision. Todos los derechos reservados.</p>
+      </footer>
     </div>
   );
 }
