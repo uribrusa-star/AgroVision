@@ -6,8 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon, MoreHorizontal, PackageCheck, Package, CalendarClock, Trash2 } from 'lucide-react';
-import { engineerLogStats } from '@/lib/data';
+import { DollarSign, HardHat, Sprout, Tractor, Weight, Image as ImageIcon, MoreHorizontal, PackageCheck, Package, CalendarClock, Trash2, BarChart } from 'lucide-react';
 import { handleSummarizeHarvest } from './actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BatchLogForm } from './batch-log-form';
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart as RechartsBarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 
 
@@ -453,7 +452,7 @@ function BatchYieldChart() {
       <CardContent>
          {chartData.length > 0 ? (
            <ChartContainer config={chartConfig} className="h-[300px] w-full">
-            <BarChart data={chartData} accessibilityLayer>
+            <RechartsBarChart data={chartData} accessibilityLayer>
               <CartesianGrid vertical={false} />
               <XAxis
                 dataKey="batch"
@@ -472,7 +471,7 @@ function BatchYieldChart() {
                 content={<ChartTooltipContent indicator="dot" />}
               />
               <Bar dataKey="kilograms" fill="var(--color-kilograms)" radius={4} />
-            </BarChart>
+            </RechartsBarChart>
           </ChartContainer>
          ) : (
           <div className="flex h-[300px] w-full items-center justify-center">
@@ -486,7 +485,7 @@ function BatchYieldChart() {
 
 
 export default function EngineerLogPage() {
-  const { collectors, harvests } = useContext(AppDataContext);
+  const { collectors, harvests, collectorPaymentLogs, batches } = useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -494,6 +493,16 @@ export default function EngineerLogPage() {
   }, []);
   
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
+  const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
+
+  const completedBatches = batches.filter(b => b.status === 'completed');
+  const totalKgInCompletedBatches = completedBatches.reduce((total, batch) => {
+    const batchKilos = harvests.filter(h => h.batchNumber === batch.id).reduce((sum, h) => sum + h.kilograms, 0);
+    return total + batchKilos;
+  }, 0);
+  
+  const averageYieldPerBatch = completedBatches.length > 0 ? totalKgInCompletedBatches / completedBatches.length : 0;
+
 
   return (
     <>
@@ -515,22 +524,22 @@ export default function EngineerLogPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Costo Total de Insumos</CardTitle>
-            <Tractor className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Costo Total de Mano de Obra</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${isClient ? engineerLogStats.totalInputs.toLocaleString('es-ES') : 'Cargando...'}</div>
-            <p className="text-xs text-muted-foreground">Fertilizantes, agua, etc.</p>
+            <div className="text-2xl font-bold">${isClient ? totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2 }) : 'Cargando...'}</div>
+            <p className="text-xs text-muted-foreground">Basado en pagos registrados</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Precio Promedio/kg</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Rendimiento Promedio/Lote</CardTitle>
+            <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${isClient ? engineerLogStats.averagePrice.toFixed(2) : '...'}</div>
-            <p className="text-xs text-muted-foreground">Promedio de mercado</p>
+            <div className="text-2xl font-bold">{isClient ? averageYieldPerBatch.toFixed(1) : '...'} kg</div>
+            <p className="text-xs text-muted-foreground">Promedio en lotes completados</p>
           </CardContent>
         </Card>
         <Card>
