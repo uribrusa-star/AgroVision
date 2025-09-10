@@ -11,6 +11,7 @@ import { ArrowDownCircle, ArrowUpCircle, Calendar } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { Transaction } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export function TransactionHistory() {
   const { loading, transactions } = useContext(AppDataContext);
@@ -33,6 +34,7 @@ export function TransactionHistory() {
                 <CardDescription>Un registro de los últimos gastos e ingresos.</CardDescription>
             </CardHeader>
             <CardContent>
+              <ScrollArea className="h-[300px]">
                 <Table>
                     <TableHeader>
                     <TableRow>
@@ -63,7 +65,7 @@ export function TransactionHistory() {
                                         : <ArrowDownCircle className="h-4 w-4 text-red-500" />
                                     }
                                     <div>
-                                        <p className="font-medium">{transaction.description}</p>
+                                        <p className="font-medium truncate max-w-[120px] sm:max-w-none">{transaction.description}</p>
                                         <p className="text-xs text-muted-foreground">{new Date(transaction.date).toLocaleDateString('es-ES')}</p>
                                     </div>
                                 </div>
@@ -78,6 +80,7 @@ export function TransactionHistory() {
                     ))}
                     </TableBody>
                 </Table>
+              </ScrollArea>
             </CardContent>
         </Card>
 
