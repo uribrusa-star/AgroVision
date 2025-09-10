@@ -44,7 +44,7 @@ export default function EngineerLogPage() {
         description="Gestión de aplicaciones, lotes y visión general de la producción."
       />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Producción Total</CardTitle>
@@ -88,7 +88,7 @@ export default function EngineerLogPage() {
       </div>
 
        <Tabs defaultValue="applications" className="mb-8">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2">
           <TabsTrigger value="applications">
             <Sprout className="mr-2" />
             Gestión de Aplicaciones
@@ -99,20 +99,20 @@ export default function EngineerLogPage() {
           </TabsTrigger>
         </TabsList>
         <TabsContent value="applications">
-          <div className="grid gap-8 lg:grid-cols-2 mt-4">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-4">
             {canManageApplications ? <ApplicationLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para registrar aplicaciones.</p></CardContent></CardHeader></Card>}
             <ApplicationHistory />
           </div>
         </TabsContent>
         <TabsContent value="batches">
-           <div className="grid gap-8 lg:grid-cols-2 mt-4">
+           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-4">
             {canManageBatches ? <BatchLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para pre-cargar lotes.</p></CardContent></CardHeader></Card>}
             <BatchHistory />
           </div>
         </TabsContent>
       </Tabs>
       
-      <div className="grid gap-8 lg:grid-cols-3 mb-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mb-8">
         <div className="lg:col-span-2">
            <BatchYieldChart />
         </div>
@@ -121,7 +121,7 @@ export default function EngineerLogPage() {
         </div>
       </div>
 
-      <div className="grid gap-8">
+      <div className="grid grid-cols-1 gap-8">
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>

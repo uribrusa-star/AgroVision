@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -54,7 +55,7 @@ export default function DashboardPage() {
   return (
     <>
       <PageHeader title="Panel de Control" description="Estadísticas clave y actividad reciente." />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cosecha Total</CardTitle>
@@ -97,7 +98,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2 mt-8">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mt-8">
         <MonthlyHarvestChart harvests={harvests} />
 
         <Card>

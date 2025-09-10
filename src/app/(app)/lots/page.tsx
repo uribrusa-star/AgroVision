@@ -60,7 +60,7 @@ export default function LotsPage() {
       
       <Card className="mb-8">
         <CardContent className="p-4">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
                 <Input
                 type="text"
                 placeholder="Filtrar por productor..."
@@ -69,7 +69,7 @@ export default function LotsPage() {
                 onChange={(e) => setFilterProductor(e.target.value)}
                 />
                 <Select value={filterEstado} onValueChange={setFilterEstado}>
-                <SelectTrigger className="w-full md:w-[180px]">
+                <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Filtrar por estado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -82,7 +82,7 @@ export default function LotsPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {loading && (
             Array.from({ length: 3 }).map((_, index) => (
                 <Card key={index}>
