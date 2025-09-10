@@ -12,13 +12,25 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Droplet, MapPin, Milestone, Mountain, Sprout, Wind, TrendingUp, Sun, Ruler, CheckCircle, Pencil } from 'lucide-react';
+import { Droplet, MapPin, Milestone, Mountain, Sprout, Wind, TrendingUp, Sun, Ruler, CheckCircle, Pencil, User, Briefcase } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppDataContext } from "@/context/app-data-context";
 import type { EstablishmentData, UserRole } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
-type FormSchemaType = z.infer<typeof soilSchema> | z.infer<typeof plantingSchema> | z.infer<typeof irrigationSchema> | z.infer<typeof managementSchema>;
+const generalSchema = z.object({
+  producer: z.string().min(1, "El nombre del productor es requerido."),
+  technicalManager: z.string().min(1, "El responsable técnico es requerido."),
+  locality: z.string().min(1, "La localidad es requerida."),
+  province: z.string().min(1, "La provincia es requerida."),
+  coordinates: z.string().min(1, "Las coordenadas son requeridas."),
+});
+
+const areaSchema = z.object({
+  total: z.coerce.number().min(0, "La superficie debe ser un número positivo."),
+  strawberry: z.coerce.number().min(0, "La superficie debe ser un número positivo."),
+  system: z.string().min(1, "El sistema productivo es requerido."),
+});
 
 const soilSchema = z.object({
   type: z.string().min(1, "El tipo de suelo es requerido."),
@@ -47,6 +59,11 @@ const managementSchema = z.object({
     frequency: z.string().min(1, "La frecuencia de cosecha es requerida."),
 });
 
+const commercializationSchema = z.object({
+    destination: z.string().min(1, "El destino es requerido."),
+    objective: z.string().min(1, "El objetivo económico es requerido."),
+});
+
 
 const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
   const { currentUser } = useContext(AppDataContext);
@@ -72,10 +89,13 @@ const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: 
   )
 };
 
-const InfoItem = ({ label, value }: { label: string, value: React.ReactNode }) => (
-    <div className="flex justify-between py-2 border-b border-dashed">
-        <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <div className="text-sm text-right font-semibold">{value}</div>
+const InfoItem = ({ label, value, icon: Icon }: { label: string, value: React.ReactNode, icon?: React.ElementType }) => (
+    <div className="flex justify-between items-start py-2 border-b border-dashed">
+        <div className="flex items-center gap-2">
+            {Icon && <Icon className="h-4 w-4 text-muted-foreground" />}
+            <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        </div>
+        <div className="text-sm text-right font-semibold text-foreground max-w-[60%] break-words">{value}</div>
     </div>
 );
 
@@ -84,6 +104,12 @@ const EditDialog = ({ open, onOpenChange, title, schema, defaultValues, onSubmit
         resolver: zodResolver(schema),
         defaultValues: defaultValues,
     });
+    
+    React.useEffect(() => {
+        if(open) {
+            form.reset(defaultValues);
+        }
+    }, [open, defaultValues, form]);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,7 +133,7 @@ const EditDialog = ({ open, onOpenChange, title, schema, defaultValues, onSubmit
 
 
 export default function EstablishmentPage() {
-  const { loading, establishmentData, updateEstablishmentData } = useContext(AppDataContext);
+  const { loading, establishmentData, updateEstablishmentData, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
@@ -119,16 +145,44 @@ export default function EstablishmentPage() {
     setEditingSection(null);
   }
 
-  const handleSubmit = async (section: keyof EstablishmentData, values: any) => {
+  const handleSubmit = async (section: keyof EstablishmentData | 'general' | 'area' | 'commercialization', values: any) => {
       if (!establishmentData) return;
       
-      let updatedData = {};
-      if (section === 'soil' || section === 'planting' || section === 'irrigation' || section === 'management' || section === 'harvest' ) {
-          if(section === 'soil'){
-            updatedData = { soil: { type: values.type, analysis: values.analysis }, planting: {...establishmentData.planting, mulching: values.mulching} };
-          } else {
-            updatedData = { [section]: values };
+      let updatedData: Partial<EstablishmentData> = {};
+      
+      if(section === 'general') {
+        updatedData = {
+          producer: values.producer,
+          technicalManager: values.technicalManager,
+          location: {
+            ...establishmentData.location,
+            locality: values.locality,
+            province: values.province,
+            coordinates: values.coordinates,
           }
+        }
+      } else if (section === 'area') {
+        updatedData = {
+          area: { total: values.total, strawberry: values.strawberry },
+          system: values.system
+        }
+      } else if (section === 'soil') {
+        updatedData = {
+          soil: { type: values.type, analysis: values.analysis },
+          planting: {...establishmentData.planting, mulching: values.mulching}
+        };
+      } else if(section === 'commercialization') {
+        updatedData = {
+            harvest: { ...establishmentData.harvest, destination: values.destination },
+            economics: { ...establishmentData.economics, objective: values.objective }
+        }
+      } else if (section === 'management') {
+         updatedData = {
+             management: { weeds: values.weeds, sanitaryPlan: values.sanitaryPlan },
+             harvest: { ...establishmentData.harvest, period: values.period, frequency: values.frequency }
+         };
+      } else if (section === 'planting' || section === 'irrigation') {
+          updatedData = { [section]: values };
       }
 
       try {
@@ -156,6 +210,9 @@ export default function EstablishmentPage() {
         </>
     );
   }
+  
+  const producerAccess: UserRole[] = ['Productor'];
+  const agronomistAccess: UserRole[] = ['Productor', 'Ingeniero Agronomo'];
 
   return (
     <>
@@ -167,52 +224,53 @@ export default function EstablishmentPage() {
         
         {/* Columna 1 */}
         <div className="space-y-6">
-            <InfoCard title="Datos Generales" icon={MapPin} editableBy={['Productor']}>
-               <InfoItem label="Productor" value={establishmentData.producer} />
-               <InfoItem label="Responsable Técnico" value={establishmentData.technicalManager} />
-               <InfoItem label="Localidad" value={`${establishmentData.location.locality}, ${establishmentData.location.province}`} />
-               <InfoItem label="Coordenadas" value={establishmentData.location.coordinates} />
+            <InfoCard title="Datos Generales" icon={Briefcase} onEdit={() => handleEdit('general')} editableBy={producerAccess}>
+               <InfoItem label="Productor" value={establishmentData.producer} icon={User} />
+               <InfoItem label="Responsable Técnico" value={establishmentData.technicalManager} icon={User} />
+               <InfoItem label="Localidad" value={`${establishmentData.location.locality}, ${establishmentData.location.province}`} icon={MapPin}/>
+               <InfoItem label="Coordenadas" value={establishmentData.location.coordinates} icon={MapPin} />
             </InfoCard>
 
-             <InfoCard title="Superficie" icon={Ruler} editableBy={['Productor']}>
+             <InfoCard title="Superficie y Sistema" icon={Ruler} onEdit={() => handleEdit('area')} editableBy={producerAccess}>
                <InfoItem label="Superficie Total" value={`${establishmentData.area.total} ha`} />
                <InfoItem label="Destinada a Frutilla" value={`${establishmentData.area.strawberry} ha`} />
                <InfoItem label="Sistema Productivo" value={establishmentData.system} />
-            </InfoCard>
-             <InfoCard title="Suelo y Cobertura" icon={Mountain} onEdit={() => handleEdit('soil')} editableBy={['Productor', 'Ingeniero Agronomo']}>
-               <InfoItem label="Tipo de Suelo" value={establishmentData.soil.type} />
-               <InfoItem label="Análisis Inicial" value={establishmentData.soil.analysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
-               <InfoItem label="Cobertura (Mulching)" value={establishmentData.planting.mulching} />
             </InfoCard>
         </div>
 
         {/* Columna 2 */}
         <div className="space-y-6">
-            <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')} editableBy={['Productor', 'Ingeniero Agronomo']}>
-                <InfoItem label="Variedades" value={establishmentData.planting.variety} />
-                <InfoItem label="Fecha de Plantación" value={new Date(establishmentData.planting.date).toLocaleDateString('es-ES')} />
-                <InfoItem label="Origen de Plantas" value={establishmentData.planting.origin} />
-                <InfoItem label="Densidad" value={establishmentData.planting.density} />
+            <InfoCard title="Suelo y Cobertura" icon={Mountain} onEdit={() => handleEdit('soil')} editableBy={agronomistAccess}>
+               <InfoItem label="Tipo de Suelo" value={establishmentData.soil.type} />
+               <InfoItem label="Análisis Inicial" value={establishmentData.soil.analysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
+               <InfoItem label="Cobertura (Mulching)" value={establishmentData.planting.mulching} />
             </InfoCard>
 
-            <InfoCard title="Riego y Fertirrigación" icon={Droplet} onEdit={() => handleEdit('irrigation')} editableBy={['Productor', 'Ingeniero Agronomo']}>
-                <InfoItem label="Sistema de Riego" value={establishmentData.irrigation.system} />
-                <InfoItem label="Caudal por Gotero" value={establishmentData.irrigation.flowRate} />
-                <InfoItem label="Frecuencia Base" value={establishmentData.irrigation.frequency} />
-                <InfoItem label="Análisis de Agua" value={establishmentData.irrigation.waterAnalysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
+             <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')} editableBy={agronomistAccess}>
+                <InfoItem label="Variedades" value={establishmentData.planting.variety} />
+                <InfoItem label="Fecha de Plantación" value={new Date(establishmentData.planting.date).toLocaleDateString('es-ES', { timeZone: 'UTC' })} />
+                <InfoItem label="Origen de Plantas" value={establishmentData.planting.origin} />
+                <InfoItem label="Densidad" value={establishmentData.planting.density} />
             </InfoCard>
         </div>
 
         {/* Columna 3 */}
         <div className="space-y-6">
-            <InfoCard title="Manejo y Cosecha" icon={Wind} onEdit={() => handleEdit('management')} editableBy={['Productor', 'Ingeniero Agronomo']}>
+            <InfoCard title="Riego y Fertirrigación" icon={Droplet} onEdit={() => handleEdit('irrigation')} editableBy={agronomistAccess}>
+                <InfoItem label="Sistema de Riego" value={establishmentData.irrigation.system} />
+                <InfoItem label="Caudal por Gotero" value={establishmentData.irrigation.flowRate} />
+                <InfoItem label="Frecuencia Base" value={establishmentData.irrigation.frequency} />
+                <InfoItem label="Análisis de Agua" value={establishmentData.irrigation.waterAnalysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
+            </InfoCard>
+
+            <InfoCard title="Manejo y Cosecha" icon={Wind} onEdit={() => handleEdit('management')} editableBy={agronomistAccess}>
                 <InfoItem label="Control de Malezas" value={establishmentData.management.weeds} />
                 <InfoItem label="Plan Sanitario" value={establishmentData.management.sanitaryPlan} />
                 <InfoItem label="Período de Cosecha" value={establishmentData.harvest.period} />
                 <InfoItem label="Frecuencia" value={establishmentData.harvest.frequency} />
             </InfoCard>
 
-            <InfoCard title="Comercialización" icon={TrendingUp} editableBy={['Productor']}>
+             <InfoCard title="Comercialización" icon={TrendingUp} onEdit={() => handleEdit('commercialization')} editableBy={producerAccess}>
                  <InfoItem label="Destino Principal" value={establishmentData.harvest.destination} />
                  <InfoItem label="Objetivo Económico" value={establishmentData.economics.objective} />
             </InfoCard>
@@ -220,6 +278,52 @@ export default function EstablishmentPage() {
       </div>
 
        {/* Edit Modals */}
+       <EditDialog
+          open={editingSection === 'general'}
+          onOpenChange={handleCloseDialog}
+          title="Datos Generales"
+          schema={generalSchema}
+          defaultValues={{ 
+            producer: establishmentData.producer, 
+            technicalManager: establishmentData.technicalManager,
+            locality: establishmentData.location.locality,
+            province: establishmentData.location.province,
+            coordinates: establishmentData.location.coordinates,
+          }}
+          onSubmit={(values) => handleSubmit('general', values)}
+      >
+          {(form: any) => (
+              <>
+                  <FormField control={form.control} name="producer" render={({ field }) => ( <FormItem> <FormLabel>Nombre del Productor</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="technicalManager" render={({ field }) => ( <FormItem> <FormLabel>Responsable Técnico</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="locality" render={({ field }) => ( <FormItem> <FormLabel>Localidad</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="province" render={({ field }) => ( <FormItem> <FormLabel>Provincia</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="coordinates" render={({ field }) => ( <FormItem> <FormLabel>Coordenadas</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+              </>
+          )}
+      </EditDialog>
+
+       <EditDialog
+          open={editingSection === 'area'}
+          onOpenChange={handleCloseDialog}
+          title="Superficie y Sistema"
+          schema={areaSchema}
+          defaultValues={{ 
+              total: establishmentData.area.total,
+              strawberry: establishmentData.area.strawberry,
+              system: establishmentData.system
+           }}
+          onSubmit={(values) => handleSubmit('area', values)}
+      >
+          {(form: any) => (
+              <>
+                  <FormField control={form.control} name="total" render={({ field }) => ( <FormItem> <FormLabel>Superficie Total (ha)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="strawberry" render={({ field }) => ( <FormItem> <FormLabel>Superficie para Frutilla (ha)</FormLabel> <FormControl><Input type="number" {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="system" render={({ field }) => ( <FormItem> <FormLabel>Sistema Productivo</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+              </>
+          )}
+      </EditDialog>
+
       <EditDialog
           open={editingSection === 'soil'}
           onOpenChange={handleCloseDialog}
@@ -242,7 +346,7 @@ export default function EstablishmentPage() {
           onOpenChange={handleCloseDialog}
           title="Implantación del Cultivo"
           schema={plantingSchema}
-          defaultValues={{ ...establishmentData.planting }}
+          defaultValues={{ ...establishmentData.planting, date: establishmentData.planting.date.split('T')[0] }}
           onSubmit={(values) => handleSubmit('planting', values)}
       >
           {(form: any) => (
@@ -279,8 +383,8 @@ export default function EstablishmentPage() {
           title="Manejo y Cosecha"
           schema={managementSchema}
           defaultValues={{ weeds: establishmentData.management.weeds, sanitaryPlan: establishmentData.management.sanitaryPlan, period: establishmentData.harvest.period, frequency: establishmentData.harvest.frequency }}
-          onSubmit={(values) => handleSubmit('management', { management: { weeds: values.weeds, sanitaryPlan: values.sanitaryPlan }, harvest: { ...establishmentData.harvest, period: values.period, frequency: values.frequency } })}
-      >
+          onSubmit={(values) => handleSubmit('management', { ...establishmentData.management, weeds: values.weeds, sanitaryPlan: values.sanitaryPlan, harvest: { ...establishmentData.harvest, period: values.period, frequency: values.frequency } })}
+        >
           {(form: any) => (
               <>
                   <FormField control={form.control} name="weeds" render={({ field }) => ( <FormItem> <FormLabel>Control de Malezas</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
@@ -290,8 +394,22 @@ export default function EstablishmentPage() {
               </>
           )}
       </EditDialog>
+
+      <EditDialog
+          open={editingSection === 'commercialization'}
+          onOpenChange={handleCloseDialog}
+          title="Comercialización"
+          schema={commercializationSchema}
+          defaultValues={{ destination: establishmentData.harvest.destination, objective: establishmentData.economics.objective }}
+          onSubmit={(values) => handleSubmit('commercialization', values)}
+      >
+          {(form: any) => (
+              <>
+                  <FormField control={form.control} name="destination" render={({ field }) => ( <FormItem> <FormLabel>Destino Principal</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+                  <FormField control={form.control} name="objective" render={({ field }) => ( <FormItem> <FormLabel>Objetivo Económico</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem> )} />
+              </>
+          )}
+      </EditDialog>
     </>
   );
 }
-
-    
