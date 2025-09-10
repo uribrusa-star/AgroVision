@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-react";
+import { BarChart as BarChartIcon, CalendarDays, Users, Weight, DollarSign } from "lucide-react";
 import { MonthlyHarvestChart } from "./monthly-harvest-chart";
 import { AppDataContext } from '@/context/app-data-context';
 import type { Harvest } from '@/lib/types';
@@ -15,7 +15,7 @@ import { BatchYieldChart } from './engineer-log/batch-yield-chart';
 
 
 export default function DashboardPage() {
-  const { loading, harvests, collectors } = React.useContext(AppDataContext);
+  const { loading, harvests, collectors, collectorPaymentLogs } = React.useContext(AppDataContext);
 
   const calculateDashboardStats = (harvests: Harvest[]) => {
     if (harvests.length === 0) {
@@ -57,6 +57,9 @@ export default function DashboardPage() {
       peakDay,
     };
   };
+  
+  const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
+
 
   const dashboardStats = {
     ...calculateDashboardStats(harvests),
@@ -68,7 +71,7 @@ export default function DashboardPage() {
   return (
     <>
       <PageHeader title="Panel de Control" description="Estadísticas clave y actividad reciente." />
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Cosecha Total</CardTitle>
@@ -77,6 +80,16 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${dashboardStats.totalHarvest.toLocaleString('es-ES', { maximumFractionDigits: 0 })} kg`}</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
+          </CardContent>
+        </Card>
+         <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Costo Total de Mano de Obra</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}</div>
+            <p className="text-xs text-muted-foreground">Basado en pagos registrados</p>
           </CardContent>
         </Card>
         <Card>

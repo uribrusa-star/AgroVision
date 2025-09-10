@@ -19,7 +19,6 @@ export default function EngineerLogPage() {
   const { loading, collectors, harvests, collectorPaymentLogs, batches, currentUser } = useContext(AppDataContext);
   
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
-  const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
   
   // We need to calculate the average yield based on harvested batches, not all completed batches.
   // A batch is considered "harvested" if there's at least one harvest record for it.
@@ -41,7 +40,7 @@ export default function EngineerLogPage() {
         description="Gestión de aplicaciones y visión general de la producción."
       />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Producción Total</CardTitle>
@@ -50,16 +49,6 @@ export default function EngineerLogPage() {
           <CardContent>
             <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `${totalProduction.toLocaleString('es-ES')} kg`}</div>
             <p className="text-xs text-muted-foreground">Acumulado de la temporada</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Costo Total de Mano de Obra</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2 })}`}</div>
-            <p className="text-xs text-muted-foreground">Basado en pagos registrados</p>
           </CardContent>
         </Card>
         <Card>
