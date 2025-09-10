@@ -26,13 +26,15 @@ const CollectorSchema = z.object({
 });
 
 export default function CollectorsPage() {
-  const { collectors, harvests, editCollector, deleteCollector } = React.useContext(AppDataContext);
+  const { collectors, harvests, addCollector, editCollector, deleteCollector } = React.useContext(AppDataContext);
   const [isClient, setIsClient] = useState(false);
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof CollectorSchema>>({
     resolver: zodResolver(CollectorSchema),
+    defaultValues: { name: '' },
   });
 
   useEffect(() => {
@@ -67,6 +69,21 @@ export default function CollectorsPage() {
     }
   };
 
+  const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
+    const newCollector: Collector = {
+      id: `C${Date.now()}`,
+      name: values.name,
+      avatar: `${collectors.length + 1}`,
+      totalHarvested: 0,
+      hoursWorked: 0,
+      productivity: 0,
+      joinDate: new Date().toISOString(),
+    };
+    addCollector(newCollector);
+    setIsAddDialogOpen(false);
+    form.reset({ name: '' });
+  };
+
 
   return (
     <>
@@ -74,7 +91,42 @@ export default function CollectorsPage() {
         title="Gestión de Recolectores"
         description="Vea, gestione y siga la productividad de sus recolectores."
       >
-        <Button>Agregar Nuevo Recolector</Button>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+                <Button>Agregar Nuevo Recolector</Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Agregar Nuevo Recolector</DialogTitle>
+                    <DialogDescription>
+                        Complete los detalles para agregar un nuevo recolector al sistema.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onAddSubmit)} className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nombre</FormLabel>
+                                    <FormControl>
+                                        <Input {...field} placeholder="Ej. Juan Pérez" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <DialogClose asChild>
+                                <Button type="button" variant="secondary">Cancelar</Button>
+                            </DialogClose>
+                            <Button type="submit">Agregar Recolector</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
       </PageHeader>
       <Card>
         <CardHeader>

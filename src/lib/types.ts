@@ -49,4 +49,5 @@ export type AppData = {
   editCollector: (collector: Collector) => void;
   deleteCollector: (collectorId: string) => void;
   addAgronomistLog: (log: AgronomistLog) => void;
+  addCollector: (collector: Collector) => void;
 };

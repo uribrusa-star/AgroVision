@@ -10,6 +10,7 @@ export const AppDataContext = React.createContext<AppData>({
   editCollector: () => {},
   deleteCollector: () => {},
   addAgronomistLog: () => {},
+  addCollector: () => {},
 });
 
 export const AppContextProvider = AppDataContext.Provider;

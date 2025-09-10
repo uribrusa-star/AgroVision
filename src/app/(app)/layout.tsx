@@ -77,6 +77,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const addAgronomistLog = (log: AgronomistLog) => {
     setAgronomistLogs(prevLogs => [log, ...prevLogs]);
   };
+
+  const addCollector = (collector: Collector) => {
+    setCollectors(prevCollectors => [collector, ...prevCollectors]);
+  };
   
   const appData: AppData = {
     harvests,
@@ -85,7 +89,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     addHarvest,
     editCollector,
     deleteCollector,
-    addAgronomistLog
+    addAgronomistLog,
+    addCollector,
   };
 
   return (
