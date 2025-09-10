@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useContext, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -14,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Droplet, MapPin, Milestone, Mountain, Sprout, Wind, TrendingUp, Sun, Ruler, CheckCircle, Pencil } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppDataContext } from "@/context/app-data-context";
-import type { EstablishmentData } from "@/lib/types";
+import type { EstablishmentData, UserRole } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 type FormSchemaType = z.infer<typeof soilSchema> | z.infer<typeof plantingSchema> | z.infer<typeof irrigationSchema> | z.infer<typeof managementSchema>;
@@ -47,9 +48,9 @@ const managementSchema = z.object({
 });
 
 
-const InfoCard = ({ title, icon: Icon, children, onEdit }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void }) => {
+const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
   const { currentUser } = useContext(AppDataContext);
-  const canEdit = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
+  const canEdit = editableBy ? editableBy.includes(currentUser.role) : false;
 
   return (
     <Card>
@@ -166,19 +167,19 @@ export default function EstablishmentPage() {
         
         {/* Columna 1 */}
         <div className="space-y-6">
-            <InfoCard title="Datos Generales" icon={MapPin}>
+            <InfoCard title="Datos Generales" icon={MapPin} editableBy={['Productor']}>
                <InfoItem label="Productor" value={establishmentData.producer} />
                <InfoItem label="Responsable Técnico" value={establishmentData.technicalManager} />
                <InfoItem label="Localidad" value={`${establishmentData.location.locality}, ${establishmentData.location.province}`} />
                <InfoItem label="Coordenadas" value={establishmentData.location.coordinates} />
             </InfoCard>
 
-             <InfoCard title="Superficie" icon={Ruler}>
+             <InfoCard title="Superficie" icon={Ruler} editableBy={['Productor']}>
                <InfoItem label="Superficie Total" value={`${establishmentData.area.total} ha`} />
                <InfoItem label="Destinada a Frutilla" value={`${establishmentData.area.strawberry} ha`} />
                <InfoItem label="Sistema Productivo" value={establishmentData.system} />
             </InfoCard>
-             <InfoCard title="Suelo y Cobertura" icon={Mountain} onEdit={() => handleEdit('soil')}>
+             <InfoCard title="Suelo y Cobertura" icon={Mountain} onEdit={() => handleEdit('soil')} editableBy={['Productor', 'Ingeniero Agronomo']}>
                <InfoItem label="Tipo de Suelo" value={establishmentData.soil.type} />
                <InfoItem label="Análisis Inicial" value={establishmentData.soil.analysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
                <InfoItem label="Cobertura (Mulching)" value={establishmentData.planting.mulching} />
@@ -187,14 +188,14 @@ export default function EstablishmentPage() {
 
         {/* Columna 2 */}
         <div className="space-y-6">
-            <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')}>
+            <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')} editableBy={['Productor', 'Ingeniero Agronomo']}>
                 <InfoItem label="Variedades" value={establishmentData.planting.variety} />
                 <InfoItem label="Fecha de Plantación" value={new Date(establishmentData.planting.date).toLocaleDateString('es-ES')} />
                 <InfoItem label="Origen de Plantas" value={establishmentData.planting.origin} />
                 <InfoItem label="Densidad" value={establishmentData.planting.density} />
             </InfoCard>
 
-            <InfoCard title="Riego y Fertirrigación" icon={Droplet} onEdit={() => handleEdit('irrigation')}>
+            <InfoCard title="Riego y Fertirrigación" icon={Droplet} onEdit={() => handleEdit('irrigation')} editableBy={['Productor', 'Ingeniero Agronomo']}>
                 <InfoItem label="Sistema de Riego" value={establishmentData.irrigation.system} />
                 <InfoItem label="Caudal por Gotero" value={establishmentData.irrigation.flowRate} />
                 <InfoItem label="Frecuencia Base" value={establishmentData.irrigation.frequency} />
@@ -204,14 +205,14 @@ export default function EstablishmentPage() {
 
         {/* Columna 3 */}
         <div className="space-y-6">
-            <InfoCard title="Manejo y Cosecha" icon={Wind} onEdit={() => handleEdit('management')}>
+            <InfoCard title="Manejo y Cosecha" icon={Wind} onEdit={() => handleEdit('management')} editableBy={['Productor', 'Ingeniero Agronomo']}>
                 <InfoItem label="Control de Malezas" value={establishmentData.management.weeds} />
                 <InfoItem label="Plan Sanitario" value={establishmentData.management.sanitaryPlan} />
                 <InfoItem label="Período de Cosecha" value={establishmentData.harvest.period} />
                 <InfoItem label="Frecuencia" value={establishmentData.harvest.frequency} />
             </InfoCard>
 
-            <InfoCard title="Comercialización" icon={TrendingUp}>
+            <InfoCard title="Comercialización" icon={TrendingUp} editableBy={['Productor']}>
                  <InfoItem label="Destino Principal" value={establishmentData.harvest.destination} />
                  <InfoItem label="Objetivo Económico" value={establishmentData.economics.objective} />
             </InfoCard>
@@ -292,3 +293,5 @@ export default function EstablishmentPage() {
     </>
   );
 }
+
+    
