@@ -15,6 +15,7 @@ import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
 import { useToast } from '@/hooks/use-toast';
 import { AgroVisionLogo } from '@/components/icons';
 import { MonthlyHarvestChart } from '../monthly-harvest-chart';
+import { BatchYieldChart } from './batch-yield-chart';
 
 
 // Extend jsPDF with autoTable
@@ -52,6 +53,7 @@ export function HarvestSummary() {
   const logoRef = useRef<HTMLDivElement>(null);
   const monthlyChartRef = useRef<HTMLDivElement>(null);
   const costChartRef = useRef<HTMLDivElement>(null);
+  const batchYieldChartRef = useRef<HTMLDivElement>(null);
 
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
   const laborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
@@ -109,12 +111,15 @@ export function HarvestSummary() {
         // --- PDF HELPER FUNCTIONS ---
         let yPos = 40;
         const addPageFooter = (docInstance: jsPDF) => {
-            const pageNum = docInstance.internal.getNumberOfPages();
+            const pageCount = docInstance.internal.getNumberOfPages();
             docInstance.setFont('helvetica', 'normal');
             docInstance.setFontSize(9);
             docInstance.setTextColor(150);
-            docInstance.text(`Página ${pageNum}`, pageWidth - 15, pageHeight - 10, { align: 'right'});
-            docInstance.text(`Informe de Producción de Frutilla - AgroVision`, 15, pageHeight - 10);
+            for(let i = 1; i <= pageCount; i++) {
+                docInstance.setPage(i);
+                docInstance.text(`Página ${i} de ${pageCount}`, pageWidth - 15, pageHeight - 10, { align: 'right'});
+                docInstance.text(`Informe de Producción de Frutilla - AgroVision`, 15, pageHeight - 10);
+            }
         };
         
         const addPageHeader = (docInstance: jsPDF) => {
@@ -131,7 +136,6 @@ export function HarvestSummary() {
         
         const checkAndAddPage = () => {
             if (yPos > pageHeight - 25) {
-                addPageFooter(doc);
                 doc.addPage();
                 addPageHeader(doc);
                 yPos = 40;
@@ -180,10 +184,9 @@ export function HarvestSummary() {
         }
 
         const addCharts = async () => {
-             if (!monthlyChartRef.current || !costChartRef.current) return;
+             if (!monthlyChartRef.current || !costChartRef.current || !batchYieldChartRef.current) return;
             
              if (yPos > pageHeight - 90) { // check for chart space
-                addPageFooter(doc);
                 doc.addPage();
                 addPageHeader(doc);
                 yPos = 40;
@@ -197,14 +200,23 @@ export function HarvestSummary() {
 
             const monthlyCanvas = await html2canvas(monthlyChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
             const costCanvas = await html2canvas(costChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
+            const batchYieldCanvas = await html2canvas(batchYieldChartRef.current, { scale: 2, backgroundColor: '#fcfcfc' });
+
             const monthlyImgData = monthlyCanvas.toDataURL('image/png');
             const costImgData = costCanvas.toDataURL('image/png');
+            const batchYieldImgData = batchYieldCanvas.toDataURL('image/png');
             
             const chartWidth = 85;
             const chartHeight = 70;
 
+            // Row 1: Monthly Harvest and Batch Yield
             doc.addImage(monthlyImgData, 'PNG', 15, yPos, chartWidth, chartHeight);
-            doc.addImage(costImgData, 'PNG', pageWidth - chartWidth - 15, yPos, chartWidth, chartHeight);
+            doc.addImage(batchYieldImgData, 'PNG', pageWidth - chartWidth - 15, yPos, chartWidth, chartHeight);
+            yPos += chartHeight + 10;
+            
+            // Row 2: Cost Distribution (centered)
+            checkAndAddPage();
+            doc.addImage(costImgData, 'PNG', (pageWidth / 2) - (chartWidth / 2), yPos, chartWidth, chartHeight);
             yPos += chartHeight + 15;
         }
 
@@ -309,7 +321,7 @@ export function HarvestSummary() {
                 El informe se compilará en un documento PDF formal, ideal para análisis y archivo.
             </p>
             {/* Hidden elements for rendering and capturing */}
-            <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: '100%', height: 'auto' }} aria-hidden="true">
+            <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: 'auto', height: 'auto' }} aria-hidden="true">
               <div ref={logoRef} style={{width: '64px', height: '64px'}}>
                  <AgroVisionLogo className="w-16 h-16"/>
               </div>
@@ -335,6 +347,9 @@ export function HarvestSummary() {
                <div ref={monthlyChartRef} className="p-4 bg-card w-[450px]">
                    <MonthlyHarvestChart harvests={harvests} />
                </div>
+               <div ref={batchYieldChartRef} className="p-4 bg-card w-[450px]">
+                    <BatchYieldChart />
+               </div>
             </div>
         </CardContent>
         <CardFooter>
@@ -346,5 +361,3 @@ export function HarvestSummary() {
     </>
   )
 }
-
-    
