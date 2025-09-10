@@ -26,13 +26,14 @@ export default function LotsPage() {
     // Assuming a fixed surface area and productivity calculation for now
     const superficie_ha = 1.5; 
     const productividad = superficie_ha > 0 ? totalKg / superficie_ha : 0;
+    const isActive = batchHarvests.length > 0 || batch.status === 'pending';
     
     return {
         id: batch.id,
         nombre: batch.id,
         productor: "Productor Admin", // Placeholder
         superficie_ha,
-        estado: batch.status === 'completed' ? 'activo' : 'inactivo',
+        estado: isActive ? 'activo' : 'inactivo',
         historial: batchHarvests.map(h => ({ fecha: h.date, kg: h.kilograms })),
         productividad,
     }
