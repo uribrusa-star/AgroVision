@@ -162,7 +162,7 @@ export type AppData = {
   loading: boolean;
   currentUser: User | null;
   users: User[];
-  setCurrentUser: (user: User | null) => void;
+  setCurrentUser: (user: User | null, rememberMe?: boolean) => void;
   harvests: Harvest[];
   collectors: Collector[];
   agronomistLogs: AgronomistLog[];

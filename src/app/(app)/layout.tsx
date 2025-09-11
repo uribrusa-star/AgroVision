@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut, LineChart, Map, KeyRound } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound } from 'lucide-react';
 import React, { useEffect, useState, useCallback, ReactNode, useTransition } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -36,7 +36,7 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { AgroVisionLogo, StrawberryIcon } from '@/components/icons';
+import { AgroVisionLogo, StrawberryIcon, NotebookPen } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2">
                 <Link href="/dashboard" className="flex items-center gap-2">
                   <AgroVisionLogo className="w-8 h-8 text-primary" />
-                  <span className="text-xl font-headline text-sidebar-foreground">AgroVision</span>
+                  <span className="text-xl font-bold text-sidebar-foreground">AgroVision</span>
                 </Link>
               </div>
             </SidebarHeader>
@@ -135,7 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </SidebarTrigger>
                 <div className="flex items-center gap-2">
                   <AgroVisionLogo className="w-6 h-6 text-primary" />
-                  <span className="text-lg font-headline">AgroVision</span>
+                  <span className="text-lg font-bold">AgroVision</span>
                 </div>
             </header>
             <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">

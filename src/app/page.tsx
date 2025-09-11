@@ -14,10 +14,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { AgroVisionLogo } from '@/components/icons';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const LoginSchema = z.object({
   email: z.string().email("Debe ser un email válido."),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+  rememberMe: z.boolean().default(false),
 });
 
 type LoginFormValues = z.infer<typeof LoginSchema>;
@@ -33,6 +35,7 @@ export default function LoginPage() {
     defaultValues: {
       email: '',
       password: '',
+      rememberMe: true,
     },
   });
 
@@ -45,7 +48,7 @@ export default function LoginPage() {
           title: `¡Bienvenido, ${user.name}!`,
           description: "Iniciando sesión en su cuenta.",
         });
-        setCurrentUser(user);
+        setCurrentUser(user, data.rememberMe);
         router.push('/dashboard');
       } else {
         toast({
@@ -61,7 +64,7 @@ export default function LoginPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="flex flex-col items-center gap-4 mb-8">
         <AgroVisionLogo className="w-16 h-16 text-primary" />
-        <h1 className="text-4xl font-headline text-foreground">Bienvenido a AgroVision</h1>
+        <h1 className="text-4xl font-bold text-foreground">Bienvenido a AgroVision</h1>
         <p className="text-muted-foreground max-w-md text-center">
           Su asistente digital para la gestión de la producción de frutilla.
         </p>
@@ -98,6 +101,26 @@ export default function LoginPage() {
                       <Input type="password" placeholder="••••••••" {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={isPending}
+                      />
+                    </FormControl>
+                    <div className="space-y-1 leading-none">
+                      <FormLabel>
+                        Recordar sesión
+                      </FormLabel>
+                    </div>
                   </FormItem>
                 )}
               />

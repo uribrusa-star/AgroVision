@@ -45,39 +45,48 @@ export const AppDataContext = React.createContext<AppData>({
   isClient: false,
 });
 
+type StorageType = 'localStorage' | 'sessionStorage';
 
-const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] => {
+const usePersistentState = <T,>(key: string): [T, (value: T | null, rememberMe?: boolean) => void] => {
   const [state, setState] = useState<T>(() => {
     if (typeof window === 'undefined') {
-      return initialValue;
+      return null as T;
     }
     try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
+      const localItem = window.localStorage.getItem(key);
+      if (localItem) return JSON.parse(localItem);
+
+      const sessionItem = window.sessionStorage.getItem(key);
+      if (sessionItem) return JSON.parse(sessionItem);
+
+      return null as T;
     } catch (error) {
-      console.warn(`Error reading localStorage key “${key}”:`, error);
-      return initialValue;
+      console.warn(`Error reading storage key “${key}”:`, error);
+      return null as T;
     }
   });
 
-  useEffect(() => {
-    try {
-      if (state === null) {
-        window.localStorage.removeItem(key);
-      } else {
-        window.localStorage.setItem(key, JSON.stringify(state));
+  const setPersistentState = (value: T | null, rememberMe: boolean = false) => {
+    if (typeof window !== 'undefined') {
+      // Clear both storages to ensure only one is used
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+      
+      if (value !== null) {
+        const storage: Storage = rememberMe ? window.localStorage : window.sessionStorage;
+        storage.setItem(key, JSON.stringify(value));
       }
-    } catch (error) {
-      console.warn(`Error setting localStorage key “${key}”:`, error);
     }
-  }, [key, state]);
+    setState(value as T);
+  };
 
-  return [state, setState];
+
+  return [state, setPersistentState];
 };
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
-    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser', null);
+    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser');
     const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
