@@ -61,11 +61,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-      <div className="flex flex-col items-center gap-4 mb-8">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
+      <div className="flex flex-col items-center gap-4 mb-8 text-center">
         <AgroVisionLogo className="w-16 h-16 text-primary" />
-        <h1 className="text-4xl font-bold text-foreground">Bienvenido a AgroVision</h1>
-        <p className="text-muted-foreground max-w-md text-center">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">Bienvenido a AgroVision</h1>
+        <p className="text-muted-foreground max-w-md">
           Su asistente digital para la gestión de la producción de frutilla.
         </p>
       </div>
@@ -134,7 +134,7 @@ export default function LoginPage() {
         </Form>
       </Card>
       
-      <footer className="mt-8 text-center text-sm text-muted-foreground">
+      <footer className="mt-12 text-center text-sm text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} AgroVision. Todos los derechos reservados.</p>
       </footer>
     </div>
