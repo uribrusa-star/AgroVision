@@ -21,6 +21,7 @@ const LogSchema = z.object({
   developmentState: z.enum(['Floración', 'Fructificación', 'Maduración'], {
     required_error: "El estado de desarrollo es requerido.",
   }),
+  batchId: z.string().optional(),
   flowerCount: z.coerce.number().optional(),
   fruitCount: z.coerce.number().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
@@ -30,7 +31,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function PhenologyLogForm() {
-  const { addPhenologyLog, currentUser } = React.useContext(AppDataContext);
+  const { addPhenologyLog, currentUser, batches } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -40,6 +41,7 @@ export function PhenologyLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       developmentState: undefined,
+      batchId: '',
       flowerCount: 0,
       fruitCount: 0,
       notes: '',
@@ -54,6 +56,7 @@ export function PhenologyLogForm() {
       const newLog: Omit<PhenologyLog, 'id'> = {
         date: new Date().toISOString(),
         developmentState: data.developmentState,
+        batchId: data.batchId || undefined,
         flowerCount: data.flowerCount,
         fruitCount: data.fruitCount,
         notes: data.notes,
@@ -85,33 +88,58 @@ export function PhenologyLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registrar Estado Fenológico</CardTitle>
-        <CardDescription>Ingrese observaciones sobre el estado actual del cultivo.</CardDescription>
+        <CardDescription>Ingrese observaciones sobre el estado del cultivo en un lote específico.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-             <FormField
-                control={form.control}
-                name="developmentState"
-                render={({ field }) => (
+            <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="developmentState"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Estado de Desarrollo</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione un estado" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Floración">Floración</SelectItem>
+                                <SelectItem value="Fructificación">Fructificación</SelectItem>
+                                <SelectItem value="Maduración">Maduración</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="batchId"
+                    render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Estado de Desarrollo</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccione un estado" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Floración">Floración</SelectItem>
-                            <SelectItem value="Fructificación">Fructificación</SelectItem>
-                            <SelectItem value="Maduración">Maduración</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
+                        <FormLabel>Lote (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Observación General" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="">Observación General</SelectItem>
+                            {batches.map(b => (
+                                <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
                     </FormItem>
-                )}
+                    )}
                 />
+            </div>
             <div className="grid md:grid-cols-2 gap-4">
                 <FormField
                     control={form.control}

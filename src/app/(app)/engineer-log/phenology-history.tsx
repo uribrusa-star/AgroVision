@@ -27,6 +27,7 @@ const LogSchema = z.object({
   developmentState: z.enum(['Floración', 'Fructificación', 'Maduración'], {
     required_error: "El estado de desarrollo es requerido.",
   }),
+  batchId: z.string().optional(),
   flowerCount: z.coerce.number().optional(),
   fruitCount: z.coerce.number().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
@@ -35,7 +36,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function PhenologyHistory() {
-  const { loading, phenologyLogs, editPhenologyLog, deletePhenologyLog, currentUser } = useContext(AppDataContext);
+  const { loading, phenologyLogs, editPhenologyLog, deletePhenologyLog, currentUser, batches } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -51,6 +52,7 @@ export function PhenologyHistory() {
     if (selectedLog) {
       form.reset({
         developmentState: selectedLog.developmentState,
+        batchId: selectedLog.batchId,
         flowerCount: selectedLog.flowerCount,
         fruitCount: selectedLog.fruitCount,
         notes: selectedLog.notes,
@@ -81,6 +83,7 @@ export function PhenologyHistory() {
       editPhenologyLog({
         ...selectedLog,
         developmentState: values.developmentState,
+        batchId: values.batchId || undefined,
         flowerCount: values.flowerCount,
         fruitCount: values.fruitCount,
         notes: values.notes,
@@ -116,6 +119,7 @@ export function PhenologyHistory() {
                 <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead>Lote</TableHead>
                     <TableHead>Conteos</TableHead>
                     <TableHead>Notas</TableHead>
                     <TableHead>Imagen</TableHead>
@@ -125,14 +129,14 @@ export function PhenologyHistory() {
                 <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 6: 5}>
+                    <TableCell colSpan={canManage ? 7: 6}>
                       <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!loading && phenologyLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 6: 5} className="text-center">No hay registros de fenología.</TableCell>
+                    <TableCell colSpan={canManage ? 7: 6} className="text-center">No hay registros de fenología.</TableCell>
                   </TableRow>
                 )}
                 {!loading && [...phenologyLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
@@ -145,6 +149,9 @@ export function PhenologyHistory() {
                                     <stateInfo.icon className="h-3 w-3" />
                                     {stateInfo.label}
                                 </Badge>
+                            </TableCell>
+                             <TableCell>
+                                {log.batchId ? <Badge variant="outline">{log.batchId}</Badge> : <span className="text-xs text-muted-foreground">General</span>}
                             </TableCell>
                             <TableCell className="text-xs">
                                 <p>Flores: {log.flowerCount ?? '-'}</p>
@@ -219,7 +226,8 @@ export function PhenologyHistory() {
             </DialogHeader>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
-                <FormField
+               <div className="grid md:grid-cols-2 gap-4">
+                 <FormField
                     control={form.control}
                     name="developmentState"
                     render={({ field }) => (
@@ -241,6 +249,30 @@ export function PhenologyHistory() {
                         </FormItem>
                     )}
                     />
+                    <FormField
+                      control={form.control}
+                      name="batchId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Lote (Opcional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Observación General" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Observación General</SelectItem>
+                                {batches.map(b => (
+                                  <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                                ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+               </div>
                 <div className="grid md:grid-cols-2 gap-4">
                     <FormField
                         control={form.control}
@@ -326,6 +358,13 @@ export function PhenologyHistory() {
                                     <p className="text-sm font-medium text-muted-foreground">Estado del Cultivo</p>
                                     <Badge variant={stateInfo.variant as any}>{stateInfo.label}</Badge>
                                 </div>
+                                
+                                {selectedLog.batchId && (
+                                  <div className="space-y-1">
+                                      <p className="text-sm font-medium text-muted-foreground">Lote</p>
+                                      <Badge variant="outline">{selectedLog.batchId}</Badge>
+                                  </div>
+                                )}
 
                                  <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-1">
@@ -371,5 +410,3 @@ export function PhenologyHistory() {
     </>
   )
 }
-
-    

@@ -25,6 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const LogSchema = z.object({
   type: z.enum(['Fertilización', 'Fumigación', 'Control', 'Sanidad', 'Labor Cultural', 'Riego', 'Condiciones Ambientales']),
+  batchId: z.string().optional(),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
 });
@@ -32,7 +33,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function ApplicationHistory() {
-  const { loading, agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser } = useContext(AppDataContext);
+  const { loading, agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser, batches } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -48,6 +49,7 @@ export function ApplicationHistory() {
     if (selectedLog) {
       form.reset({
         type: selectedLog.type,
+        batchId: selectedLog.batchId,
         product: selectedLog.product,
         notes: selectedLog.notes,
       });
@@ -77,6 +79,7 @@ export function ApplicationHistory() {
       editAgronomistLog({
         ...selectedLog,
         type: values.type as AgronomistLogType,
+        batchId: values.batchId || undefined,
         product: values.product,
         notes: values.notes,
       });
@@ -115,6 +118,7 @@ export function ApplicationHistory() {
                 <TableRow>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Tipo</TableHead>
+                    <TableHead>Lote</TableHead>
                     <TableHead>Detalle</TableHead>
                     <TableHead>Imagen</TableHead>
                     {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
@@ -123,14 +127,14 @@ export function ApplicationHistory() {
                 <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 5: 4}>
+                    <TableCell colSpan={canManage ? 6: 5}>
                       <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!loading && agronomistLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de actividades.</TableCell>
+                    <TableCell colSpan={canManage ? 6: 5} className="text-center">No hay registros de actividades.</TableCell>
                   </TableRow>
                 )}
                 {!loading && [...agronomistLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
@@ -143,6 +147,9 @@ export function ApplicationHistory() {
                             <typeInfo.icon className="h-3 w-3" />
                             {typeInfo.label}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {log.batchId ? <Badge variant="outline">{log.batchId}</Badge> : <span className="text-xs text-muted-foreground">General</span>}
                         </TableCell>
                         <TableCell>
                           <p className="font-medium">{log.product || '-'}</p>
@@ -240,19 +247,42 @@ export function ApplicationHistory() {
                     )}
                     />
                     <FormField
-                        control={form.control}
-                        name="product"
-                        render={({ field }) => (
+                      control={form.control}
+                      name="batchId"
+                      render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Producto/Labor/Detalle (Opcional)</FormLabel>
-                            <FormControl>
-                            <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
-                            </FormControl>
-                            <FormMessage />
+                          <FormLabel>Lote (Opcional)</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Aplicación General" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="">Aplicación General</SelectItem>
+                                {batches.map(b => (
+                                  <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                                ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
                         </FormItem>
-                        )}
+                      )}
                     />
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="product"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Producto/Labor/Detalle (Opcional)</FormLabel>
+                        <FormControl>
+                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 <FormField
                 control={form.control}
                 name="notes"
@@ -309,6 +339,13 @@ export function ApplicationHistory() {
                                     <p className="text-sm font-medium text-muted-foreground">Tipo de Actividad</p>
                                     <Badge variant={typeInfo.variant as any}>{typeInfo.label}</Badge>
                                 </div>
+                                
+                                {selectedLog.batchId && (
+                                  <div className="space-y-1">
+                                      <p className="text-sm font-medium text-muted-foreground">Lote</p>
+                                      <Badge variant="outline">{selectedLog.batchId}</Badge>
+                                  </div>
+                                )}
 
                                 {selectedLog.product && (
                                     <div className="space-y-1">

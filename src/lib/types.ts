@@ -64,6 +64,7 @@ export type AgronomistLog = {
     id: string;
     date: string;
     type: AgronomistLogType;
+    batchId?: string;
     product?: string;
     notes: string;
     imageUrl?: string;
@@ -74,6 +75,7 @@ export type PhenologyLog = {
     id: string;
     date: string;
     developmentState: 'Floración' | 'Fructificación' | 'Maduración';
+    batchId?: string;
     flowerCount?: number;
     fruitCount?: number;
     notes: string;
@@ -188,5 +190,3 @@ export type AppData = {
   deleteTransaction: (transactionId: string) => Promise<void>;
   isClient: boolean;
 };
-
-    

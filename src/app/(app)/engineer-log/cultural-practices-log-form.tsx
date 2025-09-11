@@ -16,13 +16,14 @@ import { useToast } from '@/hooks/use-toast';
 
 const LogSchema = z.object({
   practiceType: z.string().min(1, "El tipo de labor es requerido."),
+  batchId: z.string().optional(),
   notes: z.string().min(5, "Las notas son requeridas."),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function CulturalPracticesLogForm() {
-  const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
+  const { addAgronomistLog, currentUser, batches } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -32,6 +33,7 @@ export function CulturalPracticesLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       practiceType: '',
+      batchId: '',
       notes: '',
     },
   });
@@ -41,6 +43,7 @@ export function CulturalPracticesLogForm() {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: 'Labor Cultural',
+        batchId: data.batchId || undefined,
         product: data.practiceType,
         notes: data.notes,
       };
@@ -57,36 +60,61 @@ export function CulturalPracticesLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registrar Labores Culturales</CardTitle>
-        <CardDescription>Registre deshojes, limpiezas, mantenimiento y otras labores en el campo.</CardDescription>
+        <CardDescription>Registre labores y asócielas a un lote específico.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            <FormField
-              control={form.control}
-              name="practiceType"
-              render={({ field }) => (
-                  <FormItem>
-                  <FormLabel>Tipo de Labor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Seleccione una labor" />
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                          <SelectItem value="Deshoje">Deshoje / Limpieza</SelectItem>
-                          <SelectItem value="Reposición de plantas">Reposición de plantas</SelectItem>
-                          <SelectItem value="Mantenimiento de mulching">Mantenimiento de mulching</SelectItem>
-                          <SelectItem value="Mantenimiento de túnel">Mantenimiento de túnel</SelectItem>
-                          <SelectItem value="Polinización">Polinización</SelectItem>
-                          <SelectItem value="Otra">Otra (especificar en notas)</SelectItem>
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
-                  </FormItem>
-              )}
-            />
+             <div className="grid md:grid-cols-2 gap-4">
+                <FormField
+                control={form.control}
+                name="practiceType"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Tipo de Labor</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Seleccione una labor" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="Deshoje">Deshoje / Limpieza</SelectItem>
+                            <SelectItem value="Reposición de plantas">Reposición de plantas</SelectItem>
+                            <SelectItem value="Mantenimiento de mulching">Mantenimiento de mulching</SelectItem>
+                            <SelectItem value="Mantenimiento de túnel">Mantenimiento de túnel</SelectItem>
+                            <SelectItem value="Polinización">Polinización</SelectItem>
+                            <SelectItem value="Otra">Otra (especificar en notas)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="batchId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Lote (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Labor General" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="">Labor General</SelectItem>
+                            {batches.map(b => (
+                                <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+            </div>
             <FormField
               control={form.control}
               name="notes"

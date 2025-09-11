@@ -11,12 +11,13 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
-import type { AgronomistLog, AgronomistLogType } from '@/lib/types';
+import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 const LogSchema = z.object({
   type: z.enum(['Riego', 'Fertilización']),
+  batchId: z.string().optional(),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas son requeridas."),
 });
@@ -24,7 +25,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function IrrigationLogForm() {
-  const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
+  const { addAgronomistLog, currentUser, batches } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -34,6 +35,7 @@ export function IrrigationLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       type: 'Riego',
+      batchId: '',
       product: '',
       notes: '',
     },
@@ -46,6 +48,7 @@ export function IrrigationLogForm() {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: data.type,
+        batchId: data.batchId || undefined,
         product: data.product,
         notes: data.notes,
       };
@@ -62,7 +65,7 @@ export function IrrigationLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Riego y Fertirrigación</CardTitle>
-        <CardDescription>Registre las aplicaciones de agua y nutrientes.</CardDescription>
+        <CardDescription>Registre las aplicaciones de agua y nutrientes, asociándolas a un lote.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -91,6 +94,30 @@ export function IrrigationLogForm() {
               />
               <FormField
                 control={form.control}
+                name="batchId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lote (Opcional)</FormLabel>
+                     <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Aplicación General" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Aplicación General</SelectItem>
+                          {batches.map(b => (
+                            <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                          ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+             <FormField
+                control={form.control}
                 name="product"
                 render={({ field }) => (
                   <FormItem>
@@ -104,7 +131,6 @@ export function IrrigationLogForm() {
                   </FormItem>
                 )}
               />
-            </div>
             <FormField
               control={form.control}
               name="notes"

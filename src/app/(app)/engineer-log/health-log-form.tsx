@@ -20,6 +20,7 @@ const LogSchema = z.object({
   observationType: z.enum(['Plaga', 'Enfermedad'], {
     required_error: "El tipo de observación es requerido.",
   }),
+  batchId: z.string().optional(),
   product: z.string().min(1, "El producto o agente observado es requerido."),
   severity: z.string().min(3, "La incidencia o severidad es requerida."),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
@@ -29,7 +30,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function HealthLogForm() {
-  const { addAgronomistLog, currentUser } = React.useContext(AppDataContext);
+  const { addAgronomistLog, currentUser, batches } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -39,6 +40,7 @@ export function HealthLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       observationType: undefined,
+      batchId: '',
       product: '',
       severity: '',
       notes: '',
@@ -53,6 +55,7 @@ export function HealthLogForm() {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: 'Sanidad',
+        batchId: data.batchId || undefined,
         product: `${data.observationType}: ${data.product}`,
         notes: `Incidencia: ${data.severity}. Observaciones: ${data.notes}`,
         imageUrl: data.image || "",
@@ -83,7 +86,7 @@ export function HealthLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registrar Sanidad y Monitoreo</CardTitle>
-        <CardDescription>Observe plagas, enfermedades y el grado de incidencia en el cultivo.</CardDescription>
+        <CardDescription>Observe plagas y enfermedades, y asócielas a un lote específico.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -124,7 +127,8 @@ export function HealthLogForm() {
                     )}
                 />
             </div>
-             <FormField
+            <div className="grid md:grid-cols-2 gap-4">
+              <FormField
                 control={form.control}
                 name="severity"
                 render={({ field }) => (
@@ -136,7 +140,31 @@ export function HealthLogForm() {
                     <FormMessage />
                 </FormItem>
                 )}
-            />
+              />
+              <FormField
+                control={form.control}
+                name="batchId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Lote (Opcional)</FormLabel>
+                     <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Observación General" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="">Observación General</SelectItem>
+                          {batches.map(b => (
+                            <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                          ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="notes"
