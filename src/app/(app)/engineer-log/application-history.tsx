@@ -28,6 +28,7 @@ const LogSchema = z.object({
   batchId: z.string().optional(),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
+  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -52,6 +53,7 @@ export function ApplicationHistory() {
         batchId: selectedLog.batchId || 'general',
         product: selectedLog.product,
         notes: selectedLog.notes,
+        image: selectedLog.imageUrl,
       });
     }
   }, [selectedLog, form]);
@@ -82,6 +84,8 @@ export function ApplicationHistory() {
         batchId: values.batchId === 'general' ? undefined : values.batchId,
         product: values.product,
         notes: values.notes,
+        imageUrl: values.image || "",
+        imageHint: values.image ? (selectedLog.imageHint || 'crop disease pest') : undefined,
       });
       setIsEditDialogOpen(false);
       setSelectedLog(null);
@@ -301,6 +305,19 @@ export function ApplicationHistory() {
                     </FormItem>
                 )}
                 />
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL de Imagen (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
@@ -387,3 +404,5 @@ export function ApplicationHistory() {
     </>
   )
 }
+
+    

@@ -31,6 +31,7 @@ const LogSchema = z.object({
   flowerCount: z.coerce.number().optional(),
   fruitCount: z.coerce.number().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
+  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -56,6 +57,7 @@ export function PhenologyHistory() {
         flowerCount: selectedLog.flowerCount,
         fruitCount: selectedLog.fruitCount,
         notes: selectedLog.notes,
+        image: selectedLog.imageUrl,
       });
     }
   }, [selectedLog, form]);
@@ -87,6 +89,8 @@ export function PhenologyHistory() {
         flowerCount: values.flowerCount,
         fruitCount: values.fruitCount,
         notes: values.notes,
+        imageUrl: values.image || "",
+        imageHint: values.image ? (selectedLog.imageHint || 'crop phenology') : undefined,
       });
       setIsEditDialogOpen(false);
       setSelectedLog(null);
@@ -319,7 +323,19 @@ export function PhenologyHistory() {
                     </FormItem>
                 )}
                 />
-                {/* Note: Image editing is not implemented in this version for simplicity */}
+                <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL de Imagen (Opcional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
@@ -410,3 +426,5 @@ export function PhenologyHistory() {
     </>
   )
 }
+
+    
