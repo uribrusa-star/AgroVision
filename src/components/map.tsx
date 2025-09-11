@@ -1,8 +1,9 @@
 
 'use client';
 
-import React from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Polygon } from '@react-google-maps/api';
+import React, { useContext, useState } from 'react';
+import { GoogleMap, useJsApiLoader, Polygon, Marker, InfoWindow } from '@react-google-maps/api';
+import { AppDataContext } from '@/context/app-data-context';
 
 type MapProps = {
     center: {
@@ -16,26 +17,39 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
     const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     });
-
-    const containerStyle = {
-        width: '100%',
-        height: '100%',
-    };
+    
+    const { harvests } = useContext(AppDataContext);
+    const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
 
     const renderPolygons = () => {
         if (!geoJsonData || !geoJsonData.features) return null;
 
         return geoJsonData.features
             .filter((feature: any) => feature.geometry && feature.geometry.type === 'Polygon')
-            .map((feature: any, index: number) => {
+            .map((feature: any) => {
                 const paths = feature.geometry.coordinates[0].map((coord: [number, number]) => ({
                     lat: coord[1],
                     lng: coord[0],
                 }));
 
+                const properties = Object.keys(feature.properties);
+                const polygonId = properties.length > 0 ? properties[0] : `polygon-${feature.id}`;
+                
+                const polygonHarvests = harvests.filter(h => h.batchNumber === polygonId);
+                const totalKilos = polygonHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+
+                const centerOfPolygon = paths.reduce(
+                    (acc: { lat: number, lng: number }, curr: { lat: number, lng: number }) => {
+                        return { lat: acc.lat + curr.lat, lng: acc.lng + curr.lng };
+                    }, { lat: 0, lng: 0 }
+                );
+                centerOfPolygon.lat /= paths.length;
+                centerOfPolygon.lng /= paths.length;
+
+
                 return (
                     <Polygon
-                        key={`polygon-${index}`}
+                        key={polygonId}
                         paths={paths}
                         options={{
                             fillColor: "#4A90E2",
@@ -44,7 +58,21 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                             strokeOpacity: 0.8,
                             strokeWeight: 2,
                         }}
-                    />
+                        onClick={() => setActiveInfoWindow(polygonId)}
+                    >
+                         {activeInfoWindow === polygonId && (
+                            <InfoWindow
+                                position={centerOfPolygon}
+                                onCloseClick={() => setActiveInfoWindow(null)}
+                            >
+                                <div className="p-1">
+                                    <h4 className="font-bold text-base mb-2">Lote: {polygonId}</h4>
+                                    <p className="text-sm"><strong>Producción Total:</strong> {totalKilos.toLocaleString('es-ES')} kg</p>
+                                    <p className="text-sm"><strong>Nº Cosechas:</strong> {polygonHarvests.length}</p>
+                                </div>
+                            </InfoWindow>
+                        )}
+                    </Polygon>
                 );
             });
     };
@@ -78,9 +106,12 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
 
     return (
         <GoogleMap
-            mapContainerStyle={containerStyle}
+            mapContainerStyle={{
+                width: '100%',
+                height: '100%',
+            }}
             center={center}
-            zoom={14}
+            zoom={15}
             options={{
                 streetViewControl: false,
                 mapTypeControl: false,
