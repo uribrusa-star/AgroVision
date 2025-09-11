@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -341,5 +342,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
-    

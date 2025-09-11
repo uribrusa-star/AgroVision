@@ -88,7 +88,6 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 mapTypeId: 'terrain',
             }}
         >
-            <Marker position={center} title="Ubicación del establecimiento" />
             {renderPolygons()}
             {renderMarkers()}
         </GoogleMap>

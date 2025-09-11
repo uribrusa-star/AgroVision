@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useContext, useState, useMemo } from "react";
+import React, { useContext, useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,29 +30,42 @@ const geoJsonSchema = z.object({
 });
 
 export default function MapPage() {
-  const { establishmentData } = useContext(AppDataContext);
+  const { establishmentData, updateEstablishmentData } = useContext(AppDataContext);
   const { toast } = useToast();
-  const [geoJsonData, setGeoJsonData] = useState<any>(null);
+  
+  const [internalGeoJson, setInternalGeoJson] = useState<any>(null);
 
   const geoJsonForm = useForm<{ geoJsonData: string }>({
     resolver: zodResolver(geoJsonSchema),
     defaultValues: {
-      geoJsonData: '',
+      geoJsonData: establishmentData?.geoJsonData || '',
     },
   });
 
-  const onGeoJsonSubmit = (values: { geoJsonData: string }) => {
-    if (values.geoJsonData.trim() === '') {
-        setGeoJsonData(null);
-        toast({ title: "GeoJSON Limpiado", description: "Se han eliminado las geometrías del mapa." });
-        return;
+  useEffect(() => {
+    if (establishmentData?.geoJsonData) {
+        try {
+            setInternalGeoJson(JSON.parse(establishmentData.geoJsonData));
+        } catch {
+            setInternalGeoJson(null);
+        }
+        geoJsonForm.reset({ geoJsonData: establishmentData.geoJsonData });
     }
+  }, [establishmentData?.geoJsonData, geoJsonForm]);
+
+
+  const onGeoJsonSubmit = async (values: { geoJsonData: string }) => {
     try {
-        const parsedData = JSON.parse(values.geoJsonData);
-        setGeoJsonData(parsedData);
-        toast({ title: "GeoJSON Cargado", description: "Los datos se han cargado en el mapa." });
+        await updateEstablishmentData({ geoJsonData: values.geoJsonData });
+        if (values.geoJsonData.trim() === '') {
+            setInternalGeoJson(null);
+            toast({ title: "GeoJSON Limpiado", description: "Se han eliminado las geometrías del mapa y guardado el cambio." });
+        } else {
+            setInternalGeoJson(JSON.parse(values.geoJsonData));
+            toast({ title: "GeoJSON Guardado y Cargado", description: "Los datos se han guardado y cargado en el mapa." });
+        }
     } catch (error) {
-        toast({ title: "Error de GeoJSON", description: "El formato de los datos no es válido.", variant: "destructive" });
+        toast({ title: "Error", description: "No se pudieron guardar los datos GeoJSON.", variant: "destructive" });
     }
   };
 
@@ -83,14 +96,14 @@ export default function MapPage() {
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
-                   <MapComponent center={mapCenter} geoJsonData={geoJsonData} />
+                   <MapComponent center={mapCenter} geoJsonData={internalGeoJson} />
                 </div>
             </CardContent>
         </Card>
         <Card className="md:col-span-1">
              <CardHeader>
                 <CardTitle>Cargar GeoJSON</CardTitle>
-                <CardDescription>Pegue el contenido de un archivo GeoJSON para visualizarlo en el mapa.</CardDescription>
+                <CardDescription>Pegue el contenido de un archivo GeoJSON para visualizarlo en el mapa. Los datos se guardarán automáticamente.</CardDescription>
             </CardHeader>
             <Form {...geoJsonForm}>
                 <form onSubmit={geoJsonForm.handleSubmit(onGeoJsonSubmit)}>
@@ -114,7 +127,7 @@ export default function MapPage() {
                         />
                     </CardContent>
                     <CardFooter>
-                        <Button type="submit">Cargar en Mapa</Button>
+                        <Button type="submit">Guardar y Cargar en Mapa</Button>
                     </CardFooter>
                 </form>
             </Form>

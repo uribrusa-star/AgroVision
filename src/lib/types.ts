@@ -1,4 +1,5 @@
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -138,6 +139,7 @@ export type EstablishmentData = {
   economics: {
     objective: string;
   };
+  geoJsonData?: string;
 };
 
 export type ProducerLog = {

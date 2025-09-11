@@ -47,7 +47,8 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   },
   economics: {
     objective: "Maximizar rendimiento y calidad para mercado fresco."
-  }
+  },
+  geoJsonData: "",
 };
 
 
