@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import Image from 'next/image';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AgroVisionLogo } from '@/components/icons';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -63,7 +63,7 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="flex flex-col items-center gap-4 mb-8 text-center">
-        <AgroVisionLogo className="w-16 h-16 text-primary" />
+        <Image src="https://i.imgur.com/gBAm14s.png" alt="AgroVision Logo" width={80} height={80} data-ai-hint="logo" />
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">Bienvenido a AgroVision</h1>
         <p className="text-muted-foreground max-w-md">
           Su asistente digital para la gestión de la producción de frutilla.
