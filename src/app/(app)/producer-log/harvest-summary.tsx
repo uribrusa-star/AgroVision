@@ -5,10 +5,8 @@ import React, { useContext, useTransition, useMemo, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
-import { Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Button } from '@/components/ui/button';
 import { AppDataContext } from '@/context/app-data-context';
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
@@ -16,6 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { AgroVisionLogo } from '@/components/icons';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
+import { CostDistributionChart } from '../dashboard/cost-distribution-chart';
 
 
 // Extend jsPDF with autoTable
@@ -23,37 +22,6 @@ interface jsPDFWithAutoTable extends jsPDF {
   autoTable: (options: any) => jsPDF;
   lastAutoTable: { finalY: number };
 }
-
-// Chart configurations
-const costChartConfig = {
-  costs: {
-    label: "Costos",
-  },
-  'Mano de Obra': {
-    label: "Mano de Obra",
-    color: "hsl(var(--chart-1))",
-  },
-  'Insumos': {
-    label: "Insumos",
-    color: "hsl(var(--chart-2))",
-  },
-  'Riego': {
-    label: "Riego",
-    color: "hsl(var(--chart-3))",
-  },
-   'Mantenimiento': {
-    label: "Mantenimiento",
-    color: "hsl(var(--chart-4))",
-  },
-  'Servicios': {
-    label: "Servicios",
-    color: "hsl(var(--chart-5))",
-  },
-  'Otro': {
-      label: "Otro",
-      color: "hsl(var(--muted))"
-  }
-};
 
 
 export function HarvestSummary() {
@@ -92,14 +60,6 @@ export function HarvestSummary() {
   
   // Use establishment data for calculations, with fallbacks
   const farmArea = establishmentData?.area.strawberry || 5; // Default to 5ha
-  
-  const costDistributionData = useMemo(() => 
-      Object.entries(costByCategory).map(([category, value]) => ({
-          name: category,
-          value,
-          fill: costChartConfig[category as keyof typeof costChartConfig]?.color || '#8884d8'
-      })).filter(item => item.value > 0),
-  [costByCategory]);
   
 
   const handleGeneratePdf = () => {
@@ -369,23 +329,7 @@ export function HarvestSummary() {
                  <AgroVisionLogo className="w-16 h-16"/>
               </div>
               <div ref={costChartRef} className='p-4 bg-card w-[450px]'>
-                <Card>
-                  <CardHeader>
-                      <CardTitle>Distribución de Costos</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ChartContainer config={costChartConfig} className="h-[250px] w-full">
-                      <RechartsPieChart>
-                          <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
-                          <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${costChartConfig[name as keyof typeof costChartConfig]?.label || name}: ${(percent * 100).toFixed(0)}%`}>
-                              {costDistributionData.map((entry) => (
-                                  <Cell key={`cell-${entry.name}`} fill={entry.fill} />
-                              ))}
-                          </Pie>
-                      </RechartsPieChart>
-                    </ChartContainer>
-                  </CardContent>
-                </Card>
+                 <CostDistributionChart isForPdf={true} />
               </div>
                <div ref={monthlyChartRef} className="p-4 bg-card w-[450px]">
                    <MonthlyHarvestChart harvests={harvests} />
