@@ -9,6 +9,7 @@ import React, { useEffect, useState, useCallback, ReactNode, useTransition } fro
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import Image from 'next/image';
 import {
   collection,
   getDocs,
@@ -100,7 +101,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
                 <Link href="/dashboard" className="flex items-center gap-2">
-                  <AgroVisionLogo className="w-8 h-8 text-primary" />
+                  <Image src="/logo.png" alt="AgroVision Logo" width={32} height={32} />
                   <span className="text-xl font-bold text-sidebar-foreground">AgroVision</span>
                 </Link>
               </div>
@@ -134,7 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className="sr-only">Toggle Menu</span>
                 </SidebarTrigger>
                 <div className="flex items-center gap-2">
-                  <AgroVisionLogo className="w-6 h-6 text-primary" />
+                  <Image src="/logo.png" alt="AgroVision Logo" width={24} height={24} />
                   <span className="text-lg font-bold">AgroVision</span>
                 </div>
             </header>
