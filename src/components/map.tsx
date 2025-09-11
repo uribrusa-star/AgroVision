@@ -39,10 +39,11 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 streetViewControl: false,
                 mapTypeControl: false,
                 fullscreenControl: false,
+                mapTypeId: 'terrain',
             }}
         >
             <Marker position={center} title="Ubicación del establecimiento" />
-            {geoJsonData && <Data data={geoJsonData} />}
+            {geoJsonData && <Data key={JSON.stringify(geoJsonData)} data={geoJsonData} />}
         </GoogleMap>
     );
 };
