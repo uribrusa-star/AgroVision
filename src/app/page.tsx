@@ -134,13 +134,6 @@ export default function LoginPage() {
         </Form>
       </Card>
       
-      <div className="text-xs text-center text-muted-foreground mt-4 space-y-1">
-          <p className="font-bold">Usuarios de Demostración:</p>
-          <p>productor@agrovision.co (pass: productor123)</p>
-          <p>agronomo@agrovision.co (pass: ingeniero123)</p>
-          <p>encargado@agrovision.co (pass: encargado123)</p>
-      </div>
-
       <footer className="mt-8 text-center text-sm text-muted-foreground">
         <p>&copy; {new Date().getFullYear()} AgroVision. Todos los derechos reservados.</p>
       </footer>
