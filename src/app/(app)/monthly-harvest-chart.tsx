@@ -44,7 +44,7 @@ const processHarvestsForChart = (harvests: Harvest[]) => {
 };
 
 
-export function MonthlyHarvestChart({ harvests }: { harvests: Harvest[] }) {
+function MonthlyHarvestChartComponent({ harvests }: { harvests: Harvest[] }) {
   const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
@@ -114,3 +114,5 @@ export function MonthlyHarvestChart({ harvests }: { harvests: Harvest[] }) {
     </Card>
   );
 }
+
+export const MonthlyHarvestChart = React.memo(MonthlyHarvestChartComponent);

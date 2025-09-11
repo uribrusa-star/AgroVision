@@ -14,7 +14,7 @@ const chartConfig = {
   },
 };
 
-export function BatchYieldChart() {
+function BatchYieldChartComponent() {
   const { loading, harvests } = useContext(AppDataContext);
 
   const harvestedBatchIds = [...new Set(harvests.map(h => h.batchNumber))];
@@ -79,3 +79,4 @@ export function BatchYieldChart() {
     </Card>
   )
 }
+export const BatchYieldChart = React.memo(BatchYieldChartComponent);

@@ -158,8 +158,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string> => {
         const newHarvestRef = await addDoc(collection(db, 'harvests'), harvest);
-        const collectorRef = doc(db, 'collectors', harvest.collector.id);
+        const newHarvest = { id: newHarvestRef.id, ...harvest };
         
+        const collectorRef = doc(db, 'collectors', harvest.collector.id);
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
         if (!collectorDoc) {
           console.error("Collector not found in state");
@@ -168,16 +169,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         const newTotalHarvested = collectorDoc.totalHarvested + harvest.kilograms;
         const newHoursWorked = collectorDoc.hoursWorked + hoursWorked;
-        
-        const batch = writeBatch(db);
-        batch.update(collectorRef, {
+        const updatedCollectorData = {
             totalHarvested: newTotalHarvested,
             hoursWorked: newHoursWorked,
             productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-        });
+        };
+        
+        await setDoc(collectorRef, updatedCollectorData, { merge: true });
 
-        await batch.commit();
-        await fetchData();
+        setHarvests(prev => [...prev, newHarvest]);
+        setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? { ...c, ...updatedCollectorData } : c));
+        
         return newHarvestRef.id;
     };
 
@@ -185,120 +187,125 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const collectorRef = doc(db, 'collectors', updatedCollector.id);
         const { id, ...data } = updatedCollector;
         await setDoc(collectorRef, data, { merge: true });
-        await fetchData();
+        setCollectors(prev => prev.map(c => c.id === id ? updatedCollector : c));
     };
 
     const deleteCollector = async (collectorId: string) => {
-        const batch = writeBatch(db);
+        const batchOp = writeBatch(db);
 
         const collectorRef = doc(db, 'collectors', collectorId);
-        batch.delete(collectorRef);
+        batchOp.delete(collectorRef);
 
         const harvestsToDeleteQuery = query(collection(db, 'harvests'), where('collector.id', '==', collectorId));
         const harvestsToDeleteSnapshot = await getDocs(harvestsToDeleteQuery);
-        harvestsToDeleteSnapshot.forEach(doc => batch.delete(doc.ref));
+        harvestsToDeleteSnapshot.forEach(doc => batchOp.delete(doc.ref));
 
         const paymentsToDeleteQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', collectorId));
         const paymentsToDeleteSnapshot = await getDocs(paymentsToDeleteQuery);
-        paymentsToDeleteSnapshot.forEach(doc => batch.delete(doc.ref));
+        paymentsToDeleteSnapshot.forEach(doc => batchOp.delete(doc.ref));
 
-        await batch.commit();
-        await fetchData();
+        await batchOp.commit();
+        
+        setCollectors(prev => prev.filter(c => c.id !== collectorId));
+        setHarvests(prev => prev.filter(h => h.collector.id !== collectorId));
+        setCollectorPaymentLogs(prev => prev.filter(p => p.collectorId !== collectorId));
     };
 
     const addCollector = async (collector: Omit<Collector, 'id'>) => {
-        await addDoc(collection(db, 'collectors'), collector);
-        await fetchData();
+        const newCollectorRef = await addDoc(collection(db, 'collectors'), collector);
+        setCollectors(prev => [...prev, { id: newCollectorRef.id, ...collector }]);
     };
 
     const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
-        await addDoc(collection(db, 'agronomistLogs'), log);
-        await fetchData();
+        const newLogRef = await addDoc(collection(db, 'agronomistLogs'), log);
+        setAgronomistLogs(prev => [...prev, { id: newLogRef.id, ...log }]);
     };
 
     const editAgronomistLog = async (updatedLog: AgronomistLog) => {
         const logRef = doc(db, 'agronomistLogs', updatedLog.id);
         const { id, ...data } = updatedLog;
         await setDoc(logRef, data, { merge: true });
-        await fetchData();
+        setAgronomistLogs(prev => prev.map(l => l.id === id ? updatedLog : l));
     };
 
     const deleteAgronomistLog = async (logId: string) => {
         await deleteDoc(doc(db, 'agronomistLogs', logId));
-        await fetchData();
+        setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
     };
 
     const addPhenologyLog = async (log: Omit<PhenologyLog, 'id'>) => {
-        await addDoc(collection(db, 'phenologyLogs'), log);
-        await fetchData();
+        const newLogRef = await addDoc(collection(db, 'phenologyLogs'), log);
+        setPhenologyLogs(prev => [...prev, { id: newLogRef.id, ...log }]);
     };
 
     const editPhenologyLog = async (updatedLog: PhenologyLog) => {
         const logRef = doc(db, 'phenologyLogs', updatedLog.id);
         const { id, ...data } = updatedLog;
         await setDoc(logRef, data, { merge: true });
-        await fetchData();
+        setPhenologyLogs(prev => prev.map(l => l.id === id ? updatedLog : l));
     };
 
     const deletePhenologyLog = async (logId: string) => {
         await deleteDoc(doc(db, 'phenologyLogs', logId));
-        await fetchData();
+        setPhenologyLogs(prev => prev.filter(l => l.id !== logId));
     };
 
-    const addBatch = async (batchData: Omit<Batch, 'id'>) => {
+    const addBatch = async (batchData: Omit<Batch, 'status'> & {status: string}) => {
         const newBatchRef = doc(db, 'batches', batchData.id);
-        await setDoc(newBatchRef, batchData);
-        await fetchData();
+        const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
+        await setDoc(newBatchRef, newBatch);
+        setBatches(prev => [...prev, newBatch]);
     };
 
 
     const deleteBatch = async (batchId: string) => {
         await deleteDoc(doc(db, 'batches', batchId));
-        await fetchData();
+        setBatches(prev => prev.filter(b => b.id !== batchId));
     };
 
     const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
-        await addDoc(collection(db, 'collectorPaymentLogs'), log);
-        await fetchData();
+        const newLogRef = await addDoc(collection(db, 'collectorPaymentLogs'), log);
+        setCollectorPaymentLogs(prev => [...prev, { id: newLogRef.id, ...log }]);
     };
 
     const deleteCollectorPaymentLog = async (logId: string) => {
       const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
       if (!logToDelete) return;
   
-      const batch = writeBatch(db);
+      const batchOp = writeBatch(db);
       
       const paymentLogRef = doc(db, 'collectorPaymentLogs', logId);
-      batch.delete(paymentLogRef);
+      batchOp.delete(paymentLogRef);
       
-      // We assume harvestId will always exist and be valid
       const harvestRef = doc(db, 'harvests', logToDelete.harvestId);
-      batch.delete(harvestRef);
+      batchOp.delete(harvestRef);
       
-      await batch.commit();
-      await fetchData();
+      await batchOp.commit();
+      
+      setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
+      setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
     };
 
     const updateEstablishmentData = async (data: Partial<EstablishmentData>) => {
         const { id, ...updateData } = data;
         const establishmentRef = doc(db, 'establishment', 'main');
         await setDoc(establishmentRef, updateData, { merge: true });
-        await fetchData();
+        setEstablishmentData(prev => prev ? { ...prev, ...updateData } : null);
     };
 
     const addProducerLog = async (log: Omit<ProducerLog, 'id'>) => {
-        await addDoc(collection(db, 'producerLogs'), log);
-        await fetchData();
+        const newLogRef = await addDoc(collection(db, 'producerLogs'), log);
+        setProducerLogs(prev => [...prev, { id: newLogRef.id, ...log }]);
     };
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-        await addDoc(collection(db, 'transactions'), transaction);
-        await fetchData();
+        const newTransRef = await addDoc(collection(db, 'transactions'), transaction);
+        setTransactions(prev => [...prev, { id: newTransRef.id, ...transaction }]);
     };
 
     const deleteTransaction = async (transactionId: string) => {
         await deleteDoc(doc(db, 'transactions', transactionId));
-        await fetchData();
+        setTransactions(prev => prev.filter(t => t.id !== transactionId));
     };
 
     const value = {

@@ -38,7 +38,7 @@ const costChartConfig = {
   }
 } as const;
 
-export function CostDistributionChart({ isForPdf = false }: { isForPdf?: boolean}) {
+function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boolean}) {
   const { loading, transactions, collectorPaymentLogs } = useContext(AppDataContext);
 
   const totalLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
@@ -126,3 +126,5 @@ export function CostDistributionChart({ isForPdf = false }: { isForPdf?: boolean
     </Card>
   );
 }
+
+export const CostDistributionChart = React.memo(CostDistributionChartComponent);

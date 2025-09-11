@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useContext, useMemo, useTransition } from 'react';
+import React, { useContext, useMemo, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,7 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import { useToast } from '@/hooks/use-toast';
 
-export function ProductionPaymentHistory() {
+function ProductionPaymentHistoryComponent() {
   const { loading, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
@@ -108,3 +108,5 @@ export function ProductionPaymentHistory() {
     </Card>
   )
 }
+
+export const ProductionPaymentHistory = React.memo(ProductionPaymentHistoryComponent);
