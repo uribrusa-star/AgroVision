@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Map } from 'lucide-react';
+import { Leaf, Map, Notebook, Weight } from 'lucide-react';
 import { AppDataContext } from "@/context/app-data-context";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,17 +20,17 @@ const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 const geoJsonSchema = z.object({
     geoJsonData: z.string().refine((data) => {
         try {
-            if (data.trim() === '') return true;
-            JSON.parse(data);
-            return true;
+            if (data.trim() === '') return true; // Allow empty string
+            const parsed = JSON.parse(data);
+            return parsed && parsed.type === 'FeatureCollection' && Array.isArray(parsed.features);
         } catch (e) {
             return false;
         }
-    }, { message: "GeoJSON inválido." }),
+    }, { message: "GeoJSON inválido o no es un FeatureCollection." }),
 });
 
 export default function MapPage() {
-  const { establishmentData, updateEstablishmentData } = useContext(AppDataContext);
+  const { establishmentData, updateEstablishmentData, harvests, agronomistLogs, phenologyLogs } = useContext(AppDataContext);
   const { toast } = useToast();
   
   const [internalGeoJson, setInternalGeoJson] = useState<any>(null);
@@ -43,13 +43,16 @@ export default function MapPage() {
   });
 
   useEffect(() => {
-    if (establishmentData?.geoJsonData) {
+    const savedGeoJson = establishmentData?.geoJsonData;
+    if (savedGeoJson) {
         try {
-            setInternalGeoJson(JSON.parse(establishmentData.geoJsonData));
+            const parsed = JSON.parse(savedGeoJson);
+            setInternalGeoJson(parsed);
+            geoJsonForm.reset({ geoJsonData: savedGeoJson });
         } catch {
             setInternalGeoJson(null);
+            geoJsonForm.reset({ geoJsonData: '' });
         }
-        geoJsonForm.reset({ geoJsonData: establishmentData.geoJsonData });
     }
   }, [establishmentData?.geoJsonData, geoJsonForm]);
 
@@ -59,10 +62,10 @@ export default function MapPage() {
         await updateEstablishmentData({ geoJsonData: values.geoJsonData });
         if (values.geoJsonData.trim() === '') {
             setInternalGeoJson(null);
-            toast({ title: "GeoJSON Limpiado", description: "Se han eliminado las geometrías del mapa y guardado el cambio." });
+            toast({ title: "GeoJSON Limpiado", description: "Se han eliminado las geometrías del mapa." });
         } else {
             setInternalGeoJson(JSON.parse(values.geoJsonData));
-            toast({ title: "GeoJSON Guardado y Cargado", description: "Los datos se han guardado y cargado en el mapa." });
+            toast({ title: "GeoJSON Guardado", description: "Los datos se han guardado y cargado en el mapa." });
         }
     } catch (error) {
         toast({ title: "Error", description: "No se pudieron guardar los datos GeoJSON.", variant: "destructive" });
@@ -76,8 +79,35 @@ export default function MapPage() {
         return { lat, lng };
       }
     }
-    return { lat: -26.83, lng: -65.22 }; // Default center
+    return { lat: -26.83, lng: -65.22 }; // Default center if no coordinates
   }, [establishmentData]);
+  
+  const lotData = useMemo(() => {
+    if (!internalGeoJson || !internalGeoJson.features) return [];
+
+    const polygonFeatures = internalGeoJson.features.filter(
+      (feature: any) => feature.geometry?.type === 'Polygon'
+    );
+
+    return polygonFeatures.map((feature: any) => {
+      const lotId = Object.keys(feature.properties)[0];
+      if (!lotId) return null;
+
+      const lotHarvests = harvests.filter(h => h.batchNumber === lotId);
+      const lotAgronomistLogs = agronomistLogs.filter(l => l.batchId === lotId);
+      const lotPhenologyLogs = phenologyLogs.filter(p => p.batchId === lotId);
+      
+      const totalKilos = lotHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+
+      return {
+        id: lotId,
+        totalKilos,
+        harvestCount: lotHarvests.length,
+        agronomistLogCount: lotAgronomistLogs.length,
+        phenologyLogCount: lotPhenologyLogs.length
+      };
+    }).filter(Boolean); // Filter out nulls if a polygon has no properties
+  }, [internalGeoJson, harvests, agronomistLogs, phenologyLogs]);
 
 
   return (
@@ -86,24 +116,26 @@ export default function MapPage() {
         title="Mapa del Establecimiento"
         description="Visualice la finca y cargue datos geográficos en formato GeoJSON."
       />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <Card className="md:col-span-1">
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Map className="h-6 w-6 text-primary" />
-                    Mapa Interactivo
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
-                   <MapComponent center={mapCenter} geoJsonData={internalGeoJson} />
-                </div>
-            </CardContent>
-        </Card>
-        <Card className="md:col-span-1">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mt-6">
+        <div className="xl:col-span-2 grid grid-cols-1 gap-6">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Map className="h-6 w-6 text-primary" />
+                        Mapa Interactivo
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
+                       <MapComponent center={mapCenter} geoJsonData={internalGeoJson} />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+        <Card className="xl:col-span-1">
              <CardHeader>
                 <CardTitle>Cargar GeoJSON</CardTitle>
-                <CardDescription>Pegue el contenido de un archivo GeoJSON para visualizarlo en el mapa. Los datos se guardarán automáticamente.</CardDescription>
+                <CardDescription>Pegue el contenido de un archivo GeoJSON para visualizarlo. Los datos se guardarán automáticamente.</CardDescription>
             </CardHeader>
             <Form {...geoJsonForm}>
                 <form onSubmit={geoJsonForm.handleSubmit(onGeoJsonSubmit)}>
@@ -133,6 +165,51 @@ export default function MapPage() {
             </Form>
         </Card>
       </div>
+
+      {lotData.length > 0 && (
+          <div className="mt-8">
+              <h2 className="text-2xl font-headline text-foreground mb-4">Resumen de Lotes</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {lotData.map(lot => (
+                      <Card key={lot.id}>
+                          <CardHeader>
+                              <CardTitle>Lote: {lot.id}</CardTitle>
+                              <CardDescription>Resumen de datos para este lote.</CardDescription>
+                          </CardHeader>
+                          <CardContent className="space-y-4">
+                               <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
+                                    <Weight className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                      <p className="font-bold text-lg">{lot.totalKilos.toLocaleString('es-ES')} kg</p>
+                                      <p className="text-sm text-muted-foreground">{lot.harvestCount} cosechas</p>
+                                  </div>
+                              </div>
+                               <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
+                                    <Leaf className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                      <p className="font-bold text-lg">{lot.agronomistLogCount}</p>
+                                      <p className="text-sm text-muted-foreground">Actividades Agronómicas</p>
+                                  </div>
+                              </div>
+                               <div className="flex items-start gap-3">
+                                  <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
+                                      <Notebook className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                      <p className="font-bold text-lg">{lot.phenologyLogCount}</p>
+                                      <p className="text-sm text-muted-foreground">Registros Fenológicos</p>
+                                  </div>
+                              </div>
+                          </CardContent>
+                      </Card>
+                  ))}
+              </div>
+          </div>
+      )}
     </>
   );
 }
