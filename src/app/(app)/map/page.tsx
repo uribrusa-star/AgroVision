@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Leaf, Map, Notebook, Weight } from 'lucide-react';
+import { Map } from 'lucide-react';
 import { AppDataContext } from "@/context/app-data-context";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
@@ -30,11 +30,9 @@ const geoJsonSchema = z.object({
 });
 
 export default function MapPage() {
-  const { establishmentData, updateEstablishmentData, harvests, agronomistLogs, phenologyLogs } = useContext(AppDataContext);
+  const { establishmentData, updateEstablishmentData } = useContext(AppDataContext);
   const { toast } = useToast();
   
-  const [internalGeoJson, setInternalGeoJson] = useState<any>(null);
-
   const geoJsonForm = useForm<{ geoJsonData: string }>({
     resolver: zodResolver(geoJsonSchema),
     defaultValues: {
@@ -43,17 +41,7 @@ export default function MapPage() {
   });
 
   useEffect(() => {
-    const savedGeoJson = establishmentData?.geoJsonData;
-    if (savedGeoJson) {
-        try {
-            const parsed = JSON.parse(savedGeoJson);
-            setInternalGeoJson(parsed);
-            geoJsonForm.reset({ geoJsonData: savedGeoJson });
-        } catch {
-            setInternalGeoJson(null);
-            geoJsonForm.reset({ geoJsonData: '' });
-        }
-    }
+    geoJsonForm.reset({ geoJsonData: establishmentData?.geoJsonData || '' });
   }, [establishmentData?.geoJsonData, geoJsonForm]);
 
 
@@ -61,10 +49,8 @@ export default function MapPage() {
     try {
         await updateEstablishmentData({ geoJsonData: values.geoJsonData });
         if (values.geoJsonData.trim() === '') {
-            setInternalGeoJson(null);
             toast({ title: "GeoJSON Limpiado", description: "Se han eliminado las geometrías del mapa." });
         } else {
-            setInternalGeoJson(JSON.parse(values.geoJsonData));
             toast({ title: "GeoJSON Guardado", description: "Los datos se han guardado y cargado en el mapa." });
         }
     } catch (error) {
@@ -79,36 +65,16 @@ export default function MapPage() {
         return { lat, lng };
       }
     }
-    return { lat: -26.83, lng: -65.22 }; // Default center if no coordinates
+    return { lat: -31.9518, lng: -60.9341 }; // Default center if no coordinates
   }, [establishmentData]);
   
-  const lotData = useMemo(() => {
-    if (!internalGeoJson || !internalGeoJson.features) return [];
-
-    const polygonFeatures = internalGeoJson.features.filter(
-      (feature: any) => feature.geometry?.type === 'Polygon'
-    );
-
-    return polygonFeatures.map((feature: any) => {
-      const lotId = Object.keys(feature.properties)[0];
-      if (!lotId) return null;
-
-      const lotHarvests = harvests.filter(h => h.batchNumber === lotId);
-      const lotAgronomistLogs = agronomistLogs.filter(l => l.batchId === lotId);
-      const lotPhenologyLogs = phenologyLogs.filter(p => p.batchId === lotId);
-      
-      const totalKilos = lotHarvests.reduce((sum, h) => sum + h.kilograms, 0);
-
-      return {
-        id: lotId,
-        totalKilos,
-        harvestCount: lotHarvests.length,
-        agronomistLogCount: lotAgronomistLogs.length,
-        phenologyLogCount: lotPhenologyLogs.length
-      };
-    }).filter(Boolean); // Filter out nulls if a polygon has no properties
-  }, [internalGeoJson, harvests, agronomistLogs, phenologyLogs]);
-
+  const parsedGeoJson = useMemo(() => {
+      try {
+          return establishmentData?.geoJsonData ? JSON.parse(establishmentData.geoJsonData) : null;
+      } catch {
+          return null;
+      }
+  }, [establishmentData?.geoJsonData]);
 
   return (
     <>
@@ -127,7 +93,7 @@ export default function MapPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
-                       <MapComponent center={mapCenter} geoJsonData={internalGeoJson} />
+                       <MapComponent center={mapCenter} geoJsonData={parsedGeoJson} />
                     </div>
                 </CardContent>
             </Card>
@@ -165,51 +131,6 @@ export default function MapPage() {
             </Form>
         </Card>
       </div>
-
-      {lotData.length > 0 && (
-          <div className="mt-8">
-              <h2 className="text-2xl font-headline text-foreground mb-4">Resumen de Lotes</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {lotData.map(lot => (
-                      <Card key={lot.id}>
-                          <CardHeader>
-                              <CardTitle>Lote: {lot.id}</CardTitle>
-                              <CardDescription>Resumen de datos para este lote.</CardDescription>
-                          </CardHeader>
-                          <CardContent className="space-y-4">
-                               <div className="flex items-start gap-3">
-                                  <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
-                                    <Weight className="h-5 w-5" />
-                                  </div>
-                                  <div>
-                                      <p className="font-bold text-lg">{lot.totalKilos.toLocaleString('es-ES')} kg</p>
-                                      <p className="text-sm text-muted-foreground">{lot.harvestCount} cosechas</p>
-                                  </div>
-                              </div>
-                               <div className="flex items-start gap-3">
-                                  <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
-                                    <Leaf className="h-5 w-5" />
-                                  </div>
-                                  <div>
-                                      <p className="font-bold text-lg">{lot.agronomistLogCount}</p>
-                                      <p className="text-sm text-muted-foreground">Actividades Agronómicas</p>
-                                  </div>
-                              </div>
-                               <div className="flex items-start gap-3">
-                                  <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
-                                      <Notebook className="h-5 w-5" />
-                                  </div>
-                                  <div>
-                                      <p className="font-bold text-lg">{lot.phenologyLogCount}</p>
-                                      <p className="text-sm text-muted-foreground">Registros Fenológicos</p>
-                                  </div>
-                              </div>
-                          </CardContent>
-                      </Card>
-                  ))}
-              </div>
-          </div>
-      )}
     </>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useContext, useState } from 'react';
 import { GoogleMap, useJsApiLoader, Polygon, Marker, InfoWindow } from '@react-google-maps/api';
 import { AppDataContext } from '@/context/app-data-context';
+import { Leaf, Notebook, Weight } from 'lucide-react';
 
 type MapProps = {
     center: {
@@ -17,10 +18,10 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     });
     
-    const { harvests } = useContext(AppDataContext);
+    const { harvests, agronomistLogs, phenologyLogs } = useContext(AppDataContext);
     const [activeInfoWindow, setActiveInfoWindow] = useState<string | null>(null);
 
-    const renderPolygons = () => {
+    const renderPolygonsAndInfoWindows = () => {
         if (!geoJsonData || !geoJsonData.features) return null;
 
         return geoJsonData.features
@@ -32,10 +33,12 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 }));
 
                 const properties = Object.keys(feature.properties);
-                const polygonId = properties.length > 0 ? properties[0] : `polygon-${feature.id}`;
+                const polygonId = properties.length > 0 ? properties[0] : `polygon-${feature.id || Math.random()}`;
                 
-                const polygonHarvests = harvests.filter(h => h.batchNumber === polygonId);
-                const totalKilos = polygonHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+                const lotHarvests = harvests.filter(h => h.batchNumber === polygonId);
+                const lotAgronomistLogs = agronomistLogs.filter(l => l.batchId === polygonId);
+                const lotPhenologyLogs = phenologyLogs.filter(p => p.batchId === polygonId);
+                const totalKilos = lotHarvests.reduce((sum, h) => sum + h.kilograms, 0);
 
                 const centerOfPolygon = paths.reduce(
                     (acc: { lat: number, lng: number }, curr: { lat: number, lng: number }) => {
@@ -64,10 +67,37 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                                 position={centerOfPolygon}
                                 onCloseClick={() => setActiveInfoWindow(null)}
                             >
-                                <div className="p-1">
+                                <div className="p-1 max-w-xs text-foreground">
                                     <h4 className="font-bold text-base mb-2">Lote: {polygonId}</h4>
-                                    <p className="text-sm"><strong>Producción Total:</strong> {totalKilos.toLocaleString('es-ES')} kg</p>
-                                    <p className="text-sm"><strong>Nº Cosechas:</strong> {polygonHarvests.length}</p>
+                                    <div className="space-y-3">
+                                      <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
+                                          <Weight className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm">{totalKilos.toLocaleString('es-ES')} kg</p>
+                                            <p className="text-xs text-muted-foreground">{lotHarvests.length} cosechas</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
+                                          <Leaf className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm">{lotAgronomistLogs.length}</p>
+                                            <p className="text-xs text-muted-foreground">Actividades Agronómicas</p>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-start gap-3">
+                                        <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-full">
+                                            <Notebook className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-sm">{lotPhenologyLogs.length}</p>
+                                            <p className="text-xs text-muted-foreground">Registros Fenológicos</p>
+                                        </div>
+                                      </div>
+                                    </div>
                                 </div>
                             </InfoWindow>
                         )}
@@ -84,6 +114,9 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
             .map((feature: any, index: number) => {
                 const [lng, lat] = feature.geometry.coordinates;
                 const title = feature.properties ? Object.keys(feature.properties)[0] : 'Punto de interés';
+                
+                // Exclude the main establishment marker from being rendered separately
+                if (title === 'Establecimiento Las Raices') return null;
 
                  return (
                     <Marker
@@ -118,7 +151,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 mapTypeId: 'satellite',
             }}
         >
-            {renderPolygons()}
+            {renderPolygonsAndInfoWindows()}
             {renderMarkers()}
         </GoogleMap>
     );
