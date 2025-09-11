@@ -85,7 +85,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 streetViewControl: false,
                 mapTypeControl: false,
                 fullscreenControl: false,
-                mapTypeId: 'terrain',
+                mapTypeId: 'satellite',
             }}
         >
             {renderPolygons()}
