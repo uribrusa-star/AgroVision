@@ -182,7 +182,7 @@ export function ApplicationHistory() {
                                 </DropdownMenu>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutely seguro?</AlertDialogTitle>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
                                         <AlertDialogDescription>
                                             Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de la aplicación.
                                         </AlertDialogDescription>
@@ -350,5 +350,3 @@ export function ApplicationHistory() {
     </>
   )
 }
-
-    

@@ -23,6 +23,7 @@ const LogSchema = z.object({
   product: z.string().min(1, "El producto o agente observado es requerido."),
   severity: z.string().min(3, "La incidencia o severidad es requerida."),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
+  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -41,8 +42,11 @@ export function HealthLogForm() {
       product: '',
       severity: '',
       notes: '',
+      image: '',
     },
   });
+
+  const imageUrl = form.watch('image');
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
@@ -51,6 +55,8 @@ export function HealthLogForm() {
         type: 'Sanidad',
         product: `${data.observationType}: ${data.product}`,
         notes: `Incidencia: ${data.severity}. Observaciones: ${data.notes}`,
+        imageUrl: data.image || "",
+        ...(data.image && { imageHint: 'crop disease pest' }),
       };
       await addAgronomistLog(newLog);
       toast({
@@ -61,6 +67,18 @@ export function HealthLogForm() {
     });
   };
   
+  const getDisplayImageUrl = (url: string | undefined): string | undefined => {
+    if (!url) return undefined;
+    if (url.includes('imgur.com') && !url.includes('i.imgur.com')) {
+      const parts = url.split('/');
+      const hash = parts.pop();
+      return `https://i.imgur.com/${hash}.jpg`;
+    }
+    return url;
+  }
+  
+  const displayImageUrl = getDisplayImageUrl(imageUrl);
+
   return (
     <Card>
       <CardHeader>
@@ -137,6 +155,35 @@ export function HealthLogForm() {
                 </FormItem>
               )}
             />
+            <FormField
+              control={form.control}
+              name="image"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>URL de Imagen (Opcional)</FormLabel>
+                  <FormControl>
+                     <Input 
+                        placeholder="https://ejemplo.com/imagen.jpg" 
+                        {...field} 
+                        disabled={!canManage || isPending}
+                      />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            {displayImageUrl && (
+                <div className="flex justify-center p-4 border-dashed border-2 border-muted rounded-md">
+                    <div className="relative w-full max-w-xs aspect-video">
+                        <Image
+                        src={displayImageUrl}
+                        alt="Vista previa de la imagen"
+                        fill
+                        className="object-contain rounded-md"
+                        />
+                    </div>
+                </div>
+            )}
           </CardContent>
           {canManage && (
             <CardFooter>
