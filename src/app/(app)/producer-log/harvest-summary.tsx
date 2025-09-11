@@ -58,7 +58,7 @@ const costChartConfig = {
 
 export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
-  const { harvests, transactions, agronomistLogs, currentUser, establishmentData } = useContext(AppDataContext);
+  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs } = useContext(AppDataContext);
   const { toast } = useToast();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
@@ -69,20 +69,25 @@ export function HarvestSummary() {
 
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
   
-  const allCosts = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
+  const totalLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
   
+  const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
+
   const costByCategory = useMemo(() => {
-    return allCosts.reduce((acc, transaction) => {
+    const costs: {[key: string]: number} = { 'Mano de Obra': totalLaborCost };
+    
+    otherExpenses.forEach(transaction => {
         const { category, amount } = transaction;
-        if (!acc[category]) {
-            acc[category] = 0;
+        if (!costs[category]) {
+            costs[category] = 0;
         }
-        acc[category] += amount;
-        return acc;
-    }, {} as {[key: string]: number});
-  }, [allCosts]);
+        costs[category] += amount;
+    });
+
+    return costs;
+  }, [otherExpenses, totalLaborCost]);
   
-  const totalCost = useMemo(() => allCosts.reduce((acc, t) => acc + t.amount, 0), [allCosts]);
+  const totalCost = useMemo(() => Object.values(costByCategory).reduce((acc, amount) => acc + amount, 0), [costByCategory]);
   const totalIncome = useMemo(() => transactions.filter(t => t.type === 'Ingreso').reduce((acc, t) => acc + t.amount, 0), [transactions]);
   
   // Use establishment data for calculations, with fallbacks
@@ -374,7 +379,7 @@ export function HarvestSummary() {
                           <ChartTooltip content={<ChartTooltipContent nameKey="name" />} />
                           <Pie data={costDistributionData} dataKey="value" nameKey="name" innerRadius={50} labelLine={false} label={({name, percent}) => `${costChartConfig[name as keyof typeof costChartConfig]?.label || name}: ${(percent * 100).toFixed(0)}%`}>
                               {costDistributionData.map((entry) => (
-                                  <Cell key={`cell-${entry.name}`} fill={costChartConfig[entry.name as keyof typeof costChartConfig]?.color || '#000000'} />
+                                  <Cell key={`cell-${entry.name}`} fill={entry.fill} />
                               ))}
                           </Pie>
                       </RechartsPieChart>
