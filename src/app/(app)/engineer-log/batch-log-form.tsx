@@ -30,7 +30,6 @@ export function BatchLogForm() {
     defaultValues: {
       id: '',
     },
-    disabled: !canManage || isPending,
   });
 
   const onSubmit = (data: BatchLogFormValues) => {
@@ -39,7 +38,7 @@ export function BatchLogForm() {
         return;
     }
     startTransition(async () => {
-      const newBatch: Omit<Batch, 'id'> = {
+      const newBatch: Omit<Batch, 'id' | 'status'> & { id: string, preloadedDate: string, status: string } = {
         id: data.id, // Keep the user-provided ID
         preloadedDate: new Date().toISOString(),
         status: 'pending',
@@ -49,7 +48,7 @@ export function BatchLogForm() {
         title: "¡Lote Pre-cargado!",
         description: `El lote ${data.id} está listo para ser cosechado.`,
       });
-      form.reset();
+      form.reset({id: ''});
     });
   };
 
@@ -69,7 +68,7 @@ export function BatchLogForm() {
                 <FormItem>
                   <FormLabel>Nuevo ID de Lote</FormLabel>
                   <FormControl>
-                    <Input placeholder="ej., L017" {...field} />
+                    <Input placeholder="ej., L017" {...field} disabled={!canManage || isPending} />
                   </FormControl>
                   <FormDescriptionComponent>
                     El formato debe ser 'L' seguido de 3 números.
@@ -81,7 +80,7 @@ export function BatchLogForm() {
           </CardContent>
           {canManage && (
             <CardFooter>
-                <Button type="submit" disabled={isPending}>{isPending ? 'Agregando...' : 'Agregar Lote'}</Button>
+                <Button type="submit" disabled={isPending || !canManage}>{isPending ? 'Agregando...' : 'Agregar Lote'}</Button>
             </CardFooter>
           )}
         </form>
