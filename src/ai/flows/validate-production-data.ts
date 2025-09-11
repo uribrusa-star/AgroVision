@@ -60,9 +60,11 @@ const validateProductionDataPrompt = ai.definePrompt({
   output: {schema: ValidateProductionDataOutputSchema},
   prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.
 
-  Consider factors like reasonable yield amounts compared to the farmer's historical average, consistency with historical data, and any potential anomalies. Provide a detailed explanation for your assessment.
+  Consider factors like reasonable yield amounts compared to the farmer's historical average, consistency with historical data, and any potential anomalies.
 
-  Respond with a JSON object indicating whether the data is valid and, if not, the reason for the invalidity.
+  **Important**: The response for the 'reason' field, if the data is invalid, must be in Spanish.
+
+  Respond with a JSON object indicating whether the data is valid and, if not, the reason for the invalidity in Spanish.
 
   Production Data:
   Batch ID: {{{batchId}}}
