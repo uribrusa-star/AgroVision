@@ -237,6 +237,10 @@ export default function EstablishmentPage() {
     }
     return [ -26.83, -65.22 ] as [number, number]; // Default center
   }, [establishmentData]);
+  
+  const DisplayMap = useMemo(() => {
+    return <MapComponent center={mapCenter} geoJsonData={geoJsonData} />;
+  }, [mapCenter, geoJsonData]);
 
 
   if (loading || !establishmentData) {
@@ -344,7 +348,7 @@ export default function EstablishmentPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="h-[400px] w-full rounded-md overflow-hidden z-0">
-                        <MapComponent center={mapCenter} geoJsonData={geoJsonData} />
+                       {DisplayMap}
                     </div>
                 </CardContent>
             </Card>
