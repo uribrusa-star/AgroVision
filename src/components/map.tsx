@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { GoogleMap, useJsApiLoader, Marker, Data } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, Polygon } from '@react-google-maps/api';
 
 type MapProps = {
     center: {
@@ -21,6 +21,52 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
         width: '100%',
         height: '100%',
     };
+
+    const renderPolygons = () => {
+        if (!geoJsonData || !geoJsonData.features) return null;
+
+        return geoJsonData.features
+            .filter((feature: any) => feature.geometry && feature.geometry.type === 'Polygon')
+            .map((feature: any, index: number) => {
+                const paths = feature.geometry.coordinates[0].map((coord: [number, number]) => ({
+                    lat: coord[1],
+                    lng: coord[0],
+                }));
+
+                return (
+                    <Polygon
+                        key={`polygon-${index}`}
+                        paths={paths}
+                        options={{
+                            fillColor: "#4A90E2",
+                            fillOpacity: 0.35,
+                            strokeColor: "#4A90E2",
+                            strokeOpacity: 0.8,
+                            strokeWeight: 2,
+                        }}
+                    />
+                );
+            });
+    };
+    
+    const renderMarkers = () => {
+         if (!geoJsonData || !geoJsonData.features) return null;
+
+         return geoJsonData.features
+            .filter((feature: any) => feature.geometry && feature.geometry.type === 'Point')
+            .map((feature: any, index: number) => {
+                const [lng, lat] = feature.geometry.coordinates;
+                const title = feature.properties ? Object.keys(feature.properties)[0] : 'Punto de interés';
+
+                 return (
+                    <Marker
+                        key={`marker-${index}`}
+                        position={{ lat, lng }}
+                        title={title}
+                    />
+                 );
+            });
+    }
 
     if (loadError) {
         return <div>Error al cargar el mapa. Verifique la clave de API.</div>;
@@ -43,7 +89,8 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
             }}
         >
             <Marker position={center} title="Ubicación del establecimiento" />
-            {geoJsonData && <Data key={JSON.stringify(geoJsonData)} data={geoJsonData} />}
+            {renderPolygons()}
+            {renderMarkers()}
         </GoogleMap>
     );
 };
