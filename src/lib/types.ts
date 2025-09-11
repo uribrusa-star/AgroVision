@@ -190,5 +190,6 @@ export type AppData = {
   addProducerLog: (log: Omit<ProducerLog, 'id'>) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (transactionId: string) => Promise<void>;
+  updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };

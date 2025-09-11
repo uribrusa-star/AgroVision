@@ -12,7 +12,7 @@ import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, 
 export const AppDataContext = React.createContext<AppData>({
   loading: true,
   currentUser: null,
-  users: availableUsers,
+  users: [],
   setCurrentUser: () => {},
   harvests: [],
   collectors: [],
@@ -41,6 +41,7 @@ export const AppDataContext = React.createContext<AppData>({
   addProducerLog: async () => { throw new Error('Not implemented') },
   addTransaction: async () => { throw new Error('Not implemented') },
   deleteTransaction: async () => { throw new Error('Not implemented') },
+  updateUserPassword: async () => { throw new Error('Not implemented') },
   isClient: false,
 });
 
@@ -77,6 +78,7 @@ const usePersistentState = <T,>(key: string, initialValue: T): [T, React.Dispatc
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
     const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser', null);
+    const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
@@ -96,6 +98,21 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const fetchData = useCallback(async () => {
       setLoading(true);
       try {
+        const usersCollectionRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersCollectionRef);
+
+        if (usersSnapshot.empty) {
+          const batch = writeBatch(db);
+          availableUsers.forEach(user => {
+            const userRef = doc(db, 'users', user.id);
+            batch.set(userRef, user);
+          });
+          await batch.commit();
+          setUsers(availableUsers);
+        } else {
+          setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
+        }
+
         const establishmentDocRef = doc(db, 'establishment', 'main');
         const establishmentDocSnap = await getDoc(establishmentDocRef);
 
@@ -308,10 +325,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setTransactions(prev => prev.filter(t => t.id !== transactionId));
     };
 
+    const updateUserPassword = async (userId: string, newPassword: string) => {
+        const userRef = doc(db, 'users', userId);
+        await setDoc(userRef, { password: newPassword }, { merge: true });
+        // Update local state to reflect change immediately
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
+        if (currentUser?.id === userId) {
+            setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
+        }
+    };
+
     const value = {
         loading,
         currentUser,
-        users: availableUsers,
+        users,
         setCurrentUser,
         harvests,
         collectors,
@@ -340,6 +367,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         addProducerLog,
         addTransaction,
         deleteTransaction,
+        updateUserPassword,
         isClient
     };
 

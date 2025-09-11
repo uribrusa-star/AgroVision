@@ -1,9 +1,9 @@
 import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData } from './types';
 
 export const users: User[] = [
-  { id: 'user-productor', name: 'Productor Admin', email: 'productor@agrovision.co', role: 'Productor', avatar: 'user-1', password: 'productor123' },
-  { id: 'user-agronomo', name: 'Ingeniero Agrónomo', email: 'agronomo@agrovision.co', role: 'Ingeniero Agronomo', avatar: 'user-2', password: 'ingeniero123' },
-  { id: 'user-encargado', name: 'Encargado de Campo', email: 'encargado@agrovision.co', role: 'Encargado', avatar: 'user-3', password: 'encargado123' },
+  { id: 'user-productor', name: 'Productor', email: 'productor@agrovision.co', role: 'Productor', avatar: 'user-1', password: 'productor123' },
+  { id: 'user-agronomo', name: 'Ingeniero', email: 'agronomo@agrovision.co', role: 'Ingeniero Agronomo', avatar: 'user-2', password: 'ingeniero123' },
+  { id: 'user-encargado', name: 'Encargado', email: 'encargado@agrovision.co', role: 'Encargado', avatar: 'user-3', password: 'encargado123' },
 ];
 
 export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {

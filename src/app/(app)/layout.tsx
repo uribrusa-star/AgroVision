@@ -4,8 +4,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut, LineChart, Map } from 'lucide-react';
-import React, { useEffect, useState, useCallback, ReactNode } from 'react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut, LineChart, Map, KeyRound } from 'lucide-react';
+import React, { useEffect, useState, useCallback, ReactNode, useTransition } from 'react';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   collection,
   getDocs,
@@ -35,6 +38,9 @@ import {
 } from '@/components/ui/sidebar';
 import { AgroVisionLogo, StrawberryIcon } from '@/components/icons';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -47,7 +53,6 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { db } from '@/lib/firebase';
@@ -149,10 +154,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+const PasswordSchema = z.object({
+  newPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
+  confirmPassword: z.string(),
+}).refine(data => data.newPassword === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"],
+});
+
 
 function UserMenu() {
-  const { currentUser, users, setCurrentUser } = React.useContext(AppDataContext);
+  const { currentUser, users, setCurrentUser, updateUserPassword } = React.useContext(AppDataContext);
   const router = useRouter();
+  const { toast } = useToast();
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+
+  const form = useForm<z.infer<typeof PasswordSchema>>({
+    resolver: zodResolver(PasswordSchema),
+    defaultValues: { newPassword: '', confirmPassword: '' },
+  });
   
   if(!currentUser) return null;
   
@@ -160,50 +181,124 @@ function UserMenu() {
     setCurrentUser(null);
     router.push('/');
   }
+
+  const onPasswordSubmit = (values: z.infer<typeof PasswordSchema>) => {
+    startTransition(async () => {
+        try {
+            await updateUserPassword(currentUser.id, values.newPassword);
+            toast({
+                title: "¡Éxito!",
+                description: "Su contraseña ha sido actualizada.",
+            });
+            setIsPasswordDialogOpen(false);
+            form.reset();
+        } catch (e) {
+             toast({
+                title: "Error",
+                description: "No se pudo actualizar la contraseña.",
+                variant: "destructive",
+            });
+        }
+    });
+  }
   
   return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
-              <Avatar className="h-8 w-8">
-                  <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
-                  <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <div className="text-left">
-                  <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
-                  <p className="text-xs text-muted-foreground">{currentUser.email}</p>
-              </div>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent side="right" align="start" className="w-56">
-          <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
-          <DropdownMenuSeparator />
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
+                <Avatar className="h-8 w-8">
+                    <AvatarImage src={`https://picsum.photos/seed/${currentUser.avatar}/40/40`} alt={currentUser.name} />
+                    <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="text-left">
+                    <p className="text-sm font-medium text-sidebar-foreground">{currentUser.name}</p>
+                    <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                </div>
+            </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start" className="w-56">
+            <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
+            <DropdownMenuSeparator />
 
-          {currentUser.role === 'Productor' && (
-            <>
-                <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
-                <DropdownMenuRadioGroup value={currentUser.id} onValueChange={(userId) => {
-                    const selectedUser = users.find(u => u.id === userId);
-                    if(selectedUser) {
-                        setCurrentUser(selectedUser);
-                    }
-                }}>
-                    {users.map((user) => (
-                        <DropdownMenuRadioItem key={user.id} value={user.id}>
-                            {user.name}
-                            {currentUser.id === user.id && <Check className="ml-auto h-4 w-4" />}
-                        </DropdownMenuRadioItem>
-                    ))}
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-            </>
-          )}
-          
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Cerrar Sesión</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            {currentUser.role === 'Productor' && (
+                <>
+                    <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
+                    <DropdownMenuRadioGroup value={currentUser.id} onValueChange={(userId) => {
+                        const selectedUser = users.find(u => u.id === userId);
+                        if(selectedUser) {
+                            setCurrentUser(selectedUser);
+                        }
+                    }}>
+                        {users.map((user) => (
+                            <DropdownMenuRadioItem key={user.id} value={user.id}>
+                                {user.name}
+                                {currentUser.id === user.id && <Check className="ml-auto h-4 w-4" />}
+                            </DropdownMenuRadioItem>
+                        ))}
+                    </DropdownMenuRadioGroup>
+                    <DropdownMenuSeparator />
+                </>
+            )}
+
+            <DropdownMenuItem onSelect={() => setIsPasswordDialogOpen(true)}>
+                <KeyRound className="mr-2 h-4 w-4" />
+                <span>Cambiar Contraseña</span>
+            </DropdownMenuItem>
+            
+            <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Cerrar Sesión</span>
+            </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Cambiar Contraseña</DialogTitle>
+                <DialogDescription>
+                    Ingrese una nueva contraseña para su cuenta.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                     <FormField
+                        control={form.control}
+                        name="newPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nueva Contraseña</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                     <FormField
+                        control={form.control}
+                        name="confirmPassword"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Confirmar Nueva Contraseña</FormLabel>
+                                <FormControl>
+                                    <Input type="password" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancelar</Button>
+                        </DialogClose>
+                        <Button type="submit" disabled={isPending}>
+                            {isPending ? "Guardando..." : "Guardar Contraseña"}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+      </Dialog>
   )
 }
