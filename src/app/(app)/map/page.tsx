@@ -20,7 +20,6 @@ const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 const geoJsonSchema = z.object({
     geoJsonData: z.string().refine((data) => {
         try {
-            // Allow empty string
             if (data.trim() === '') return true;
             JSON.parse(data);
             return true;
@@ -61,10 +60,10 @@ export default function MapPage() {
     if (establishmentData?.location.coordinates) {
       const [lat, lng] = establishmentData.location.coordinates.split(',').map(Number);
       if (!isNaN(lat) && !isNaN(lng)) {
-        return [lat, lng] as [number, number];
+        return { lat, lng };
       }
     }
-    return [ -26.83, -65.22 ] as [number, number]; // Default center
+    return { lat: -26.83, lng: -65.22 }; // Default center
   }, [establishmentData]);
 
 
@@ -83,7 +82,7 @@ export default function MapPage() {
                 </CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="h-[400px] w-full rounded-md overflow-hidden z-0">
+                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
                    <MapComponent center={mapCenter} geoJsonData={geoJsonData} />
                 </div>
             </CardContent>

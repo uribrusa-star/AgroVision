@@ -1,62 +1,49 @@
 
 'use client';
 
-import 'leaflet/dist/leaflet.css';
-import 'leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css';
-import 'leaflet-defaulticon-compatibility';
-
-import { MapContainer, TileLayer, Marker, Popup, GeoJSON } from 'react-leaflet';
-import { LatLngExpression, Map, geoJSON, tileLayer, marker, popup } from 'leaflet';
-import { useRef, useEffect } from 'react';
+import React from 'react';
+import { GoogleMap, useJsApiLoader, Marker, Data } from '@react-google-maps/api';
 
 type MapProps = {
-    center: LatLngExpression;
+    center: {
+        lat: number;
+        lng: number;
+    };
     geoJsonData?: any;
 };
 
 const MapComponent = ({ center, geoJsonData }: MapProps) => {
-    const mapContainerRef = useRef<HTMLDivElement>(null);
-    const mapRef = useRef<Map | null>(null);
+    const { isLoaded, loadError } = useJsApiLoader({
+        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    });
 
-    useEffect(() => {
-        // Solo inicializar el mapa si el contenedor existe y no hay un mapa ya instanciado.
-        if (mapContainerRef.current && !mapRef.current) {
-            const map = new Map(mapContainerRef.current).setView(center, 13);
-            mapRef.current = map;
+    const containerStyle = {
+        width: '100%',
+        height: '100%',
+    };
 
-            tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
+    if (loadError) {
+        return <div>Error al cargar el mapa. Verifique la clave de API.</div>;
+    }
 
-            marker(center).addTo(map)
-                .bindPopup('Ubicación del establecimiento.');
-        }
-
-        // Limpiar la instancia del mapa al desmontar el componente.
-        return () => {
-            if (mapRef.current) {
-                mapRef.current.remove();
-                mapRef.current = null;
-            }
-        };
-    }, [center]); // El effect solo depende del centro, que no debería cambiar frecuentemente.
-
-    useEffect(() => {
-        // Añadir o actualizar datos GeoJSON cuando cambien
-        if (mapRef.current && geoJsonData) {
-            const geoJsonLayer = geoJSON(geoJsonData);
-            // Limpiar capas anteriores si es necesario
-            mapRef.current.eachLayer((layer) => {
-                if (!!layer.toGeoJSON) {
-                    mapRef.current!.removeLayer(layer);
-                }
-            });
-            geoJsonLayer.addTo(mapRef.current);
-        }
-    }, [geoJsonData]);
+    if (!isLoaded) {
+        return <div>Cargando mapa...</div>;
+    }
 
     return (
-        <div ref={mapContainerRef} style={{ height: '100%', width: '100%', zIndex: 0 }} />
+        <GoogleMap
+            mapContainerStyle={containerStyle}
+            center={center}
+            zoom={14}
+            options={{
+                streetViewControl: false,
+                mapTypeControl: false,
+                fullscreenControl: false,
+            }}
+        >
+            <Marker position={center} title="Ubicación del establecimiento" />
+            {geoJsonData && <Data data={geoJsonData} />}
+        </GoogleMap>
     );
 };
 
