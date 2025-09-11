@@ -35,7 +35,7 @@ export function IrrigationLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       type: 'Riego',
-      batchId: '',
+      batchId: 'general',
       product: '',
       notes: '',
     },
@@ -48,7 +48,7 @@ export function IrrigationLogForm() {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: data.type,
-        batchId: data.batchId || undefined,
+        batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: data.product,
         notes: data.notes,
       };
@@ -57,7 +57,12 @@ export function IrrigationLogForm() {
         title: "¡Registro Exitoso!",
         description: `Se ha agregado un nuevo registro de ${data.type}.`,
       });
-      form.reset();
+      form.reset({
+        type: 'Riego',
+        batchId: 'general',
+        product: '',
+        notes: '',
+      });
     });
   };
   
@@ -105,7 +110,7 @@ export function IrrigationLogForm() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Aplicación General</SelectItem>
+                          <SelectItem value="general">Aplicación General</SelectItem>
                           {batches.map(b => (
                             <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
                           ))}

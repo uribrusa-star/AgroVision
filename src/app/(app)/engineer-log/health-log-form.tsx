@@ -40,7 +40,7 @@ export function HealthLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       observationType: undefined,
-      batchId: '',
+      batchId: 'general',
       product: '',
       severity: '',
       notes: '',
@@ -55,7 +55,7 @@ export function HealthLogForm() {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: 'Sanidad',
-        batchId: data.batchId || undefined,
+        batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: `${data.observationType}: ${data.product}`,
         notes: `Incidencia: ${data.severity}. Observaciones: ${data.notes}`,
         imageUrl: data.image || "",
@@ -66,7 +66,14 @@ export function HealthLogForm() {
         title: "¡Registro de Sanidad Exitoso!",
         description: `Se ha agregado una nueva observación de ${data.observationType}.`,
       });
-      form.reset();
+      form.reset({
+        observationType: undefined,
+        batchId: 'general',
+        product: '',
+        severity: '',
+        notes: '',
+        image: '',
+      });
     });
   };
   
@@ -154,7 +161,7 @@ export function HealthLogForm() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Observación General</SelectItem>
+                          <SelectItem value="general">Observación General</SelectItem>
                           {batches.map(b => (
                             <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
                           ))}

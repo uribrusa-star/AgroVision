@@ -49,7 +49,7 @@ export function ApplicationHistory() {
     if (selectedLog) {
       form.reset({
         type: selectedLog.type,
-        batchId: selectedLog.batchId,
+        batchId: selectedLog.batchId || 'general',
         product: selectedLog.product,
         notes: selectedLog.notes,
       });
@@ -79,7 +79,7 @@ export function ApplicationHistory() {
       editAgronomistLog({
         ...selectedLog,
         type: values.type as AgronomistLogType,
-        batchId: values.batchId || undefined,
+        batchId: values.batchId === 'general' ? undefined : values.batchId,
         product: values.product,
         notes: values.notes,
       });
@@ -259,7 +259,7 @@ export function ApplicationHistory() {
                               </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Aplicación General</SelectItem>
+                                <SelectItem value="general">Aplicación General</SelectItem>
                                 {batches.map(b => (
                                   <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
                                 ))}

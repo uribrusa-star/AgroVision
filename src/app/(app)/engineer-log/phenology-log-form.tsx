@@ -41,7 +41,7 @@ export function PhenologyLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       developmentState: undefined,
-      batchId: '',
+      batchId: 'general',
       flowerCount: 0,
       fruitCount: 0,
       notes: '',
@@ -56,7 +56,7 @@ export function PhenologyLogForm() {
       const newLog: Omit<PhenologyLog, 'id'> = {
         date: new Date().toISOString(),
         developmentState: data.developmentState,
-        batchId: data.batchId || undefined,
+        batchId: data.batchId === 'general' ? undefined : data.batchId,
         flowerCount: data.flowerCount,
         fruitCount: data.fruitCount,
         notes: data.notes,
@@ -68,7 +68,14 @@ export function PhenologyLogForm() {
         title: "¡Registro Exitoso!",
         description: `Se ha agregado un nuevo registro de fenología.`,
       });
-      form.reset();
+      form.reset({
+        developmentState: undefined,
+        batchId: 'general',
+        flowerCount: 0,
+        fruitCount: 0,
+        notes: '',
+        image: '',
+      });
     });
   };
   
@@ -129,7 +136,7 @@ export function PhenologyLogForm() {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="">Observación General</SelectItem>
+                            <SelectItem value="general">Observación General</SelectItem>
                             {batches.map(b => (
                                 <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
                             ))}

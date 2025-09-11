@@ -52,7 +52,7 @@ export function PhenologyHistory() {
     if (selectedLog) {
       form.reset({
         developmentState: selectedLog.developmentState,
-        batchId: selectedLog.batchId,
+        batchId: selectedLog.batchId || 'general',
         flowerCount: selectedLog.flowerCount,
         fruitCount: selectedLog.fruitCount,
         notes: selectedLog.notes,
@@ -83,7 +83,7 @@ export function PhenologyHistory() {
       editPhenologyLog({
         ...selectedLog,
         developmentState: values.developmentState,
-        batchId: values.batchId || undefined,
+        batchId: values.batchId === 'general' ? undefined : values.batchId,
         flowerCount: values.flowerCount,
         fruitCount: values.fruitCount,
         notes: values.notes,
@@ -262,7 +262,7 @@ export function PhenologyHistory() {
                               </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="">Observación General</SelectItem>
+                                <SelectItem value="general">Observación General</SelectItem>
                                 {batches.map(b => (
                                   <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
                                 ))}

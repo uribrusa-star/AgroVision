@@ -33,7 +33,7 @@ export function CulturalPracticesLogForm() {
     resolver: zodResolver(LogSchema),
     defaultValues: {
       practiceType: '',
-      batchId: '',
+      batchId: 'general',
       notes: '',
     },
   });
@@ -43,7 +43,7 @@ export function CulturalPracticesLogForm() {
       const newLog: Omit<AgronomistLog, 'id'> = {
         date: new Date().toISOString(),
         type: 'Labor Cultural',
-        batchId: data.batchId || undefined,
+        batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: data.practiceType,
         notes: data.notes,
       };
@@ -52,7 +52,11 @@ export function CulturalPracticesLogForm() {
         title: "¡Registro Exitoso!",
         description: `Se ha agregado una nueva labor cultural: ${data.practiceType}.`,
       });
-      form.reset();
+      form.reset({
+        practiceType: '',
+        batchId: 'general',
+        notes: '',
+      });
     });
   };
   
@@ -104,7 +108,7 @@ export function CulturalPracticesLogForm() {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                            <SelectItem value="">Labor General</SelectItem>
+                            <SelectItem value="general">Labor General</SelectItem>
                             {batches.map(b => (
                                 <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
                             ))}
