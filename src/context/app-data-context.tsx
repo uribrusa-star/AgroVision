@@ -177,7 +177,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         
         await setDoc(collectorRef, updatedCollectorData, { merge: true });
 
-        setHarvests(prev => [...prev, newHarvest]);
+        setHarvests(prev => [newHarvest, ...prev]);
         setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? { ...c, ...updatedCollectorData } : c));
         
         return newHarvestRef.id;
