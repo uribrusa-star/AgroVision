@@ -39,6 +39,7 @@ export const AppDataContext = React.createContext<AppData>({
   updateEstablishmentData: async () => { throw new Error('Not implemented') },
   addProducerLog: async () => { throw new Error('Not implemented') },
   addTransaction: async () => { throw new Error('Not implemented') },
+  deleteTransaction: async () => { throw new Error('Not implemented') },
   isClient: false,
 });
 
@@ -294,6 +295,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         await fetchData();
     };
 
+    const deleteTransaction = async (transactionId: string) => {
+        await deleteDoc(doc(db, 'transactions', transactionId));
+        await fetchData();
+    };
+
     const value = {
         loading,
         currentUser,
@@ -325,6 +331,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         updateEstablishmentData,
         addProducerLog,
         addTransaction,
+        deleteTransaction,
         isClient
     };
 

@@ -61,13 +61,13 @@ export function HarvestSummary() {
   const laborCost = useMemo(() => transactions.filter(t => t.type === 'Gasto' && t.category === 'Mano de Obra').reduce((acc, t) => acc + t.amount, 0), [transactions]);
   const supplyCost = useMemo(() => transactions.filter(t => t.type === 'Gasto' && t.category === 'Insumos').reduce((acc, t) => acc + t.amount, 0), [transactions]);
   const irrigationCost = useMemo(() => transactions.filter(t => t.type === 'Gasto' && t.category === 'Riego').reduce((acc, t) => acc + t.amount, 0), [transactions]);
+  const totalIncome = useMemo(() => transactions.filter(t => t.type === 'Ingreso').reduce((acc, t) => acc + t.amount, 0), [transactions]);
   
   // Use establishment data for calculations, with fallbacks
   const farmArea = establishmentData?.area.strawberry || 5; // Default to 5ha
   
   const totalCost = laborCost + supplyCost + irrigationCost;
-  const estimatedRevenue = totalProduction * 2.5; // Simple estimation at $2.5/kg
-
+  
   const costDistributionData = [
       { name: 'labor', value: laborCost, fill: 'var(--color-labor)' },
       { name: 'insumos', value: supplyCost, fill: 'var(--color-insumos)' },
@@ -290,12 +290,12 @@ export function HarvestSummary() {
             ]]
         );
         
-        addTable("Proyección Financiera (Estimada)",
+        addTable("Balance Financiero (Registrado)",
             [['Ingresos Totales', 'Costos Totales', 'Margen Bruto']],
             [[
-                `$${estimatedRevenue.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
+                `$${totalIncome.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
                 `$${totalCost.toLocaleString('es-AR', {maximumFractionDigits: 2})}`,
-                `$${(estimatedRevenue - totalCost).toLocaleString('es-AR', {maximumFractionDigits: 2})}`
+                `$${(totalIncome - totalCost).toLocaleString('es-AR', {maximumFractionDigits: 2})}`
             ]]
         );
 
@@ -378,3 +378,5 @@ export function HarvestSummary() {
     </>
   )
 }
+
+    

@@ -1,8 +1,4 @@
 
-
-
-
-
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -189,6 +185,7 @@ export type AppData = {
   updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
   addProducerLog: (log: Omit<ProducerLog, 'id'>) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  deleteTransaction: (transactionId: string) => Promise<void>;
   isClient: boolean;
 };
 

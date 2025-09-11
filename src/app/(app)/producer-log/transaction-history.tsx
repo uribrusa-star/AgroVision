@@ -1,21 +1,25 @@
 
 'use client';
 
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState, useTransition } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
-import { ArrowDownCircle, ArrowUpCircle, Calendar } from 'lucide-react';
+import { ArrowDownCircle, ArrowUpCircle, Calendar, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import type { Transaction } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 export function TransactionHistory() {
-  const { loading, transactions } = useContext(AppDataContext);
+  const { loading, transactions, deleteTransaction } = useContext(AppDataContext);
+  const { toast } = useToast();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [isDeleting, startDeleteTransition] = useTransition();
 
   const sortedTransactions = useMemo(() => 
     [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), 
@@ -24,6 +28,17 @@ export function TransactionHistory() {
   
   const handleRowClick = (transaction: Transaction) => {
     setSelectedTransaction(transaction);
+  }
+
+  const handleDelete = (transactionId: string) => {
+    startDeleteTransition(async () => {
+        await deleteTransaction(transactionId);
+        toast({
+            title: "Transacción Eliminada",
+            description: "El registro financiero ha sido eliminado exitosamente.",
+        });
+        setSelectedTransaction(null);
+    });
   }
 
   return (
@@ -128,7 +143,27 @@ export function TransactionHistory() {
                                 </CardContent>
                              </Card>
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="sm:justify-between">
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" disabled={isDeleting}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        {isDeleting ? 'Eliminando...' : 'Eliminar'}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción de sus registros.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(selectedTransaction.id)}>Continuar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                             <Button onClick={() => setSelectedTransaction(null)}>Cerrar</Button>
                         </DialogFooter>
                     </>
