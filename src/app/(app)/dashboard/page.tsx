@@ -43,7 +43,8 @@ export default function DashboardPage() {
     const averageYield = numberOfBatches > 0 ? totalHarvest / numberOfBatches : 0;
 
     const dailyHarvests: { [key: string]: number } = harvests.reduce((acc, h) => {
-      const date = new Date(h.date).toISOString().split('T')[0];
+      // Use local date string to avoid timezone issues with toISOString()
+      const date = new Date(h.date).toLocaleDateString('es-ES');
       if (!acc[date]) {
         acc[date] = 0;
       }
@@ -51,7 +52,9 @@ export default function DashboardPage() {
       return acc;
     }, {} as { [key: string]: number });
 
-    const peakDay = Object.keys(dailyHarvests).reduce((a, b) => dailyHarvests[a] > dailyHarvests[b] ? a : b, '');
+    const peakDay = Object.keys(dailyHarvests).length > 0
+        ? Object.keys(dailyHarvests).reduce((a, b) => dailyHarvests[a] > dailyHarvests[b] ? a : b)
+        : null;
 
 
     return {
@@ -121,7 +124,7 @@ export default function DashboardPage() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : (dashboardStats.peakDay ? new Date(dashboardStats.peakDay).toLocaleDateString('es-ES', {timeZone: 'UTC'}) : 'N/A')}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : (dashboardStats.peakDay || 'N/A')}</div>
             <p className="text-xs text-muted-foreground">Cosecha más alta esta temporada</p>
           </CardContent>
         </Card>
