@@ -5,7 +5,7 @@ import React, { useContext, useState, useTransition, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Sparkles, BrainCircuit } from 'lucide-react';
+import { Sparkles, BrainCircuit, BarChart, Weight, History } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { predictYield } from '@/ai/flows/predict-yield';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+import type { AgronomistLog, PhenologyLog } from '@/lib/types';
 
 const PredictionRequestSchema = z.object({
   batchId: z.string().min(1, "Debe seleccionar un lote."),
@@ -35,11 +36,36 @@ export function YieldPredictionPanel() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
+  const [selectedBatchId, setSelectedBatchId] = useState<string>('');
 
   const harvestedBatches = useMemo(() => {
     const harvestedBatchIds = new Set(harvests.map(h => h.batchNumber));
     return batches.filter(b => harvestedBatchIds.has(b.id));
   }, [batches, harvests]);
+  
+  const selectedBatchStats = useMemo(() => {
+    if (!selectedBatchId) return null;
+    
+    const batchHarvests = harvests.filter(h => h.batchNumber === selectedBatchId);
+    if(batchHarvests.length === 0) return null;
+
+    const totalKilos = batchHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+    const averageYield = totalKilos / batchHarvests.length;
+
+    const allLogs: (AgronomistLog | PhenologyLog)[] = [...agronomistLogs, ...phenologyLogs];
+    const latestLog = allLogs.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+
+    return {
+        totalKilos,
+        averageYield,
+        harvestCount: batchHarvests.length,
+        latestLog: latestLog ? { 
+            date: new Date(latestLog.date).toLocaleDateString('es-ES'),
+            description: 'type' in latestLog ? `${latestLog.type}: ${latestLog.product || latestLog.notes}` : `${latestLog.developmentState}: ${latestLog.notes}`
+        } : null,
+    }
+  }, [selectedBatchId, harvests, agronomistLogs, phenologyLogs]);
 
   const form = useForm<PredictionRequestValues>({
     resolver: zodResolver(PredictionRequestSchema),
@@ -48,6 +74,12 @@ export function YieldPredictionPanel() {
       weatherForecast: 'Soleado con temperaturas en ligero aumento. Sin lluvias previstas.',
     },
   });
+
+  const handleBatchChange = (batchId: string) => {
+    setSelectedBatchId(batchId);
+    form.setValue('batchId', batchId);
+    setPredictionResult(null);
+  }
 
   const onSubmit = (values: PredictionRequestValues) => {
     setPredictionResult(null);
@@ -105,18 +137,18 @@ export function YieldPredictionPanel() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Generar Nueva Predicción</CardTitle>
-        <CardDescription>Seleccione un lote y proporcione el pronóstico del tiempo para obtener una proyección de rendimiento.</CardDescription>
+        <CardDescription>Seleccione un lote para ver sus estadísticas y obtener una proyección de rendimiento.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <FormField
               control={form.control}
               name="batchId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Seleccionar Lote</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending || dataLoading}>
+                  <Select onValueChange={handleBatchChange} value={field.value} disabled={isPending || dataLoading}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Seleccione un lote cosechado..." />
@@ -136,6 +168,41 @@ export function YieldPredictionPanel() {
                 </FormItem>
               )}
             />
+
+            {selectedBatchStats && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Radiografía del Lote: {selectedBatchId}</CardTitle>
+                        <CardDescription>Resumen de los datos históricos clave para este lote.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div className="flex items-center gap-3">
+                            <Weight className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-semibold">{selectedBatchStats.totalKilos.toLocaleString('es-ES')} kg</p>
+                                <p className="text-muted-foreground">Producción Total</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <BarChart className="h-6 w-6 text-primary" />
+                            <div>
+                                <p className="font-semibold">{selectedBatchStats.averageYield.toFixed(1)} kg/cosecha</p>
+                                <p className="text-muted-foreground">Rendimiento Promedio</p>
+                            </div>
+                        </div>
+                         {selectedBatchStats.latestLog && (
+                            <div className="flex items-center gap-3 md:col-span-3">
+                                <History className="h-6 w-6 text-primary" />
+                                <div>
+                                    <p className="font-semibold truncate" title={selectedBatchStats.latestLog.description}>{selectedBatchStats.latestLog.description}</p>
+                                    <p className="text-muted-foreground">Última Actividad ({selectedBatchStats.latestLog.date})</p>
+                                </div>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
             <FormField
               control={form.control}
               name="weatherForecast"
@@ -143,7 +210,7 @@ export function YieldPredictionPanel() {
                 <FormItem>
                   <FormLabel>Pronóstico del Tiempo (Próximos 7 días)</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="Ej: Soleado, temperaturas en aumento" disabled={isPending || dataLoading} />
+                    <Input {...field} placeholder="Ej: Soleado, temperaturas en aumento" disabled={isPending || dataLoading || !selectedBatchId} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -151,7 +218,7 @@ export function YieldPredictionPanel() {
             />
           </CardContent>
           <CardFooter className="flex-col items-start gap-6">
-            <Button type="submit" disabled={isPending || dataLoading}>
+            <Button type="submit" disabled={isPending || dataLoading || !selectedBatchId}>
               {isPending ? (
                 <>
                   <BrainCircuit className="mr-2 h-4 w-4 animate-spin" />
