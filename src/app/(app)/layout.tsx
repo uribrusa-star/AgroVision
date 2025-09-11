@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut, LineChart } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, NotebookPen, LogOut, LineChart, Map } from 'lucide-react';
 import React, { useEffect, useState, useCallback, ReactNode } from 'react';
 import {
   collection,
@@ -57,6 +57,7 @@ const allNavItems = [
   { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/predictions', label: 'Predicciones', icon: LineChart, roles: ['Productor', 'Ingeniero Agronomo'] },
   { href: '/establishment', label: 'Establecimiento', icon: Building, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
+  { href: '/map', label: 'Mapa', icon: Map, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/producer-log', label: 'Bitácora del Productor', icon: NotebookPen, roles: ['Productor'] },
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },

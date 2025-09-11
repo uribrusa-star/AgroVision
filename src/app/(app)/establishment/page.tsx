@@ -68,18 +68,6 @@ const commercializationSchema = z.object({
     objective: z.string().min(1, "El objetivo económico es requerido."),
 });
 
-const geoJsonSchema = z.object({
-    geoJsonData: z.string().refine((data) => {
-        try {
-            JSON.parse(data);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }, { message: "GeoJSON inválido." }),
-});
-
-
 const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
   const { currentUser } = useContext(AppDataContext);
   const canEdit = editableBy ? editableBy.includes(currentUser.role) : false;
@@ -151,14 +139,6 @@ export default function EstablishmentPage() {
   const { loading, establishmentData, updateEstablishmentData, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [editingSection, setEditingSection] = useState<string | null>(null);
-  const [geoJsonData, setGeoJsonData] = useState<any>(null);
-
-  const geoJsonForm = useForm<{ geoJsonData: string }>({
-    resolver: zodResolver(geoJsonSchema),
-    defaultValues: {
-      geoJsonData: '',
-    },
-  });
 
   const handleEdit = (section: string) => {
     setEditingSection(section);
@@ -167,17 +147,6 @@ export default function EstablishmentPage() {
   const handleCloseDialog = () => {
     setEditingSection(null);
   }
-  
-  const onGeoJsonSubmit = (values: { geoJsonData: string }) => {
-    try {
-        const parsedData = JSON.parse(values.geoJsonData);
-        setGeoJsonData(parsedData);
-        toast({ title: "GeoJSON Cargado", description: "Los datos se han cargado en el mapa." });
-    } catch (error) {
-        toast({ title: "Error de GeoJSON", description: "El formato de los datos no es válido.", variant: "destructive" });
-    }
-  };
-
 
   const handleSubmit = async (section: keyof EstablishmentData | 'general' | 'area' | 'commercialization', values: any) => {
       if (!establishmentData) return;
@@ -227,16 +196,6 @@ export default function EstablishmentPage() {
         toast({ title: "Error", description: "No se pudo actualizar los datos.", variant: "destructive"});
       }
   };
-
-  const mapCenter = useMemo(() => {
-    if (establishmentData?.location.coordinates) {
-      const [lat, lng] = establishmentData.location.coordinates.split(',').map(Number);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return [lat, lng] as [number, number];
-      }
-    }
-    return [ -26.83, -65.22 ] as [number, number]; // Default center
-  }, [establishmentData]);
 
 
   if (loading || !establishmentData) {
@@ -331,55 +290,6 @@ export default function EstablishmentPage() {
                  <InfoItem label="Destino Principal" value={establishmentData.harvest.destination} />
                  <InfoItem label="Objetivo Económico" value={establishmentData.economics.objective} />
             </InfoCard>
-        </div>
-        
-        {/* Mapa y GeoJSON */}
-        <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <Card className="md:col-span-1">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Map className="h-6 w-6 text-primary" />
-                        Mapa del Establecimiento
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="h-[400px] w-full rounded-md overflow-hidden z-0">
-                       <MapComponent center={mapCenter} geoJsonData={geoJsonData} />
-                    </div>
-                </CardContent>
-            </Card>
-            <Card className="md:col-span-1">
-                 <CardHeader>
-                    <CardTitle>Cargar GeoJSON</CardTitle>
-                    <CardDescription>Pegue el contenido de un archivo GeoJSON para visualizarlo en el mapa.</CardDescription>
-                </CardHeader>
-                <Form {...geoJsonForm}>
-                    <form onSubmit={geoJsonForm.handleSubmit(onGeoJsonSubmit)}>
-                        <CardContent>
-                            <FormField
-                                control={geoJsonForm.control}
-                                name="geoJsonData"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Datos GeoJSON</FormLabel>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder='{ "type": "FeatureCollection", "features": [ ... ] }'
-                                                className="min-h-[280px] resize-none font-mono text-xs"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                        <CardFooter>
-                            <Button type="submit">Cargar en Mapa</Button>
-                        </CardFooter>
-                    </form>
-                </Form>
-            </Card>
         </div>
       </div>
 
