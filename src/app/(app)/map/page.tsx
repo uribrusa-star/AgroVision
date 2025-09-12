@@ -249,14 +249,14 @@ export default function MapPage() {
     return { lat: -31.953363, lng: -60.9346299 }; // Default center Coronda
   }, [parsedGeoJson, establishmentData]);
   
-  const [windyCoords, setWindyCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng, key: Date.now()});
+  const [windyCoords, setWindyCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng });
   
   useEffect(() => {
-    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng, key: Date.now() });
+    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
   }, [mapCenter]);
 
   const resetWindyMap = () => {
-    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng, key: Date.now() });
+    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
   };
 
 
@@ -294,7 +294,7 @@ export default function MapPage() {
             </CardHeader>
             <CardContent>
                 <div className="h-[600px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
-                   <WindyMapEmbed key={windyCoords.key} lat={windyCoords.lat} lng={windyCoords.lng} />
+                   <WindyMapEmbed lat={windyCoords.lat} lng={windyCoords.lng} />
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -322,3 +322,4 @@ export default function MapPage() {
     </>
   );
 }
+
