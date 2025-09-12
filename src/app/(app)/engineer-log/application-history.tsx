@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useTransition } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,7 @@ import { AppDataContext } from '@/context/app-data-context';
 import type { AgronomistLog, AgronomistLogType } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -39,6 +39,7 @@ export function ApplicationHistory() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<AgronomistLog | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
@@ -69,30 +70,34 @@ export function ApplicationHistory() {
   }
   
   const handleDelete = (logId: string) => {
-    deleteAgronomistLog(logId);
-    toast({
-      title: "Registro Eliminado",
-      description: "La entrada del registro ha sido eliminada exitosamente.",
+    startTransition(() => {
+        deleteAgronomistLog(logId);
+        toast({
+        title: "Registro Eliminado",
+        description: "La entrada del registro ha sido eliminada exitosamente.",
+        });
     });
   };
 
   const onEditSubmit = (values: LogFormValues) => {
     if (selectedLog) {
-      editAgronomistLog({
-        ...selectedLog,
-        type: values.type as AgronomistLogType,
-        batchId: values.batchId === 'general' ? undefined : values.batchId,
-        product: values.product,
-        notes: values.notes,
-        imageUrl: values.image || "",
-        imageHint: values.image ? (selectedLog.imageHint || 'crop disease pest') : undefined,
+      startTransition(() => {
+          editAgronomistLog({
+            ...selectedLog,
+            type: values.type as AgronomistLogType,
+            batchId: values.batchId === 'general' ? undefined : values.batchId,
+            product: values.product,
+            notes: values.notes,
+            imageUrl: values.image || "",
+            imageHint: values.image ? (selectedLog.imageHint || 'crop disease pest') : undefined,
+          });
+          toast({
+            title: "Registro Actualizado",
+            description: "La entrada del registro ha sido actualizada exitosamente.",
+          });
       });
       setIsEditDialogOpen(false);
       setSelectedLog(null);
-      toast({
-        title: "Registro Actualizado",
-        description: "La entrada del registro ha sido actualizada exitosamente.",
-      });
     }
   };
 
@@ -114,7 +119,7 @@ export function ApplicationHistory() {
       <Card>
         <CardHeader>
             <CardTitle>Historial de Actividades</CardTitle>
-            <CardDescription>Registro de todas las aplicaciones, labores, controles y observaciones realizadas en el campo.</CardDescription>
+            <CardDescription>Registro de todas las aplicaciones, labores, controles y observaciones realizadas en el campo.</CardHeader>
         </CardHeader>
         <CardContent>
             <Table>
@@ -177,7 +182,7 @@ export function ApplicationHistory() {
                             <AlertDialog>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isPending}>
                                     <MoreHorizontal className="h-4 w-4" />
                                     <span className="sr-only">Toggle menu</span>
                                     </Button>
@@ -231,7 +236,7 @@ export function ApplicationHistory() {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Tipo de Actividad</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccione un tipo" />
@@ -256,7 +261,7 @@ export function ApplicationHistory() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Lote (Opcional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                               <FormControl>
                               <SelectTrigger>
                                   <SelectValue placeholder="Aplicación General" />
@@ -281,7 +286,7 @@ export function ApplicationHistory() {
                     <FormItem>
                         <FormLabel>Producto/Labor/Detalle (Opcional)</FormLabel>
                         <FormControl>
-                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage} />
+                        <Input placeholder="ej., Nitrato de Calcio" {...field} disabled={!canManage || isPending} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -298,7 +303,7 @@ export function ApplicationHistory() {
                         placeholder="Describa la aplicación, dosis, observaciones, etc."
                         className="resize-none"
                         {...field}
-                        disabled={!canManage}
+                        disabled={!canManage || isPending}
                         />
                     </FormControl>
                     <FormMessage />
@@ -312,7 +317,7 @@ export function ApplicationHistory() {
                     <FormItem>
                       <FormLabel>URL de Imagen (Opcional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage} />
+                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage || isPending} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -322,7 +327,7 @@ export function ApplicationHistory() {
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
+                <Button type="submit" disabled={isPending || !canManage}>{isPending ? 'Guardando...' : 'Guardar Cambios'}</Button>
                 </DialogFooter>
             </form>
             </Form>

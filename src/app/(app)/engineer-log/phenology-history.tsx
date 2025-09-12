@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useTransition } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -42,6 +42,7 @@ export function PhenologyHistory() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [selectedLog, setSelectedLog] = useState<PhenologyLog | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
@@ -73,31 +74,35 @@ export function PhenologyHistory() {
   };
 
   const handleDelete = (logId: string) => {
-    deletePhenologyLog(logId);
-    toast({
-      title: "Registro Eliminado",
-      description: "La entrada del registro ha sido eliminada exitosamente.",
+    startTransition(() => {
+        deletePhenologyLog(logId);
+        toast({
+        title: "Registro Eliminado",
+        description: "La entrada del registro ha sido eliminada exitosamente.",
+        });
     });
   };
 
   const onEditSubmit = (values: LogFormValues) => {
     if (selectedLog) {
-      editPhenologyLog({
-        ...selectedLog,
-        developmentState: values.developmentState,
-        batchId: values.batchId === 'general' ? undefined : values.batchId,
-        flowerCount: values.flowerCount,
-        fruitCount: values.fruitCount,
-        notes: values.notes,
-        imageUrl: values.image || "",
-        imageHint: values.image ? (selectedLog.imageHint || 'crop phenology') : undefined,
+      startTransition(() => {
+          editPhenologyLog({
+            ...selectedLog,
+            developmentState: values.developmentState,
+            batchId: values.batchId === 'general' ? undefined : values.batchId,
+            flowerCount: values.flowerCount,
+            fruitCount: values.fruitCount,
+            notes: values.notes,
+            imageUrl: values.image || "",
+            imageHint: values.image ? (selectedLog.imageHint || 'crop phenology') : undefined,
+          });
+          toast({
+            title: "Registro Actualizado",
+            description: "La entrada del registro ha sido actualizada exitosamente.",
+          });
       });
       setIsEditDialogOpen(false);
       setSelectedLog(null);
-      toast({
-        title: "Registro Actualizado",
-        description: "La entrada del registro ha sido actualizada exitosamente.",
-      });
     }
   };
 
@@ -182,7 +187,7 @@ export function PhenologyHistory() {
                                 <AlertDialog>
                                     <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                        <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isPending}>
                                         <MoreHorizontal className="h-4 w-4" />
                                         <span className="sr-only">Toggle menu</span>
                                         </Button>
@@ -237,7 +242,7 @@ export function PhenologyHistory() {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Estado de Desarrollo</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Seleccione un estado" />
@@ -259,7 +264,7 @@ export function PhenologyHistory() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Lote (Opcional)</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value} disabled={!canManage}>
+                          <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
                               <FormControl>
                               <SelectTrigger>
                                   <SelectValue placeholder="Observación General" />
@@ -285,7 +290,7 @@ export function PhenologyHistory() {
                         <FormItem>
                             <FormLabel>Nº Flores (aprox.)</FormLabel>
                             <FormControl>
-                            <Input type="number" {...field} disabled={!canManage} />
+                            <Input type="number" {...field} disabled={!canManage || isPending} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -298,7 +303,7 @@ export function PhenologyHistory() {
                         <FormItem>
                             <FormLabel>Nº Frutos (aprox.)</FormLabel>
                             <FormControl>
-                            <Input type="number" {...field} disabled={!canManage} />
+                            <Input type="number" {...field} disabled={!canManage || isPending} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -316,7 +321,7 @@ export function PhenologyHistory() {
                         placeholder="Describa el vigor, color de hojas, síntomas, etc."
                         className="resize-none"
                         {...field}
-                        disabled={!canManage}
+                        disabled={!canManage || isPending}
                         />
                     </FormControl>
                     <FormMessage />
@@ -330,7 +335,7 @@ export function PhenologyHistory() {
                     <FormItem>
                       <FormLabel>URL de Imagen (Opcional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage} />
+                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage || isPending} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -340,7 +345,7 @@ export function PhenologyHistory() {
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit" disabled={!canManage}>Guardar Cambios</Button>
+                <Button type="submit" disabled={isPending || !canManage}>{isPending ? 'Guardando...' : 'Guardar Cambios'}</Button>
                 </DialogFooter>
             </form>
             </Form>
