@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { useContext, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -66,6 +67,21 @@ const managementSchema = z.object({
 const commercializationSchema = z.object({
     destination: z.string().min(1, "El destino es requerido."),
     objective: z.string().min(1, "El objetivo económico es requerido."),
+});
+
+const geoJsonSchema = z.object({
+  geoJsonData: z.string().refine(
+    (val) => {
+      if (!val) return true; // Allow empty string
+      try {
+        JSON.parse(val);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+    { message: "El texto ingresado debe ser un objeto GeoJSON válido." }
+  ),
 });
 
 const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
@@ -148,7 +164,7 @@ export default function EstablishmentPage() {
     setEditingSection(null);
   }
 
-  const handleSubmit = async (section: keyof EstablishmentData | 'general' | 'area' | 'commercialization', values: any) => {
+  const handleSubmit = async (section: keyof EstablishmentData | 'general' | 'area' | 'commercialization' | 'management' | 'geoJson', values: any) => {
       if (!establishmentData) return;
       
       let updatedData: Partial<EstablishmentData> = {};
@@ -186,6 +202,8 @@ export default function EstablishmentPage() {
          };
       } else if (section === 'planting' || section === 'irrigation') {
           updatedData = { [section]: values };
+      } else if (section === 'geoJson') {
+          updatedData = { geoJsonData: values.geoJsonData };
       }
 
       try {
@@ -196,6 +214,45 @@ export default function EstablishmentPage() {
         toast({ title: "Error", description: "No se pudo actualizar los datos.", variant: "destructive"});
       }
   };
+  
+  const parsedGeoJson = useMemo(() => {
+      try {
+          return establishmentData?.geoJsonData ? JSON.parse(establishmentData.geoJsonData) : null;
+      } catch {
+          return null;
+      }
+  }, [establishmentData?.geoJsonData]);
+
+  const mapCenter = useMemo(() => {
+    if (parsedGeoJson && parsedGeoJson.features && parsedGeoJson.features.length > 0) {
+      const firstFeature = parsedGeoJson.features[0];
+      if (firstFeature.geometry) {
+        if (firstFeature.geometry.type === 'Point') {
+          const [lng, lat] = firstFeature.geometry.coordinates;
+          return { lat, lng };
+        }
+        if (firstFeature.geometry.type === 'Polygon') {
+          const coords = firstFeature.geometry.coordinates[0];
+          if (!coords || coords.length === 0) return { lat: -31.953363, lng: -60.9346299 }; // Fallback
+          
+          let lat = 0, lng = 0;
+          coords.forEach(([coordLng, coordLat]: [number, number]) => {
+            lat += coordLat;
+            lng += coordLng;
+          });
+          return { lat: lat / coords.length, lng: lng / coords.length };
+        }
+      }
+    }
+    // Fallback to location coordinates or default
+    if (establishmentData?.location.coordinates) {
+      const [lat, lng] = establishmentData.location.coordinates.split(',').map(s => parseFloat(s.trim()));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng };
+      }
+    }
+    return { lat: -31.953363, lng: -60.9346299 }; // Default center Coronda
+  }, [parsedGeoJson, establishmentData]);
 
 
   if (loading || !establishmentData) {
@@ -252,26 +309,23 @@ export default function EstablishmentPage() {
                <InfoItem label="Destinada a Frutilla" value={`${establishmentData.area.strawberry} ha`} />
                <InfoItem label="Sistema Productivo" value={establishmentData.system} />
             </InfoCard>
-        </div>
-
-        {/* Columna 2 */}
-        <div className="space-y-6">
+            
             <InfoCard title="Suelo y Cobertura" icon={Mountain} onEdit={() => handleEdit('soil')} editableBy={agronomistAccess}>
                <InfoItem label="Tipo de Suelo" value={establishmentData.soil.type} />
                <InfoItem label="Análisis Inicial" value={establishmentData.soil.analysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
                <InfoItem label="Cobertura (Mulching)" value={establishmentData.planting.mulching} />
             </InfoCard>
+        </div>
 
-             <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')} editableBy={agronomistAccess}>
+        {/* Columna 2 */}
+        <div className="space-y-6">
+            <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')} editableBy={agronomistAccess}>
                 <InfoItem label="Variedades" value={establishmentData.planting.variety} />
                 <InfoItem label="Fecha de Plantación" value={new Date(establishmentData.planting.date).toLocaleDateString('es-ES', { timeZone: 'UTC' })} />
                 <InfoItem label="Origen de Plantas" value={establishmentData.planting.origin} />
                 <InfoItem label="Densidad" value={establishmentData.planting.density} />
             </InfoCard>
-        </div>
 
-        {/* Columna 3 */}
-        <div className="space-y-6">
             <InfoCard title="Riego y Fertirrigación" icon={Droplet} onEdit={() => handleEdit('irrigation')} editableBy={agronomistAccess}>
                 <InfoItem label="Sistema de Riego" value={establishmentData.irrigation.system} />
                 <InfoItem label="Caudal por Gotero" value={establishmentData.irrigation.flowRate} />
@@ -286,9 +340,19 @@ export default function EstablishmentPage() {
                 <InfoItem label="Frecuencia" value={establishmentData.harvest.frequency} />
             </InfoCard>
 
-             <InfoCard title="Comercialización" icon={TrendingUp} onEdit={() => handleEdit('commercialization')} editableBy={producerAccess}>
+        </div>
+
+        {/* Columna 3 */}
+        <div className="space-y-6">
+            <InfoCard title="Comercialización" icon={TrendingUp} onEdit={() => handleEdit('commercialization')} editableBy={producerAccess}>
                  <InfoItem label="Destino Principal" value={establishmentData.harvest.destination} />
                  <InfoItem label="Objetivo Económico" value={establishmentData.economics.objective} />
+            </InfoCard>
+
+             <InfoCard title="Mapa del Establecimiento (GeoJSON)" icon={Map} onEdit={() => handleEdit('geoJson')} editableBy={agronomistAccess}>
+                <div className="h-64 w-full rounded-md overflow-hidden z-0 bg-muted">
+                   <MapComponent center={mapCenter} geoJsonData={parsedGeoJson} />
+                </div>
             </InfoCard>
         </div>
       </div>
@@ -426,6 +490,44 @@ export default function EstablishmentPage() {
               </>
           )}
       </EditDialog>
+
+      <Dialog open={editingSection === 'geoJson'} onOpenChange={handleCloseDialog}>
+            <DialogContent className="sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Editar Datos GeoJSON</DialogTitle>
+                    <DialogDescription>
+                        Pegue aquí el contenido de su archivo GeoJSON para definir los lotes y puntos de interés en el mapa.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...useForm({ resolver: zodResolver(geoJsonSchema), defaultValues: { geoJsonData: establishmentData.geoJsonData || '' } })}>
+                    <form onSubmit={useForm().handleSubmit((data) => handleSubmit('geoJson', data))} className="space-y-4">
+                       <FormField
+                          control={useForm({ resolver: zodResolver(geoJsonSchema), defaultValues: { geoJsonData: establishmentData.geoJsonData || '' } }).control}
+                          name="geoJsonData"
+                          render={({ field }) => (
+                              <FormItem>
+                                  <FormLabel>Contenido GeoJSON</FormLabel>
+                                  <FormControl>
+                                      <Textarea
+                                          className="min-h-[300px] font-mono text-xs"
+                                          placeholder='{ "type": "FeatureCollection", "features": [ ... ] }'
+                                          {...field}
+                                      />
+                                  </FormControl>
+                                  <FormMessage />
+                              </FormItem>
+                          )}
+                      />
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
+                            <Button type="submit">Guardar GeoJSON</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
     </>
   );
 }
+
+    
