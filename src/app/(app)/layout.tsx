@@ -10,19 +10,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
-import {
-  collection,
-  getDocs,
-  doc,
-  setDoc,
-  deleteDoc,
-  writeBatch,
-  query,
-  where,
-  documentId,
-  addDoc,
-  getDoc,
-} from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -37,7 +24,7 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { AgroVisionLogo, StrawberryIcon, NotebookPen } from '@/components/icons';
+import { StrawberryIcon, NotebookPen } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -54,9 +41,7 @@ import {
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { Harvest, AppData, Collector, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { db } from '@/lib/firebase';
+import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 const allNavItems = [
@@ -72,7 +57,7 @@ const allNavItems = [
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { currentUser, isClient, loading } = React.useContext(AppDataContext);
+  const { currentUser, isClient, loading, users } = React.useContext(AppDataContext);
   const router = useRouter();
 
   useEffect(() => {
@@ -101,7 +86,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
                 <Link href="/dashboard" className="flex items-center gap-2">
-                  <AgroVisionLogo className="w-8 h-8" />
+                  <Image src="/logo.png" alt="AgroVision Logo" width={32} height={32} />
                   <span className="text-xl font-bold text-sidebar-foreground">AgroVision</span>
                 </Link>
               </div>
@@ -135,7 +120,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className="sr-only">Toggle Menu</span>
                 </SidebarTrigger>
                 <div className="flex items-center gap-2">
-                  <AgroVisionLogo className="w-6 h-6" />
+                  <Image src="/logo.png" alt="AgroVision Logo" width={24} height={24} />
                   <span className="text-lg font-bold">AgroVision</span>
                 </div>
             </header>
@@ -203,6 +188,13 @@ function UserMenu() {
     });
   }
   
+  const handleUserChange = (userId: string) => {
+    const selectedUser = users.find(u => u.id === userId);
+    if(selectedUser) {
+        setCurrentUser(selectedUser);
+    }
+  }
+
   return (
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
         <DropdownMenu>
@@ -225,12 +217,7 @@ function UserMenu() {
             {currentUser.role === 'Productor' && (
                 <>
                     <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup value={currentUser.id} onValueChange={(userId) => {
-                        const selectedUser = users.find(u => u.id === userId);
-                        if(selectedUser) {
-                            setCurrentUser(selectedUser);
-                        }
-                    }}>
+                    <DropdownMenuRadioGroup value={currentUser.id} onValueChange={handleUserChange}>
                         {users.map((user) => (
                             <DropdownMenuRadioItem key={user.id} value={user.id}>
                                 {user.name}
