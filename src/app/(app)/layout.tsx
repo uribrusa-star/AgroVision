@@ -190,7 +190,7 @@ function UserMenu() {
   const handleUserChange = (userId: string) => {
     const selectedUser = users.find(u => u.id === userId);
     if(selectedUser) {
-        setCurrentUser(selectedUser, true);
+        setCurrentUser(selectedUser);
     }
   }
 
