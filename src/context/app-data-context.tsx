@@ -222,44 +222,33 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const editCollector = (updatedCollector: Collector) => {
-        const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
+    const editCollector = async (updatedCollector: Collector) => {
+      try {
+        const batch = writeBatch(db);
 
-        // Optimistic UI updates
-        setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
-        setHarvests(prev => prev.map(h => h.collector.id === updatedCollector.id ? { ...h, collector: { ...h.collector, name: updatedCollector.name } } : h));
-        setCollectorPaymentLogs(prev => prev.map(p => p.collectorId === updatedCollector.id ? { ...p, collectorName: updatedCollector.name } : p));
+        const collectorRef = doc(db, 'collectors', updatedCollector.id);
+        const { id, ...collectorData } = updatedCollector;
+        batch.set(collectorRef, collectorData, { merge: true });
 
-        const runUpdate = async () => {
-            const batch = writeBatch(db);
-
-            const collectorRef = doc(db, 'collectors', updatedCollector.id);
-            const { id, ...collectorData } = updatedCollector;
-            batch.set(collectorRef, collectorData, { merge: true });
-
-            const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
-            const harvestsSnapshot = await getDocs(harvestsQuery);
-            harvestsSnapshot.forEach(doc => {
-                batch.update(doc.ref, { 'collector.name': updatedCollector.name });
-            });
-
-            const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
-            const paymentsSnapshot = await getDocs(paymentsQuery);
-            paymentsSnapshot.forEach(doc => {
-                batch.update(doc.ref, { collectorName: updatedCollector.name });
-            });
-            
-            await batch.commit();
-        };
-
-        runUpdate().catch(error => {
-            console.error("Failed to edit collector and related documents:", error);
-            // Rollback optimistic updates
-            setCollectors(originalState.collectors);
-            setHarvests(originalState.harvests);
-            setCollectorPaymentLogs(originalState.collectorPaymentLogs);
-            toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
+        const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
+        const harvestsSnapshot = await getDocs(harvestsQuery);
+        harvestsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { 'collector.name': updatedCollector.name });
         });
+
+        const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
+        const paymentsSnapshot = await getDocs(paymentsQuery);
+        paymentsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { collectorName: updatedCollector.name });
+        });
+        
+        await batch.commit();
+        await fetchData(); // Refetch all data to ensure UI consistency
+      } catch (error) {
+        console.error("Failed to edit collector and related documents:", error);
+        toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
+        await fetchData(); // Refetch data even on error to revert UI to a consistent state
+      }
     };
 
     const deleteCollector = (collectorId: string) => {
