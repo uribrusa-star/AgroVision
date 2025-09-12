@@ -182,8 +182,10 @@ export default function MapPage() {
           const [lng, lat] = firstFeature.geometry.coordinates;
           return { lat, lng };
         }
-        if (firstFeature.geometry.type === 'Polygon' || firstFeature.geometry.type === 'MultiPolygon') {
-          const coords = firstFeature.geometry.coordinates[0][0] || firstFeature.geometry.coordinates[0];
+        if (firstFeature.geometry.type === 'Polygon') {
+          const coords = firstFeature.geometry.coordinates[0];
+          if (!coords || coords.length === 0) return { lat: -26.83, lng: -65.22 }; // Fallback
+          
           let lat = 0, lng = 0;
           coords.forEach(([coordLng, coordLat]: [number, number]) => {
             lat += coordLat;
