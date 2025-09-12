@@ -60,7 +60,7 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
             <Source
                 id="owm-precipitation"
                 type="raster"
-                tiles={[`http://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`]}
+                tiles={[`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`]}
                 tileSize={256}
             />
             <Layer {...precipitationLayer} />
