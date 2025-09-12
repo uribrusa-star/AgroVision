@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer, Calendar } from 'lucide-react';
+import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer, Calendar, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import type { AgronomistLog, AgronomistLogType } from '@/lib/types';
@@ -71,10 +71,13 @@ export function ApplicationHistory() {
   
   const handleDelete = (logId: string) => {
     startTransition(() => {
-        deleteAgronomistLog(logId);
-        toast({
-        title: "Registro Eliminado",
-        description: "La entrada del registro ha sido eliminada exitosamente.",
+        deleteAgronomistLog(logId).then(() => {
+          toast({
+            title: "Registro Eliminado",
+            description: "La entrada del registro ha sido eliminada exitosamente.",
+          });
+          setIsDetailOpen(false); // Close detail view on successful delete
+          setSelectedLog(null);
         });
     });
   };
@@ -398,7 +401,29 @@ export function ApplicationHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="sm:justify-between">
+                        {canManage ? (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" disabled={isPending}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        {isPending ? 'Eliminando...' : 'Eliminar'}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          Esta acción no se puede deshacer. Esto eliminará permanentemente este registro de actividad.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        ) : <div />}
                         <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
                     </DialogFooter>
                  </>
@@ -409,5 +434,3 @@ export function ApplicationHistory() {
     </>
   )
 }
-
-    

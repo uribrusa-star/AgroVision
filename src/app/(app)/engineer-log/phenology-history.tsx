@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Flower, Grape, Sun, Calendar } from 'lucide-react';
+import { MoreHorizontal, Flower, Grape, Sun, Calendar, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import type { PhenologyLog } from '@/lib/types';
@@ -75,10 +75,13 @@ export function PhenologyHistory() {
 
   const handleDelete = (logId: string) => {
     startTransition(() => {
-        deletePhenologyLog(logId);
-        toast({
-        title: "Registro Eliminado",
-        description: "La entrada del registro ha sido eliminada exitosamente.",
+        deletePhenologyLog(logId).then(() => {
+          toast({
+            title: "Registro Eliminado",
+            description: "La entrada del registro de fenología ha sido eliminada exitosamente.",
+          });
+          setIsDetailOpen(false); // Close detail view on successful delete
+          setSelectedLog(null);
         });
     });
   };
@@ -162,7 +165,7 @@ export function PhenologyHistory() {
                              <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                                 {log.batchId ? <Badge variant="outline">{log.batchId}</Badge> : <span className="text-xs text-muted-foreground">General</span>}
                             </TableCell>
-                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer" className="text-xs">
+                            <TableCell onClick={() => handleDetails(log)} className="text-xs cursor-pointer">
                                 <p>Flores: {log.flowerCount ?? '-'}</p>
                                 <p>Frutos: {log.fruitCount ?? '-'}</p>
                             </TableCell>
@@ -420,7 +423,29 @@ export function PhenologyHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter>
+                    <DialogFooter className="sm:justify-between">
+                       {canManage ? (
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" disabled={isPending}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        {isPending ? 'Eliminando...' : 'Eliminar'}
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Esta acción no se puede deshacer. Esto eliminará permanentemente este registro de fenología.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        ) : <div />}
                         <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
                     </DialogFooter>
                  </>
@@ -431,5 +456,3 @@ export function PhenologyHistory() {
     </>
   )
 }
-
-    

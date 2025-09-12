@@ -16,10 +16,12 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useToast } from '@/hooks/use-toast';
 
 export function TransactionHistory() {
-  const { loading, transactions, deleteTransaction } = useContext(AppDataContext);
+  const { loading, transactions, deleteTransaction, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  const [isDeleting, startDeleteTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
+
+  const canManage = currentUser.role === 'Productor';
 
   const sortedTransactions = useMemo(() => 
     [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), 
@@ -31,13 +33,14 @@ export function TransactionHistory() {
   }
 
   const handleDelete = (transactionId: string) => {
-    startDeleteTransition(async () => {
-        await deleteTransaction(transactionId);
-        toast({
-            title: "Transacción Eliminada",
-            description: "El registro financiero ha sido eliminado exitosamente.",
+    startTransition(() => {
+        deleteTransaction(transactionId).then(() => {
+          toast({
+              title: "Transacción Eliminada",
+              description: "El registro financiero ha sido eliminado exitosamente.",
+          });
+          setSelectedTransaction(null);
         });
-        setSelectedTransaction(null);
     });
   }
 
@@ -144,26 +147,28 @@ export function TransactionHistory() {
                              </Card>
                         </div>
                         <DialogFooter className="sm:justify-between">
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" disabled={isDeleting}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        {isDeleting ? 'Eliminando...' : 'Eliminar'}
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción de sus registros.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(selectedTransaction.id)}>Continuar</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            {canManage ? (
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="destructive" disabled={isPending}>
+                                          <Trash2 className="mr-2 h-4 w-4" />
+                                          {isPending ? 'Eliminando...' : 'Eliminar'}
+                                      </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                          <AlertDialogDescription>
+                                              Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción de sus registros.
+                                          </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                          <AlertDialogAction onClick={() => handleDelete(selectedTransaction.id)}>Continuar y Eliminar</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
+                            ) : <div />}
                             <Button onClick={() => setSelectedTransaction(null)}>Cerrar</Button>
                         </DialogFooter>
                     </>
