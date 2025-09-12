@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import type { AgronomistLog } from "@/lib/types";
 
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
@@ -50,7 +51,7 @@ const WeatherAlertsSchema = z.object({
 });
 
 const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}) => {
-    const { phenologyLogs } = useContext(AppDataContext);
+    const { phenologyLogs, addAgronomistLog } = useContext(AppDataContext);
     const [isPending, startTransition] = useTransition();
     const [alerts, setAlerts] = useState<Alert[] | null>(null);
     const { toast } = useToast();
@@ -81,6 +82,25 @@ const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}
                 });
                 if (result.alerts && result.alerts.length > 0) {
                     setAlerts(result.alerts);
+
+                    // Save alerts to agronomist log
+                    const logPromises = result.alerts.map(alert => {
+                        const newLog: Omit<AgronomistLog, 'id'> = {
+                            date: new Date().toISOString(),
+                            type: 'Condiciones Ambientales',
+                            product: `Alerta IA: ${alert.risk}`,
+                            notes: `Recomendación: ${alert.recommendation} (Urgencia: ${alert.urgency})`,
+                        };
+                        return addAgronomistLog(newLog);
+                    });
+                    
+                    await Promise.all(logPromises);
+
+                    toast({ 
+                        title: "Análisis Completo", 
+                        description: "Se generaron nuevas alertas y se guardaron en la bitácora del agrónomo."
+                    });
+
                 } else {
                     toast({ title: "Análisis Completo", description: "La IA no identificó riesgos mayores con el pronóstico provisto." });
                 }
@@ -274,7 +294,7 @@ export default function MapPage() {
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
-                   <WindyMapEmbed lat={windyCoords.lat} lng={windyCoords.lng} key={windyCoords.key} />
+                   <WindyMapEmbed lat={windyCoords.lat} lng={windyCoords.lng} />
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
