@@ -23,7 +23,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
 const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
-  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=8&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
+  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=11&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
 
   return (
     <iframe
