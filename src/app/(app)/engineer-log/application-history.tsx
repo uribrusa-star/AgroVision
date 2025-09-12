@@ -119,7 +119,7 @@ export function ApplicationHistory() {
       <Card>
         <CardHeader>
             <CardTitle>Historial de Actividades</CardTitle>
-            <CardDescription>Registro de todas las aplicaciones, labores, controles y observaciones realizadas en el campo.</CardHeader>
+            <CardDescription>Registro de todas las aplicaciones, labores, controles y observaciones realizadas en el campo.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
