@@ -266,7 +266,7 @@ export default function MapPage() {
         title="Mapa del Establecimiento"
         description="Visualice la finca, sus lotes y genere alertas climáticas con IA."
       />
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -294,7 +294,7 @@ export default function MapPage() {
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
-                   <WindyMapEmbed lat={windyCoords.lat} lng={windyCoords.lng} />
+                   <WindyMapEmbed key={windyCoords.key} lat={windyCoords.lat} lng={windyCoords.lng} />
                    <TooltipProvider>
                     <Tooltip>
                         <TooltipTrigger asChild>
@@ -315,7 +315,7 @@ export default function MapPage() {
                 </div>
             </CardContent>
         </Card>
-        <div className="xl:col-span-2">
+        <div className="lg:col-span-2">
             <AIAlertsPanel mapCenter={mapCenter} />
         </div>
       </div>
