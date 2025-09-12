@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
-import type { Transaction } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 const TransactionSchema = z.object({
@@ -45,16 +44,22 @@ export function TransactionForm() {
 
   const onSubmit = (data: TransactionFormValues) => {
     startTransition(async () => {
-      const newTransaction: Omit<Transaction, 'id'> = {
+      await addTransaction({
         date: new Date().toISOString(),
         ...data
-      };
-      await addTransaction(newTransaction);
+      });
+
       toast({
         title: "¡Transacción Guardada!",
         description: `Se ha registrado un ${data.type.toLowerCase()} de $${data.amount}.`,
       });
-      form.reset();
+
+      form.reset({
+        type: 'Gasto',
+        category: '',
+        description: '',
+        amount: 0,
+      });
     });
   };
   
@@ -143,5 +148,3 @@ export function TransactionForm() {
     </Card>
   );
 }
-
-    
