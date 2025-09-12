@@ -71,14 +71,13 @@ export function ApplicationHistory() {
   
   const handleDelete = (logId: string) => {
     startTransition(() => {
-        deleteAgronomistLog(logId).then(() => {
-          toast({
-            title: "Registro Eliminado",
-            description: "La entrada del registro ha sido eliminada exitosamente.",
-          });
-          setIsDetailOpen(false); // Close detail view on successful delete
-          setSelectedLog(null);
+        deleteAgronomistLog(logId);
+        toast({
+          title: "Registro Eliminado",
+          description: "La entrada del registro ha sido eliminada exitosamente.",
         });
+        setIsDetailOpen(false); // Close detail view on successful delete
+        setSelectedLog(null);
     });
   };
 
@@ -343,7 +342,7 @@ export function ApplicationHistory() {
            {selectedLog && (() => {
               const typeInfo = getTypeInfo(selectedLog.type);
               return (
-                 <>
+                 <AlertDialog>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                            <typeInfo.icon className="h-5 w-5" />
@@ -403,30 +402,28 @@ export function ApplicationHistory() {
                     </div>
                     <DialogFooter className="sm:justify-between">
                         {canManage ? (
-                            <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" disabled={isPending}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         {isPending ? 'Eliminando...' : 'Eliminar'}
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                          Esta acción no se puede deshacer. Esto eliminará permanentemente este registro de actividad.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
                         ) : <div />}
                         <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
                     </DialogFooter>
-                 </>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Esto eliminará permanentemente este registro de actividad.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                 </AlertDialog>
               );
            })()}
         </DialogContent>
