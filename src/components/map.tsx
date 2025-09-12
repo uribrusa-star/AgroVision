@@ -162,6 +162,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 mapTypeControl: false,
                 fullscreenControl: false,
                 mapTypeId: 'satellite',
+                geolocation: false,
             }}
         >
             {renderPolygons()}
