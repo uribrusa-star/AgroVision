@@ -305,11 +305,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       
       const harvestRef = doc(db, 'harvests', logToDelete.harvestId);
       batchOp.delete(harvestRef);
+
+      const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
+      const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
+
+      if (collectorDoc) {
+        const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
+        const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
+        batchOp.update(collectorRef, {
+            totalHarvested: newTotalHarvested,
+            hoursWorked: newHoursWorked,
+            productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
+        });
+      }
       
       await batchOp.commit();
-      
-      setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
-      setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
+      await fetchData(); // Refetch to ensure all state is consistent
     };
 
     const updateEstablishmentData = async (data: Partial<EstablishmentData>) => {
