@@ -7,7 +7,7 @@ import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Ba
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, addDoc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, addDoc, getDoc, orderBy } from 'firebase/firestore';
 
 export const AppDataContext = React.createContext<AppData>({
   loading: true,
@@ -148,13 +148,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           transactionsSnapshot,
         ] = await Promise.all([
           getDocs(collection(db, 'collectors')),
-          getDocs(collection(db, 'harvests')),
-          getDocs(collection(db, 'agronomistLogs')),
-          getDocs(collection(db, 'phenologyLogs')),
-          getDocs(collection(db, 'batches')),
-          getDocs(collection(db, 'collectorPaymentLogs')),
-          getDocs(collection(db, 'producerLogs')),
-          getDocs(collection(db, 'transactions')),
+          getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'batches'), orderBy('preloadedDate', 'desc'))),
+          getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'producerLogs'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
         ]);
         
         setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
@@ -593,4 +593,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 };
 
     
-

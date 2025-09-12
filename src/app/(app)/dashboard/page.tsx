@@ -68,8 +68,6 @@ export default function DashboardPage() {
     ...calculateDashboardStats(harvests),
     activeCollectors: collectors.length,
   };
-  
-  const sortedHarvests = [...harvests].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <>
@@ -142,12 +140,12 @@ export default function DashboardPage() {
                         <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
                     </TableRow>
                     )}
-                    {!loading && sortedHarvests.length === 0 && (
+                    {!loading && harvests.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
                         </TableRow>
                     )}
-                    {!loading && sortedHarvests.slice(0, 5).map((harvest) => (
+                    {!loading && harvests.slice(0, 5).map((harvest) => (
                     <TableRow key={harvest.id}>
                         <TableCell>
                         <Badge variant="outline">{harvest.batchNumber}</Badge>
