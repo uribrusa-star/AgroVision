@@ -14,6 +14,20 @@ type WeatherMapProps = {
     };
 };
 
+const precipitationSource: any = {
+    id: 'owm-precipitation',
+    type: 'raster',
+    tiles: [`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`],
+    tileSize: 256,
+};
+
+const precipitationLayer: LayerProps = {
+    id: 'precipitation_layer',
+    type: 'raster',
+    source: 'owm-precipitation',
+    paint: { 'raster-opacity': 0.7 },
+};
+
 const WeatherMapComponent = ({ center }: WeatherMapProps) => {
 
     if (!MAPBOX_TOKEN) {
@@ -36,13 +50,6 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
         );
     }
     
-    const precipitationLayer: LayerProps = {
-        id: 'precipitation_layer',
-        type: 'raster',
-        source: 'owm-precipitation',
-        paint: {'raster-opacity': 0.7}
-    };
-    
     // Using a key that changes with the token ensures the map re-initializes if the token becomes available later.
     const mapKey = `weather-map-${MAPBOX_TOKEN}`;
 
@@ -57,13 +64,9 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
             }}
             mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
         >
-            <Source
-                id="owm-precipitation"
-                type="raster"
-                tiles={[`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`]}
-                tileSize={256}
-            />
-            <Layer {...precipitationLayer} />
+            <Source {...precipitationSource}>
+                <Layer {...precipitationLayer} />
+            </Source>
         </Map>
     );
 };
