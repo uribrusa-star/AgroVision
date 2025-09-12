@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
-import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -52,7 +51,7 @@ export function HealthLogForm() {
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
-      const newLog: Omit<AgronomistLog, 'id'> = {
+      await addAgronomistLog({
         date: new Date().toISOString(),
         type: 'Sanidad',
         batchId: data.batchId === 'general' ? undefined : data.batchId,
@@ -60,12 +59,13 @@ export function HealthLogForm() {
         notes: `Incidencia: ${data.severity}. Observaciones: ${data.notes}`,
         imageUrl: data.image || "",
         ...(data.image && { imageHint: 'crop disease pest' }),
-      };
-      await addAgronomistLog(newLog);
+      });
+
       toast({
         title: "¡Registro de Sanidad Exitoso!",
         description: `Se ha agregado una nueva observación de ${data.observationType}.`,
       });
+
       form.reset({
         observationType: undefined,
         batchId: 'general',
