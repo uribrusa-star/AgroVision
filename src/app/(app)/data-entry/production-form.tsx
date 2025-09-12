@@ -65,42 +65,46 @@ export function ProductionForm() {
       toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
       return;
     }
+    
+    startTransition(() => {
+      addHarvest({
+          date: values.date.toISOString(),
+          batchNumber: values.batchId,
+          kilograms: values.kilosPerBatch,
+          collector: {
+            id: values.farmerId,
+            name: farmer.name,
+          }
+      }, values.hoursWorked).then(newHarvestId => {
+          if(!newHarvestId) return;
+          
+          const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
 
-    addHarvest({
-        date: values.date.toISOString(),
-        batchNumber: values.batchId,
-        kilograms: values.kilosPerBatch,
-        collector: {
-        id: values.farmerId,
-        name: farmer.name,
-        }
-    }, values.hoursWorked).then(newHarvestId => {
-        if(!newHarvestId) return;
-        
-        const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+          addCollectorPaymentLog({
+              harvestId: newHarvestId, 
+              date: values.date.toISOString(),
+              collectorId: values.farmerId,
+              collectorName: farmer.name,
+              kilograms: values.kilosPerBatch,
+              hours: values.hoursWorked,
+              ratePerKg: values.ratePerKg,
+              payment: calculatedPayment,
+          });
 
-        addCollectorPaymentLog({
-            harvestId: newHarvestId, 
-            date: values.date.toISOString(),
-            collectorId: values.farmerId,
-            collectorName: farmer.name,
-            kilograms: values.kilosPerBatch,
-            hours: values.hoursWorked,
-            ratePerKg: values.ratePerKg,
-            payment: calculatedPayment,
-        });
-    });
+          toast({
+              title: '¡Éxito!',
+              description: `Cosecha para el lote ${values.batchId} con ${values.kilosPerBatch}kg registrada.`,
+          });
 
-    toast({
-        title: '¡Éxito!',
-        description: `Cosecha para el lote ${values.batchId} con ${values.kilosPerBatch}kg registrada.`,
-    });
-
-    form.reset({
-        ...form.getValues(), // keep date, rate, hours
-        batchId: '',
-        kilosPerBatch: 0,
-        farmerId: '',
+          form.reset({
+              ...form.getValues(),
+              batchId: '',
+              kilosPerBatch: 0,
+              farmerId: '',
+          });
+      }).catch(error => {
+        // Error is handled inside the context, but we can add a fallback toast here if needed
+      });
     });
   }
   
