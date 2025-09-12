@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useMemo, useTransition, useState } from 'react';
@@ -139,7 +140,7 @@ function ProductionPaymentHistoryComponent() {
                   </Card>
               </div>
 
-               <DialogFooter className="sm:justify-between">
+               <DialogFooter className="flex-col-reverse sm:flex-row sm:justify-between w-full gap-2">
                   {canManage ? (
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
