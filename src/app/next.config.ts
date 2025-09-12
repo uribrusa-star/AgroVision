@@ -1,44 +1,46 @@
 import type { NextConfig } from 'next';
-
-const isProd = process.env.NODE_ENV === 'production';
-
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
-  disable: !isProd, // solo activo en producción
   cacheOnFrontEndNav: true,
   aggressiveFrontEndNavCaching: true,
   reloadOnOnline: true,
   swcMinify: true,
-  workboxOptions: isProd
-    ? {
-        disableDevLogs: true,
-        runtimeCaching: [
-          {
-            // Ignorar Firestore
-            urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
-            handler: 'NetworkOnly',
+  disable: process.env.NODE_ENV === 'development',
+  workboxOptions: {
+    disableDevLogs: true,
+    runtimeCaching: [
+      // Excluir Firestore
+      {
+        urlPattern: ({ url }) =>
+          url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
+        handler: 'NetworkOnly',
+      },
+      // Todo lo demás
+      {
+        urlPattern: /.*/,
+        handler: 'NetworkFirst',
+        options: {
+          cacheName: 'pages-cache',
+          expiration: {
+            maxEntries: 50,
+            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 días
           },
-          {
-            // Cachear todo lo demás
-            urlPattern: /^https?:\/\//i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'pages-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 días
-              },
-            },
-          },
-        ],
-      }
-    : undefined,
-  fallbacks: isProd ? { document: '/offline' } : undefined,
+        },
+      },
+    ],
+  },
+  fallbacks: {
+    document: '/offline',
+  },
 });
 
 const nextConfig: NextConfig = {
-  typescript: { ignoreBuildErrors: true },
-  eslint: { ignoreDuringBuilds: true },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
