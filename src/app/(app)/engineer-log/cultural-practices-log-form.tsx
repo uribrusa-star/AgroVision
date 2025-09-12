@@ -40,18 +40,19 @@ export function CulturalPracticesLogForm() {
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
-      const newLog: Omit<AgronomistLog, 'id'> = {
+      await addAgronomistLog({
         date: new Date().toISOString(),
         type: 'Labor Cultural',
         batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: data.practiceType,
         notes: data.notes,
-      };
-      await addAgronomistLog(newLog);
+      });
+
       toast({
         title: "¡Registro Exitoso!",
         description: `Se ha agregado una nueva labor cultural: ${data.practiceType}.`,
       });
+
       form.reset({
         practiceType: '',
         batchId: 'general',
