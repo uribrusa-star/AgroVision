@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, BrainCircuit, CloudRain, Map as MapIcon, Sparkles } from 'lucide-react';
+import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles } from 'lucide-react';
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
 const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
-  const windyUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&lat=${lat}&lon=${lng}&zoom=8&overlay=radar&product=radar&menu=&message=true&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=default&metricTemp=default&radarRange=-1`;
+  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=8&overlay=wind&metricWind=default&metricTemp=default&product=ecmwf&menu_panels=wind,rain,temp`;
 
   return (
     <iframe
@@ -232,11 +232,10 @@ export default function MapPage() {
          <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <CloudRain className="h-6 w-6 text-primary" />
-                    Mapa del Clima (Radar)
+                    Mapa del Clima
                 </CardTitle>
                 <CardDescription>
-                    Mapa de radar meteorológico proporcionado por Windy.com.
+                    Mapa meteorológico proporcionado por Windy.com.
                 </CardDescription>
             </CardHeader>
             <CardContent>
