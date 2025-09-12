@@ -1,4 +1,5 @@
-import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData } from './types';
+
+import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from './types';
 
 export const users: User[] = [
   { id: 'user-productor', name: 'Productor', email: 'productor@agrovision.co', role: 'Productor', avatar: 'user-1', password: 'productor123' },
@@ -48,35 +49,7 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   economics: {
     objective: "Maximizar rendimiento y calidad para mercado fresco."
   },
-  geoJsonData: `{
-    "type": "FeatureCollection",
-    "features": [
-      {
-        "type": "Feature",
-        "properties": { "L001": "Lote de frutillas 1" },
-        "geometry": {
-          "coordinates": [
-            [
-              [-65.221, -26.831],
-              [-65.220, -26.831],
-              [-65.220, -26.830],
-              [-65.221, -26.830],
-              [-65.221, -26.831]
-            ]
-          ],
-          "type": "Polygon"
-        }
-      },
-      {
-        "type": "Feature",
-        "properties": { "Bomba de Riego": "Punto de control de riego principal" },
-        "geometry": {
-          "coordinates": [-65.2205, -26.8305],
-          "type": "Point"
-        }
-      }
-    ]
-  }`,
+  geoJsonData: `{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"L001":"Lote de frutillas 1"},"geometry":{"coordinates":[[[-65.221,-26.831],[-65.22,-26.831],[-65.22,-26.83],[-65.221,-26.83],[-65.221,-26.831]]],"type":"Polygon"}},{"type":"Feature","properties":{"Bomba de Riego":"Punto de control de riego principal"},"geometry":{"coordinates":[-65.2205,-26.8305],"type":"Point"}}]}`,
 };
 
 
@@ -85,5 +58,9 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
 export const collectors: Collector[] = [];
 export const harvests: Harvest[] = [];
 export const agronomistLogs: AgronomistLog[] = [];
+export const phenologyLogs: PhenologyLog[] = [];
+export const producerLogs: ProducerLog[] = [];
+export const transactions: Transaction[] = [];
 export const batches: Batch[] = [];
 export const collectorPaymentLogs: CollectorPaymentLog[] = [];
+
