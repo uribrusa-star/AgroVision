@@ -221,20 +221,23 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       try {
         const batch = writeBatch(db);
 
+        // Update the main collector document
         const collectorRef = doc(db, 'collectors', updatedCollector.id);
         const { id, ...collectorData } = updatedCollector;
-        batch.set(collectorRef, collectorData, { merge: true });
+        batch.update(collectorRef, collectorData);
 
+        // Find and update all harvests associated with this collector
         const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
         const harvestsSnapshot = await getDocs(harvestsQuery);
-        harvestsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { 'collector.name': updatedCollector.name });
+        harvestsSnapshot.forEach(harvestDoc => {
+            batch.update(harvestDoc.ref, { 'collector.name': updatedCollector.name });
         });
 
+        // Find and update all payment logs associated with this collector
         const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
         const paymentsSnapshot = await getDocs(paymentsQuery);
-        paymentsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { collectorName: updatedCollector.name });
+        paymentsSnapshot.forEach(paymentDoc => {
+            batch.update(paymentDoc.ref, { collectorName: updatedCollector.name });
         });
         
         await batch.commit();
@@ -247,285 +250,229 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    const deleteCollector = (collectorId: string) => {
-        const originalState = { collectors, harvests, collectorPaymentLogs };
-        
-        setCollectors(prev => prev.filter(c => c.id !== collectorId));
-        setHarvests(prev => prev.filter(h => h.collector.id !== collectorId));
-        setCollectorPaymentLogs(prev => prev.filter(p => p.collectorId !== collectorId));
-
-        const runDelete = async () => {
+    const deleteCollector = async (collectorId: string) => {
+        try {
             const batchOp = writeBatch(db);
+            
+            // Delete the collector itself
             batchOp.delete(doc(db, 'collectors', collectorId));
+
+            // Find and delete all harvests by this collector
             const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', collectorId));
-            const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', collectorId));
-            const [harvestsSnapshot, paymentsSnapshot] = await Promise.all([getDocs(harvestsQuery), getDocs(paymentsQuery)]);
+            const harvestsSnapshot = await getDocs(harvestsQuery);
             harvestsSnapshot.forEach(doc => batchOp.delete(doc.ref));
+
+            // Find and delete all payment logs for this collector
+            const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', collectorId));
+            const paymentsSnapshot = await getDocs(paymentsQuery);
             paymentsSnapshot.forEach(doc => batchOp.delete(doc.ref));
+            
             await batchOp.commit();
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to delete collector and associated data:", error);
+            toast({ title: "Error", description: "No se pudo eliminar al recolector y sus datos.", variant: "destructive"});
+            await fetchData();
+        }
+    };
+
+    const addCollector = async (collector: Omit<Collector, 'id'>) => {
+        try {
+            await addDoc(collection(db, 'collectors'), collector);
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to add collector:", error);
+            toast({ title: "Error", description: "No se pudo agregar al recolector.", variant: "destructive"});
+        }
+    };
+
+    const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
+        try {
+            await addDoc(collection(db, 'agronomistLogs'), log);
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to add agronomist log:", error);
+            toast({ title: "Error", description: "No se pudo guardar el registro.", variant: "destructive"});
+        }
+    };
+
+    const editAgronomistLog = async (updatedLog: AgronomistLog) => {
+        try {
+            const logRef = doc(db, 'agronomistLogs', updatedLog.id);
+            const { id, ...data } = updatedLog;
+            await setDoc(logRef, data, { merge: true });
+            await fetchData();
+        } catch (error) {
+             console.error("Failed to edit agronomist log:", error);
+            toast({ title: "Error", description: "No se pudo editar el registro.", variant: "destructive"});
+        }
+    };
+
+    const deleteAgronomistLog = async (logId: string) => {
+        try {
+            await deleteDoc(doc(db, 'agronomistLogs', logId));
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to delete agronomist log:", error);
+            toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
+        }
+    };
+
+    const addPhenologyLog = async (log: Omit<PhenologyLog, 'id'>) => {
+        try {
+            await addDoc(collection(db, 'phenologyLogs'), log);
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to add phenology log:", error);
+            toast({ title: "Error", description: "No se pudo guardar el registro de fenología.", variant: "destructive"});
+        }
+    };
+
+    const editPhenologyLog = async (updatedLog: PhenologyLog) => {
+        try {
+            const logRef = doc(db, 'phenologyLogs', updatedLog.id);
+            const { id, ...data } = updatedLog;
+            await setDoc(logRef, data, { merge: true });
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to edit phenology log:", error);
+            toast({ title: "Error", description: "No se pudo editar el registro.", variant: "destructive"});
+        }
+    };
+
+    const deletePhenologyLog = async (logId: string) => {
+        try {
+            await deleteDoc(doc(db, 'phenologyLogs', logId));
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to delete phenology log:", error);
+            toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
+        }
+    };
+
+    const addBatch = async (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string; preloadedDate: string; status: string }) => {
+        try {
+            const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
+            const batchRef = doc(db, 'batches', batchData.id);
+            await setDoc(batchRef, newBatch);
+            await fetchData();
+        } catch(error) {
+            console.error("Failed to add batch:", error);
+            toast({ title: "Error", description: "No se pudo agregar el lote.", variant: "destructive"});
+        }
+    };
+
+    const deleteBatch = async (batchId: string) => {
+        try {
+            await deleteDoc(doc(db, 'batches', batchId));
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to delete batch:", error);
+            toast({ title: "Error", description: "No se pudo eliminar el lote.", variant: "destructive"});
+        }
+    };
+
+    const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
+        try {
+            await addDoc(collection(db, 'collectorPaymentLogs'), log);
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to add payment log:", error);
+            toast({ title: "Error", description: "No se pudo guardar el pago.", variant: "destructive"});
+        }
+    };
+
+    const deleteCollectorPaymentLog = async (logId: string) => {
+        const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
+        if (!logToDelete) return;
+
+        const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
+        if (!collectorDoc) {
+             toast({ title: "Error", description: "Recolector original no encontrado.", variant: "destructive"});
+             return;
         }
 
-        runDelete().catch(error => {
-            console.error("Failed to delete collector:", error);
-            setCollectors(originalState.collectors);
-            setHarvests(originalState.harvests);
-            setCollectorPaymentLogs(originalState.collectorPaymentLogs);
-            toast({ title: "Error", description: "No se pudo eliminar al recolector.", variant: "destructive"});
-        });
-    };
-
-    const addCollector = (collector: Omit<Collector, 'id'>) => {
-        const tempId = `collector_${Date.now()}`;
-        setCollectors(prev => [...prev, { id: tempId, ...collector }]);
-        
-        addDoc(collection(db, 'collectors'), collector).then(ref => {
-            setCollectors(prev => prev.map(c => c.id === tempId ? { ...c, id: ref.id } : c));
-        }).catch(error => {
-            console.error("Failed to add collector:", error);
-            setCollectors(prev => prev.filter(c => c.id !== tempId));
-            toast({ title: "Error", description: "No se pudo agregar al recolector.", variant: "destructive"});
-        });
-    };
-
-    const addAgronomistLog = (log: Omit<AgronomistLog, 'id'>) => {
-        const tempId = `agrolog_${Date.now()}`;
-        setAgronomistLogs(prev => [{ id: tempId, ...log }, ...prev]);
-
-        addDoc(collection(db, 'agronomistLogs'), log).then(ref => {
-            setAgronomistLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-        }).catch(error => {
-            console.error("Failed to add agronomist log:", error);
-            setAgronomistLogs(prev => prev.filter(l => l.id !== tempId));
-            toast({ title: "Error", description: "No se pudo guardar el registro.", variant: "destructive"});
-        });
-    };
-
-    const editAgronomistLog = (updatedLog: AgronomistLog) => {
-        const originalLogs = agronomistLogs;
-        setAgronomistLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
-
-        const logRef = doc(db, 'agronomistLogs', updatedLog.id);
-        const { id, ...data } = updatedLog;
-        setDoc(logRef, data, { merge: true }).catch(error => {
-            console.error("Failed to edit agronomist log:", error);
-            setAgronomistLogs(originalLogs);
-            toast({ title: "Error", description: "No se pudo editar el registro.", variant: "destructive"});
-        });
-    };
-
-    const deleteAgronomistLog = (logId: string) => {
-        const originalLogs = agronomistLogs;
-        setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
-
-        deleteDoc(doc(db, 'agronomistLogs', logId)).catch(error => {
-            console.error("Failed to delete agronomist log:", error);
-            setAgronomistLogs(originalLogs);
-            toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
-        });
-    };
-
-    const addPhenologyLog = (log: Omit<PhenologyLog, 'id'>) => {
-        const tempId = `phenologylog_${Date.now()}`;
-        setPhenologyLogs(prev => [{ id: tempId, ...log }, ...prev]);
-
-        addDoc(collection(db, 'phenologyLogs'), log).then(ref => {
-            setPhenologyLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-        }).catch(error => {
-            console.error("Failed to add phenology log:", error);
-            setPhenologyLogs(prev => prev.filter(l => l.id !== tempId));
-            toast({ title: "Error", description: "No se pudo guardar el registro de fenología.", variant: "destructive"});
-        });
-    };
-
-    const editPhenologyLog = (updatedLog: PhenologyLog) => {
-        const originalLogs = phenologyLogs;
-        setPhenologyLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
-
-        const logRef = doc(db, 'phenologyLogs', updatedLog.id);
-        const { id, ...data } = updatedLog;
-        setDoc(logRef, data, { merge: true }).catch(error => {
-            console.error("Failed to edit phenology log:", error);
-            setPhenologyLogs(originalLogs);
-            toast({ title: "Error", description: "No se pudo editar el registro.", variant: "destructive"});
-        });
-    };
-
-    const deletePhenologyLog = (logId: string) => {
-        return new Promise<void>((resolve, reject) => {
-            const originalLogs = phenologyLogs;
-            setPhenologyLogs(prev => prev.filter(l => l.id !== logId));
+        try {
+            const batchOp = writeBatch(db);
             
-            deleteDoc(doc(db, 'phenologyLogs', logId))
-            .then(resolve)
-            .catch(error => {
-                console.error("Failed to delete phenology log:", error);
-                setPhenologyLogs(originalLogs);
-                toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
-                reject(error);
-            });
-        });
-    };
-
-    const addBatch = (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string; preloadedDate: string; status: string }) => {
-        const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
-        setBatches(prev => [newBatch, ...prev]);
-
-        const batchRef = doc(db, 'batches', batchData.id);
-        setDoc(batchRef, newBatch).catch(error => {
-            console.error("Failed to add batch:", error);
-            setBatches(prev => prev.filter(b => b.id !== batchData.id));
-            toast({ title: "Error", description: "No se pudo agregar el lote.", variant: "destructive"});
-        });
-    };
-
-    const deleteBatch = (batchId: string) => {
-        const originalBatches = batches;
-        setBatches(prev => prev.filter(b => b.id !== batchId));
-        
-        deleteDoc(doc(db, 'batches', batchId)).catch(error => {
-            console.error("Failed to delete batch:", error);
-            setBatches(originalBatches);
-            toast({ title: "Error", description: "No se pudo eliminar el lote.", variant: "destructive"});
-        });
-    };
-
-    const addCollectorPaymentLog = (log: Omit<CollectorPaymentLog, 'id'>) => {
-        const tempId = `paymentlog_${Date.now()}`;
-        setCollectorPaymentLogs(prev => [{ id: tempId, ...log }, ...prev]);
-        
-        addDoc(collection(db, 'collectorPaymentLogs'), log).then(ref => {
-            setCollectorPaymentLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-        }).catch(error => {
-            console.error("Failed to add payment log:", error);
-            setCollectorPaymentLogs(prev => prev.filter(l => l.id !== tempId));
-            toast({ title: "Error", description: "No se pudo guardar el pago.", variant: "destructive"});
-        });
-    };
-
-    const deleteCollectorPaymentLog = (logId: string) => {
-        return new Promise<void>((resolve, reject) => {
-            const originalState = { collectors, harvests, collectorPaymentLogs };
-            const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
-            if (!logToDelete) {
-                return reject("Log not found");
-            }
-            const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
-
-            // Optimistic update
-            setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
-            setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
-            if (collectorDoc) {
-                const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
-                const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
-                const updatedCollector = {
-                    ...collectorDoc,
-                    totalHarvested: newTotalHarvested,
-                    hoursWorked: newHoursWorked,
-                    productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-                };
-                setCollectors(prev => prev.map(c => c.id === logToDelete.collectorId ? updatedCollector : c));
-            }
-        
-            const runDelete = async () => {
-                const batchOp = writeBatch(db);
-                batchOp.delete(doc(db, 'collectorPaymentLogs', logId));
-                batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
-                if (collectorDoc) {
-                    const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
-                    const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
-                    const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
-                    batchOp.update(collectorRef, {
-                        totalHarvested: newTotalHarvested,
-                        hoursWorked: newHoursWorked,
-                        productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-                    });
-                }
-                await batchOp.commit();
-                resolve();
-            }
-
-            runDelete().catch(error => {
-                console.error("Failed to delete payment log:", error);
-                setCollectors(originalState.collectors);
-                setHarvests(originalState.harvests);
-                setCollectorPaymentLogs(originalState.collectorPaymentLogs);
-                toast({ title: "Error", description: "No se pudo eliminar el registro de pago.", variant: "destructive"});
-                reject(error);
-            });
-        });
-    };
-
-    const updateEstablishmentData = (data: Partial<EstablishmentData>) => {
-        return new Promise<void>((resolve, reject) => {
-            const originalData = establishmentData;
-            setEstablishmentData(prev => prev ? { ...prev, ...data } : null);
+            // Delete payment and harvest
+            batchOp.delete(doc(db, 'collectorPaymentLogs', logId));
+            batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
             
+            // Revert collector stats
+            const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
+            const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
+            const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
+            batchOp.update(collectorRef, {
+                totalHarvested: newTotalHarvested,
+                hoursWorked: newHoursWorked,
+                productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
+            });
+
+            await batchOp.commit();
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to delete payment log:", error);
+            toast({ title: "Error", description: "No se pudo eliminar el registro de pago.", variant: "destructive"});
+            await fetchData();
+        }
+    };
+
+    const updateEstablishmentData = async (data: Partial<EstablishmentData>) => {
+        try {
             const { id, ...updateData } = data;
             const establishmentRef = doc(db, 'establishment', 'main');
-            setDoc(establishmentRef, updateData, { merge: true })
-            .then(resolve)
-            .catch(error => {
-                console.error("Failed to update establishment data:", error);
-                setEstablishmentData(originalData);
-                toast({ title: "Error", description: "No se pudieron actualizar los datos.", variant: "destructive"});
-                reject(error);
-            });
-        });
+            await setDoc(establishmentRef, updateData, { merge: true });
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to update establishment data:", error);
+            toast({ title: "Error", description: "No se pudieron actualizar los datos.", variant: "destructive"});
+        }
     };
 
-    const addProducerLog = (log: Omit<ProducerLog, 'id'>) => {
-        const tempId = `producerlog_${Date.now()}`;
-        setProducerLogs(prev => [{ id: tempId, ...log }, ...prev]);
-        
-        addDoc(collection(db, 'producerLogs'), log).then(ref => {
-            setProducerLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-        }).catch(error => {
+    const addProducerLog = async (log: Omit<ProducerLog, 'id'>) => {
+        try {
+            await addDoc(collection(db, 'producerLogs'), log);
+            await fetchData();
+        } catch (error) {
             console.error("Failed to add producer log:", error);
-            setProducerLogs(prev => prev.filter(l => l.id !== tempId));
             toast({ title: "Error", description: "No se pudo guardar la nota.", variant: "destructive"});
-        });
+        }
     };
 
-    const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-        const tempId = `transaction_${Date.now()}`;
-        setTransactions(prev => [{ id: tempId, ...transaction }, ...prev]);
-        
-        addDoc(collection(db, 'transactions'), transaction).then(ref => {
-            setTransactions(prev => prev.map(t => t.id === tempId ? { ...t, id: ref.id } : t));
-        }).catch(error => {
+    const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+        try {
+            await addDoc(collection(db, 'transactions'), transaction);
+            await fetchData();
+        } catch (error) {
             console.error("Failed to add transaction:", error);
-            setTransactions(prev => prev.filter(t => t.id !== tempId));
             toast({ title: "Error", description: "No se pudo guardar la transacción.", variant: "destructive"});
-        });
+        }
     };
 
-    const deleteTransaction = (transactionId: string) => {
-        return new Promise<void>((resolve, reject) => {
-            const originalTransactions = transactions;
-            setTransactions(prev => prev.filter(t => t.id !== transactionId));
-            
-            deleteDoc(doc(db, 'transactions', transactionId))
-            .then(resolve)
-            .catch(error => {
-                console.error("Failed to delete transaction:", error);
-                setTransactions(originalTransactions);
-                toast({ title: "Error", description: "No se pudo eliminar la transacción.", variant: "destructive"});
-                reject(error);
-            });
-        });
+    const deleteTransaction = async (transactionId: string) => {
+        try {
+            await deleteDoc(doc(db, 'transactions', transactionId));
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to delete transaction:", error);
+            toast({ title: "Error", description: "No se pudo eliminar la transacción.", variant: "destructive"});
+        }
     };
 
     const updateUserPassword = async (userId: string, newPassword: string) => {
-        const userRef = doc(db, 'users', userId);
-        await setDoc(userRef, { password: newPassword }, { merge: true });
-        
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
-        if (currentUser?.id === userId) {
-            setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null, true); // Assuming remember me
+        try {
+            const userRef = doc(db, 'users', userId);
+            await setDoc(userRef, { password: newPassword }, { merge: true });
+            await fetchData();
+        } catch (error) {
+            console.error("Failed to update password:", error);
+            toast({ title: "Error", description: "No se pudo actualizar la contraseña.", variant: "destructive"});
+            throw error; // Re-throw to be caught in the component
         }
     };
 
-    const value = {
+    const value: AppData = {
         loading,
         currentUser,
         users,
