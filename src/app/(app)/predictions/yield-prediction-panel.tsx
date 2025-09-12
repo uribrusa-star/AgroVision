@@ -191,10 +191,10 @@ export function YieldPredictionPanel() {
                             </div>
                         </div>
                          {selectedBatchStats.latestLog && (
-                            <div className="flex items-center gap-3 md:col-span-3">
-                                <History className="h-6 w-6 text-primary" />
+                            <div className="flex items-start gap-3 md:col-span-3">
+                                <History className="h-6 w-6 text-primary flex-shrink-0" />
                                 <div>
-                                    <p className="font-semibold truncate" title={selectedBatchStats.latestLog.description}>{selectedBatchStats.latestLog.description}</p>
+                                    <p className="font-semibold" title={selectedBatchStats.latestLog.description}>{selectedBatchStats.latestLog.description}</p>
                                     <p className="text-muted-foreground">Última Actividad ({selectedBatchStats.latestLog.date})</p>
                                 </div>
                             </div>
