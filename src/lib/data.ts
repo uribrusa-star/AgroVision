@@ -1,4 +1,5 @@
-import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData } from './types';
+
+import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from './types';
 
 export const users: User[] = [
   { id: 'user-productor', name: 'Productor', email: 'productor@agrovision.co', role: 'Productor', avatar: 'user-1', password: 'productor123' },
@@ -10,9 +11,9 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   producer: "Finca Las Fresas",
   technicalManager: "Ing. Agr. Juan Pérez",
   location: {
-    coordinates: "-26.83, -65.22",
-    locality: "Lules",
-    province: "Tucumán"
+    coordinates: "-31.9533630, -60.9346299",
+    locality: "Coronda",
+    province: "Santa Fe"
   },
   area: {
     total: 10, // ha
@@ -48,7 +49,7 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   economics: {
     objective: "Maximizar rendimiento y calidad para mercado fresco."
   },
-  geoJsonData: "",
+  geoJsonData: `{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"L001":"Lote de frutillas 1"},"geometry":{"coordinates":[[[-60.935,-31.954],[-60.933,-31.954],[-60.933,-31.952],[-60.935,-31.952],[-60.935,-31.954]]],"type":"Polygon"}},{"type":"Feature","properties":{"Bomba de Riego":"Punto de control de riego principal"},"geometry":{"coordinates":[-60.9346299,-31.953363],"type":"Point"}}]}`,
 };
 
 
@@ -57,5 +58,11 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
 export const collectors: Collector[] = [];
 export const harvests: Harvest[] = [];
 export const agronomistLogs: AgronomistLog[] = [];
+export const phenologyLogs: PhenologyLog[] = [];
+export const producerLogs: ProducerLog[] = [];
+export const transactions: Transaction[] = [];
 export const batches: Batch[] = [];
 export const collectorPaymentLogs: CollectorPaymentLog[] = [];
+
+
+

@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
                 <Link href="/dashboard" className="flex items-center gap-2">
-                  <Image src="/logo.png" alt="AgroVision Logo" width={32} height={32} />
+                  <AgroVisionLogo className="w-8 h-8" />
                   <span className="text-xl font-bold text-sidebar-foreground">AgroVision</span>
                 </Link>
               </div>
@@ -135,7 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <span className="sr-only">Toggle Menu</span>
                 </SidebarTrigger>
                 <div className="flex items-center gap-2">
-                  <Image src="/logo.png" alt="AgroVision Logo" width={24} height={24} />
+                  <AgroVisionLogo className="w-6 h-6" />
                   <span className="text-lg font-bold">AgroVision</span>
                 </div>
             </header>

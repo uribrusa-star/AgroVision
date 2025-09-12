@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useContext, useState, useTransition, useMemo } from 'react';
@@ -11,7 +10,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
 import { AppDataContext } from '@/context/app-data-context';
 import { predictYield } from '@/ai/flows/predict-yield';
 import { useToast } from '@/hooks/use-toast';
@@ -21,7 +19,6 @@ import type { AgronomistLog, PhenologyLog } from '@/lib/types';
 
 const PredictionRequestSchema = z.object({
   batchId: z.string().min(1, "Debe seleccionar un lote."),
-  weatherForecast: z.string().min(5, "El pronóstico es requerido."),
 });
 
 type PredictionRequestValues = z.infer<typeof PredictionRequestSchema>;
@@ -32,7 +29,7 @@ type PredictionResult = {
 }
 
 export function YieldPredictionPanel() {
-  const { batches, harvests, agronomistLogs, phenologyLogs, loading: dataLoading } = useContext(AppDataContext);
+  const { batches, harvests, agronomistLogs, phenologyLogs, loading: dataLoading, establishmentData } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
@@ -71,7 +68,6 @@ export function YieldPredictionPanel() {
     resolver: zodResolver(PredictionRequestSchema),
     defaultValues: {
       batchId: '',
-      weatherForecast: 'Soleado con temperaturas en ligero aumento. Sin lluvias previstas.',
     },
   });
 
@@ -82,9 +78,21 @@ export function YieldPredictionPanel() {
   }
 
   const onSubmit = (values: PredictionRequestValues) => {
+    if (!establishmentData) {
+        toast({ title: "Error", description: "No se pudieron cargar los datos del establecimiento para obtener la ubicación.", variant: "destructive"});
+        return;
+    }
+
     setPredictionResult(null);
     startTransition(async () => {
       try {
+        const [lat, lng] = establishmentData.location.coordinates.split(',').map(s => parseFloat(s.trim()));
+        
+        if (isNaN(lat) || isNaN(lng)) {
+            toast({ title: "Error", description: "Las coordenadas del establecimiento no son válidas.", variant: "destructive"});
+            return;
+        }
+
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -104,11 +112,12 @@ export function YieldPredictionPanel() {
 
         const result = await predictYield({
           batchId: values.batchId,
+          latitude: lat,
+          longitude: lng,
           recentHarvests: JSON.stringify(recentHarvests),
           agronomistLogs: JSON.stringify(recentAgronomistLogs),
           phenologyLogs: JSON.stringify(recentPhenologyLogs),
           environmentalLogs: JSON.stringify(recentEnvironmentalLogs),
-          weatherForecast: values.weatherForecast,
         });
 
         setPredictionResult(result);
@@ -137,7 +146,7 @@ export function YieldPredictionPanel() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Generar Nueva Predicción</CardTitle>
-        <CardDescription>Seleccione un lote para ver sus estadísticas y obtener una proyección de rendimiento.</CardDescription>
+        <CardDescription>Seleccione un lote para que la IA busque el clima y genere una proyección de rendimiento.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -202,20 +211,6 @@ export function YieldPredictionPanel() {
                     </CardContent>
                 </Card>
             )}
-
-            <FormField
-              control={form.control}
-              name="weatherForecast"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Pronóstico del Tiempo (Próximos 7 días)</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="Ej: Soleado, temperaturas en aumento" disabled={isPending || dataLoading || !selectedBatchId} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </CardContent>
           <CardFooter className="flex-col items-start gap-6">
             <Button type="submit" disabled={isPending || dataLoading || !selectedBatchId}>
