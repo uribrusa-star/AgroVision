@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { AppDataContext } from '@/context/app-data-context';
-import type { ProducerLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -20,7 +19,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function NotesForm() {
-  const { addProducerLog, currentUser } = React.useContext(AppDataContext);
+  const { addProducerLog } = React.useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -31,15 +30,16 @@ export function NotesForm() {
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
-      const newLog: Omit<ProducerLog, 'id'> = {
+      await addProducerLog({
         date: new Date().toISOString(),
         notes: data.notes,
-      };
-      await addProducerLog(newLog);
+      });
+
       toast({
         title: "¡Nota Guardada!",
         description: "Su observación ha sido registrada en la bitácora.",
       });
+
       form.reset();
     });
   };
