@@ -5,11 +5,25 @@ import dynamic from "next/dynamic";
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Map, CloudRain } from 'lucide-react';
+import { Map as MapIcon, CloudRain } from 'lucide-react';
 import { AppDataContext } from "@/context/app-data-context";
 
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
-const WeatherMapComponent = dynamic(() => import('@/components/weather-map'), { ssr: false });
+
+const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
+  const windyUrl = `https://embed.windy.com/embed.html?type=map&location=coordinates&lat=${lat}&lon=${lng}&zoom=8&overlay=radar&product=radar&menu=&message=true&calendar=now&pressure=&type=map&location=coordinates&detail=true&metricWind=default&metricTemp=default&radarRange=-1`;
+
+  return (
+    <iframe
+      width="100%"
+      height="100%"
+      src={windyUrl}
+      frameBorder="0"
+      title="Windy Map"
+    ></iframe>
+  );
+};
+
 
 export default function MapPage() {
   const { establishmentData } = useContext(AppDataContext);
@@ -32,8 +46,6 @@ export default function MapPage() {
       }
   }, [establishmentData?.geoJsonData]);
 
-  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
-
   return (
     <>
       <PageHeader
@@ -44,7 +56,7 @@ export default function MapPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <Map className="h-6 w-6 text-primary" />
+                    <MapIcon className="h-6 w-6 text-primary" />
                     Mapa Interactivo de Lotes
                 </CardTitle>
             </CardHeader>
@@ -61,12 +73,12 @@ export default function MapPage() {
                     Mapa del Clima (Radar)
                 </CardTitle>
                 <CardDescription>
-                    Use el botón para activar o desactivar la capa de precipitación.
+                    Mapa de radar meteorológico proporcionado por Windy.com.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
-                   <WeatherMapComponent center={mapCenter} mapboxAccessToken={mapboxToken} />
+                   <WindyMapEmbed lat={mapCenter.lat} lng={mapCenter.lng} />
                 </div>
             </CardContent>
         </Card>
