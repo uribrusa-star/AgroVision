@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -23,23 +24,23 @@ export const AppDataContext = React.createContext<AppData>({
   producerLogs: [],
   transactions: [],
   addHarvest: async () => { throw new Error('Not implemented') },
-  editCollector: () => { throw new Error('Not implemented') },
-  deleteCollector: () => { throw new Error('Not implemented') },
-  addAgronomistLog: () => { throw new Error('Not implemented') },
-  editAgronomistLog: () => { throw new Error('Not implemented') },
-  deleteAgronomistLog: () => { throw new Error('Not implemented') },
-  addPhenologyLog: () => { throw new Error('Not implemented') },
-  editPhenologyLog: () => { throw new Error('Not implemented') },
-  deletePhenologyLog: () => { throw new Error('Not implemented') },
-  addCollector: () => { throw new Error('Not implemented') },
-  addBatch: () => { throw new Error('Not implemented') },
-  deleteBatch: () => { throw new Error('Not implemented') },
-  addCollectorPaymentLog: () => { throw new Error('Not implemented') },
-  deleteCollectorPaymentLog: () => { throw new Error('Not implemented') },
-  updateEstablishmentData: () => { throw new Error('Not implemented') },
-  addProducerLog: () => { throw new Error('Not implemented') },
-  addTransaction: () => { throw new Error('Not implemented') },
-  deleteTransaction: () => { throw new Error('Not implemented') },
+  editCollector: async () => { throw new Error('Not implemented') },
+  deleteCollector: async () => { throw new Error('Not implemented') },
+  addAgronomistLog: async () => { throw new Error('Not implemented') },
+  editAgronomistLog: async () => { throw new Error('Not implemented') },
+  deleteAgronomistLog: async () => { throw new Error('Not implemented') },
+  addPhenologyLog: async () => { throw new Error('Not implemented') },
+  editPhenologyLog: async () => { throw new Error('Not implemented') },
+  deletePhenologyLog: async () => { throw new Error('Not implemented') },
+  addCollector: async () => { throw new Error('Not implemented') },
+  addBatch: async () => { throw new Error('Not implemented') },
+  deleteBatch: async () => { throw new Error('Not implemented') },
+  addCollectorPaymentLog: async () => { throw new Error('Not implemented') },
+  deleteCollectorPaymentLog: async () => { throw new Error('Not implemented') },
+  updateEstablishmentData: async () => { throw new Error('Not implemented') },
+  addProducerLog: async () => { throw new Error('Not implemented') },
+  addTransaction: async () => { throw new Error('Not implemented') },
+  deleteTransaction: async () => { throw new Error('Not implemented') },
   updateUserPassword: async () => { throw new Error('Not implemented') },
   isClient: false,
 });
@@ -221,17 +222,48 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const editCollector = (updatedCollector: Collector) => {
-        const originalCollectors = collectors;
+    const editCollector = async (updatedCollector: Collector) => {
+        const originalCollectors = [...collectors];
+        const originalHarvests = [...harvests];
+        const originalPaymentLogs = [...collectorPaymentLogs];
+
+        // Optimistic UI updates
         setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
-        
-        const collectorRef = doc(db, 'collectors', updatedCollector.id);
-        const { id, ...data } = updatedCollector;
-        setDoc(collectorRef, data, { merge: true }).catch(error => {
-            console.error("Failed to edit collector:", error);
+        setHarvests(prev => prev.map(h => h.collector.id === updatedCollector.id ? { ...h, collector: { ...h.collector, name: updatedCollector.name } } : h));
+        setCollectorPaymentLogs(prev => prev.map(p => p.collectorId === updatedCollector.id ? { ...p, collectorName: updatedCollector.name } : p));
+
+        try {
+            const batch = writeBatch(db);
+
+            // 1. Update the collector document
+            const collectorRef = doc(db, 'collectors', updatedCollector.id);
+            const { id, ...collectorData } = updatedCollector;
+            batch.set(collectorRef, collectorData, { merge: true });
+
+            // 2. Find and update related harvests
+            const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
+            const harvestsSnapshot = await getDocs(harvestsQuery);
+            harvestsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { 'collector.name': updatedCollector.name });
+            });
+
+            // 3. Find and update related payment logs
+            const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
+            const paymentsSnapshot = await getDocs(paymentsQuery);
+            paymentsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { collectorName: updatedCollector.name });
+            });
+
+            // 4. Commit all changes
+            await batch.commit();
+        } catch (error) {
+            console.error("Failed to edit collector and related documents:", error);
+            // Rollback optimistic updates
             setCollectors(originalCollectors);
-            toast({ title: "Error", description: "No se pudo editar el recolector.", variant: "destructive"});
-        });
+            setHarvests(originalHarvests);
+            setCollectorPaymentLogs(originalPaymentLogs);
+            toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
+        }
     };
 
     const deleteCollector = (collectorId: string) => {
@@ -338,13 +370,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deletePhenologyLog = (logId: string) => {
-        const originalLogs = phenologyLogs;
-        setPhenologyLogs(prev => prev.filter(l => l.id !== logId));
-        
-        deleteDoc(doc(db, 'phenologyLogs', logId)).catch(error => {
-            console.error("Failed to delete phenology log:", error);
-            setPhenologyLogs(originalLogs);
-            toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
+        return new Promise<void>((resolve, reject) => {
+            const originalLogs = phenologyLogs;
+            setPhenologyLogs(prev => prev.filter(l => l.id !== logId));
+            
+            deleteDoc(doc(db, 'phenologyLogs', logId))
+            .then(resolve)
+            .catch(error => {
+                console.error("Failed to delete phenology log:", error);
+                setPhenologyLogs(originalLogs);
+                toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
+                reject(error);
+            });
         });
     };
 
@@ -385,62 +422,73 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteCollectorPaymentLog = (logId: string) => {
-        const originalState = { collectors, harvests, collectorPaymentLogs };
-        const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
-        if (!logToDelete) return;
-        const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
+        return new Promise<void>((resolve, reject) => {
+            const originalState = { collectors, harvests, collectorPaymentLogs };
+            const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
+            if (!logToDelete) {
+                return reject("Log not found");
+            }
+            const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
 
-        // Optimistic update
-        setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
-        setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
-        if (collectorDoc) {
-            const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
-            const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
-            const updatedCollector = {
-                ...collectorDoc,
-                totalHarvested: newTotalHarvested,
-                hoursWorked: newHoursWorked,
-                productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-            };
-            setCollectors(prev => prev.map(c => c.id === logToDelete.collectorId ? updatedCollector : c));
-        }
-      
-        const runDelete = async () => {
-            const batchOp = writeBatch(db);
-            batchOp.delete(doc(db, 'collectorPaymentLogs', logId));
-            batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
+            // Optimistic update
+            setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
+            setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
             if (collectorDoc) {
-                const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
                 const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
                 const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
-                batchOp.update(collectorRef, {
+                const updatedCollector = {
+                    ...collectorDoc,
                     totalHarvested: newTotalHarvested,
                     hoursWorked: newHoursWorked,
                     productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
-                });
+                };
+                setCollectors(prev => prev.map(c => c.id === logToDelete.collectorId ? updatedCollector : c));
             }
-            await batchOp.commit();
-        }
+        
+            const runDelete = async () => {
+                const batchOp = writeBatch(db);
+                batchOp.delete(doc(db, 'collectorPaymentLogs', logId));
+                batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
+                if (collectorDoc) {
+                    const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
+                    const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
+                    const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
+                    batchOp.update(collectorRef, {
+                        totalHarvested: newTotalHarvested,
+                        hoursWorked: newHoursWorked,
+                        productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
+                    });
+                }
+                await batchOp.commit();
+                resolve();
+            }
 
-        runDelete().catch(error => {
-            console.error("Failed to delete payment log:", error);
-            setCollectors(originalState.collectors);
-            setHarvests(originalState.harvests);
-            setCollectorPaymentLogs(originalState.collectorPaymentLogs);
-            toast({ title: "Error", description: "No se pudo eliminar el registro de pago.", variant: "destructive"});
+            runDelete().catch(error => {
+                console.error("Failed to delete payment log:", error);
+                setCollectors(originalState.collectors);
+                setHarvests(originalState.harvests);
+                setCollectorPaymentLogs(originalState.collectorPaymentLogs);
+                toast({ title: "Error", description: "No se pudo eliminar el registro de pago.", variant: "destructive"});
+                reject(error);
+            });
         });
     };
 
     const updateEstablishmentData = (data: Partial<EstablishmentData>) => {
-        const originalData = establishmentData;
-        setEstablishmentData(prev => prev ? { ...prev, ...data } : null);
-        
-        const { id, ...updateData } = data;
-        const establishmentRef = doc(db, 'establishment', 'main');
-        setDoc(establishmentRef, updateData, { merge: true }).catch(error => {
-            console.error("Failed to update establishment data:", error);
-            setEstablishmentData(originalData);
-            toast({ title: "Error", description: "No se pudieron actualizar los datos.", variant: "destructive"});
+        return new Promise<void>((resolve, reject) => {
+            const originalData = establishmentData;
+            setEstablishmentData(prev => prev ? { ...prev, ...data } : null);
+            
+            const { id, ...updateData } = data;
+            const establishmentRef = doc(db, 'establishment', 'main');
+            setDoc(establishmentRef, updateData, { merge: true })
+            .then(resolve)
+            .catch(error => {
+                console.error("Failed to update establishment data:", error);
+                setEstablishmentData(originalData);
+                toast({ title: "Error", description: "No se pudieron actualizar los datos.", variant: "destructive"});
+                reject(error);
+            });
         });
     };
 
@@ -471,13 +519,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteTransaction = (transactionId: string) => {
-        const originalTransactions = transactions;
-        setTransactions(prev => prev.filter(t => t.id !== transactionId));
-        
-        deleteDoc(doc(db, 'transactions', transactionId)).catch(error => {
-            console.error("Failed to delete transaction:", error);
-            setTransactions(originalTransactions);
-            toast({ title: "Error", description: "No se pudo eliminar la transacción.", variant: "destructive"});
+        return new Promise<void>((resolve, reject) => {
+            const originalTransactions = transactions;
+            setTransactions(prev => prev.filter(t => t.id !== transactionId));
+            
+            deleteDoc(doc(db, 'transactions', transactionId))
+            .then(resolve)
+            .catch(error => {
+                console.error("Failed to delete transaction:", error);
+                setTransactions(originalTransactions);
+                toast({ title: "Error", description: "No se pudo eliminar la transacción.", variant: "destructive"});
+                reject(error);
+            });
         });
     };
 
