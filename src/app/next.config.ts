@@ -2,42 +2,30 @@
 import type {NextConfig} from 'next';
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  swcMinify: true,
+  register: true,
+  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  workboxOptions: {
-    disableDevLogs: true,
-    runtimeCaching: [
-      {
-        urlPattern: /.*/,
-        handler: async (options: any) => {
-          const { request } = options;
-          const url = new URL(request.url);
-
-          if (url.hostname === 'firestore.googleapis.com') {
-            // Para las peticiones a Firestore, usar siempre la red.
-            const { NetworkOnly } = require('workbox-strategies');
-            const networkOnly = new NetworkOnly();
-            return await networkOnly.handle(options);
-          }
-
-          // Para todas las demás peticiones, usar NetworkFirst.
-          const { NetworkFirst } = require('workbox-strategies');
-          const networkFirst = new NetworkFirst({
-            cacheName: 'pages-cache',
-            plugins: [
-              {
-                cacheWillUpdate: async ({ response: e }) => e.ok || e.type === "opaque" ? e : null,
-              },
-            ],
-          });
-          return await networkFirst.handle(options);
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /^https?.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
+        // Excluir explícitamente las solicitudes a la API de Firestore de esta regla
+        exclude: [
+          ({url}: {url: URL}) => url.hostname === 'firestore.googleapis.com',
+        ]
       },
-    ],
-  },
+    },
+  ],
   fallbacks: {
     document: '/offline',
   }
