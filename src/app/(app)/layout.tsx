@@ -191,10 +191,14 @@ function UserMenu() {
     const selectedUser = users.find(u => u.id === userId);
     if(selectedUser) {
 <<<<<<< HEAD
+<<<<<<< HEAD
         setCurrentUser(selectedUser, true);
 =======
         setCurrentUser(selectedUser);
 >>>>>>> fdefadc509101384e27ee8ee8e7d6d718229ce3b
+=======
+        setCurrentUser(selectedUser);
+>>>>>>> 7623fed (Muestrame el codigo donde aparece icono.png)
     }
   }
 
