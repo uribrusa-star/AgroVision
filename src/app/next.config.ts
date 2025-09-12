@@ -11,22 +11,29 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     disableDevLogs: true,
     runtimeCaching: [
       {
-        urlPattern: ({url}) => url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
-        handler: 'NetworkOnly',
-      },
-      {
         urlPattern: /.*/,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'pages-cache',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-          },
-          // Excluir las solicitudes a la API de Firestore
-          exclude: [
-            ({url}) => url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
-          ]
+        handler: async (options: any) => {
+          const { request } = options;
+          const url = new URL(request.url);
+
+          if (url.hostname === 'firestore.googleapis.com') {
+            // Para las peticiones a Firestore, usar siempre la red.
+            const { NetworkOnly } = require('workbox-strategies');
+            const networkOnly = new NetworkOnly();
+            return await networkOnly.handle(options);
+          }
+
+          // Para todas las demás peticiones, usar NetworkFirst.
+          const { NetworkFirst } = require('workbox-strategies');
+          const networkFirst = new NetworkFirst({
+            cacheName: 'pages-cache',
+            plugins: [
+              {
+                cacheWillUpdate: async ({ response: e }) => e.ok || e.type === "opaque" ? e : null,
+              },
+            ],
+          });
+          return await networkFirst.handle(options);
         },
       },
     ],
