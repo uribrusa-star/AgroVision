@@ -22,12 +22,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
-const WindyMapEmbed = ({ lat, lng, key }: { lat: number, lng: number, key: number }) => {
+const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
   const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=8&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
 
   return (
     <iframe
-      key={key}
       width="100%"
       height="100%"
       src={windyUrl}
@@ -237,7 +236,7 @@ export default function MapPage() {
   }, [mapCenter]);
 
   const resetWindyMap = () => {
-    setWindyCoords({ lat: -31.9533630, lng: -60.9346299, key: Date.now() });
+    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng, key: Date.now() });
   };
 
 
