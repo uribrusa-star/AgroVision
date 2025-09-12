@@ -1,4 +1,3 @@
-
 'use client';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import * as React from 'react';
@@ -7,7 +6,6 @@ import { Button } from './ui/button';
 import { CloudRain } from 'lucide-react';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
 type WeatherMapProps = {
     center: {
@@ -17,16 +15,18 @@ type WeatherMapProps = {
 };
 
 const precipitationSource: any = {
-    id: 'owm-precipitation',
+    id: 'rainviewer',
     type: 'raster',
-    tiles: [`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`],
+    tiles: [
+        'https://tilecache.rainviewer.com/v2/radar/nowcast/{z}/{x}/{y}/256/1_1.png'
+    ],
     tileSize: 256,
 };
 
 const precipitationLayer: LayerProps = {
     id: 'precipitation_layer',
     type: 'raster',
-    source: 'owm-precipitation',
+    source: 'rainviewer',
     paint: { 'raster-opacity': 0.7 },
 };
 
