@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useContext, useMemo, useState, useTransition } from 'react';
+import { useEffect, useContext, useMemo, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -68,59 +68,54 @@ export function ProductionForm() {
       return;
     }
 
-    try {
-      const newHarvestData: Omit<Harvest, 'id'> = {
-        date: values.date.toISOString(),
-        batchNumber: values.batchId,
-        kilograms: values.kilosPerBatch,
-        collector: {
-          id: values.farmerId,
-          name: farmer.name,
-        }
-      };
-      
-      const newHarvestId = await addHarvest(newHarvestData, values.hoursWorked);
-      if(!newHarvestId) {
-        throw new Error("Failed to get new harvest ID");
+    // The addHarvest and addCollectorPaymentLog now perform optimistic updates,
+    // so we don't need to wrap them in a complex try/catch for UI purposes here.
+    // The context will handle potential network errors.
+
+    const newHarvestData: Omit<Harvest, 'id'> = {
+      date: values.date.toISOString(),
+      batchNumber: values.batchId,
+      kilograms: values.kilosPerBatch,
+      collector: {
+        id: values.farmerId,
+        name: farmer.name,
       }
-      
-      const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
-
-      const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
-        harvestId: newHarvestId, 
-        date: values.date.toISOString(),
-        collectorId: values.farmerId,
-        collectorName: farmer.name,
-        kilograms: values.kilosPerBatch,
-        hours: values.hoursWorked,
-        ratePerKg: values.ratePerKg,
-        payment: calculatedPayment,
-      };
-
-      await addCollectorPaymentLog(newPaymentLogData);
-
-      toast({
-        title: '¡Éxito!',
-        description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
-      });
-
-      form.reset({
-        date: new Date(),
-        batchId: '',
-        kilosPerBatch: 0,
-        farmerId: '',
-        ratePerKg: 0.45,
-        hoursWorked: 8,
-      });
-
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: 'Error',
-        description: 'Ocurrió un error inesperado al guardar los datos.',
-        variant: 'destructive',
-      });
+    };
+    
+    const newHarvestId = await addHarvest(newHarvestData, values.hoursWorked);
+    if(!newHarvestId) {
+      // Error is handled and toasted in the context, so we just stop execution.
+      return;
     }
+    
+    const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+
+    const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
+      harvestId: newHarvestId, 
+      date: values.date.toISOString(),
+      collectorId: values.farmerId,
+      collectorName: farmer.name,
+      kilograms: values.kilosPerBatch,
+      hours: values.hoursWorked,
+      ratePerKg: values.ratePerKg,
+      payment: calculatedPayment,
+    };
+
+    await addCollectorPaymentLog(newPaymentLogData);
+
+    toast({
+      title: '¡Éxito!',
+      description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
+    });
+
+    form.reset({
+      date: new Date(),
+      batchId: '',
+      kilosPerBatch: 0,
+      farmerId: '',
+      ratePerKg: 0.45,
+      hoursWorked: 8,
+    });
   }
   
   const onSubmit = (values: ProductionFormValues) => {
@@ -150,6 +145,7 @@ export function ProductionForm() {
 
         } catch (aiError) {
              console.error("AI validation failed, saving data directly.", aiError);
+             // In case of AI error (e.g., offline), we still want to save.
              await saveHarvestData(values);
         }
     });
@@ -157,10 +153,10 @@ export function ProductionForm() {
 
   const handleConfirmValidation = () => {
     if (validationAlert.data) {
-        startTransition(async () => {
-            await saveHarvestData(validationAlert.data!);
-            setValidationAlert({ open: false, reason: '', data: null });
-        });
+        // No need for a separate transition here as onSubmit already handles it.
+        // We just call saveHarvestData directly.
+        saveHarvestData(validationAlert.data!);
+        setValidationAlert({ open: false, reason: '', data: null });
     }
   };
 
