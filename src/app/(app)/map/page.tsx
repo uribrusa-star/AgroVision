@@ -1,12 +1,23 @@
 
 'use client';
-import React, { useContext, useMemo } from "react";
+import React, { useContext, useMemo, useState, useTransition } from "react";
 import dynamic from "next/dynamic";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { AlertCircle, BrainCircuit, CloudRain, Map as MapIcon, Sparkles } from 'lucide-react';
 
 import { PageHeader } from "@/components/page-header";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { Map as MapIcon, CloudRain } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { AppDataContext } from "@/context/app-data-context";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { generateWeatherAlerts } from "@/ai/flows/generate-weather-alerts";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
@@ -23,6 +34,133 @@ const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
     ></iframe>
   );
 };
+
+const AlertSchema = z.object({
+    risk: z.string(),
+    recommendation: z.string(),
+    urgency: z.enum(['Alta', 'Media', 'Baja']),
+});
+
+type Alert = z.infer<typeof AlertSchema>;
+
+const WeatherAlertsSchema = z.object({
+  forecast: z.string().min(10, "La descripción del pronóstico es muy corta."),
+});
+
+const AIAlertsPanel = () => {
+    const { phenologyLogs } = useContext(AppDataContext);
+    const [isPending, startTransition] = useTransition();
+    const [alerts, setAlerts] = useState<Alert[] | null>(null);
+    const { toast } = useToast();
+
+    const form = useForm<z.infer<typeof WeatherAlertsSchema>>({
+        resolver: zodResolver(WeatherAlertsSchema),
+        defaultValues: {
+            forecast: "Se esperan lluvias y tormentas aisladas para el fin de semana.",
+        },
+    });
+
+    const onSubmit = (values: z.infer<typeof WeatherAlertsSchema>) => {
+        setAlerts(null);
+        startTransition(async () => {
+             try {
+                const result = await generateWeatherAlerts({
+                    weatherForecast: values.forecast,
+                    phenologyLogs: JSON.stringify(phenologyLogs.slice(0, 10)),
+                });
+                if (result.alerts && result.alerts.length > 0) {
+                    setAlerts(result.alerts);
+                } else {
+                    toast({ title: "Análisis Completo", description: "La IA no identificó riesgos mayores con el pronóstico provisto." });
+                }
+             } catch (error) {
+                 console.error("Error generating alerts:", error);
+                 toast({
+                    title: "Error de IA",
+                    description: "No se pudieron generar las alertas. Intente de nuevo.",
+                    variant: "destructive",
+                 });
+             }
+        });
+    }
+
+    const getUrgencyBadgeVariant = (urgency: Alert['urgency']) => {
+        switch (urgency) {
+            case 'Alta': return 'destructive';
+            case 'Media': return 'secondary';
+            case 'Baja': return 'outline';
+            default: return 'default';
+        }
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-6 w-6 text-primary" />
+                    Alertas Climáticas con IA
+                </CardTitle>
+                <CardDescription>
+                    Ingrese un pronóstico del tiempo para generar recomendaciones agronómicas.
+                </CardDescription>
+            </CardHeader>
+             <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)}>
+                    <CardContent className="space-y-4">
+                        <FormField
+                            control={form.control}
+                            name="forecast"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Descripción del Pronóstico</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="Ej. Ola de calor, riesgo de heladas..." disabled={isPending} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </CardContent>
+                    <CardFooter className="flex-col items-start gap-4">
+                        <Button type="submit" disabled={isPending}>
+                            {isPending ? (
+                                <>
+                                    <BrainCircuit className="mr-2 h-4 w-4 animate-spin" />
+                                    Analizando...
+                                </>
+                            ) : "Generar Alertas"}
+                        </Button>
+
+                         {isPending && (
+                            <div className="w-full space-y-4">
+                               <Skeleton className="h-10 w-full" />
+                               <Skeleton className="h-10 w-full" />
+                            </div>
+                        )}
+
+                        {alerts && (
+                            <div className="w-full space-y-4">
+                                <h3 className="font-semibold">Resultados del Análisis:</h3>
+                                {alerts.map((alert, index) => (
+                                    <Alert key={index} variant={alert.urgency === 'Alta' ? 'destructive' : 'default'}>
+                                        <AlertCircle className="h-4 w-4" />
+                                        <AlertTitle className="flex justify-between items-center">
+                                            {alert.risk}
+                                            <Badge variant={getUrgencyBadgeVariant(alert.urgency)}>{alert.urgency}</Badge>
+                                        </AlertTitle>
+                                        <AlertDescription>
+                                            {alert.recommendation}
+                                        </AlertDescription>
+                                    </Alert>
+                                ))}
+                            </div>
+                        )}
+                    </CardFooter>
+                </form>
+            </Form>
+        </Card>
+    )
+}
 
 
 export default function MapPage() {
@@ -44,9 +182,8 @@ export default function MapPage() {
           const [lng, lat] = firstFeature.geometry.coordinates;
           return { lat, lng };
         }
-        if (firstFeature.geometry.type === 'Polygon') {
-          // Calculate centroid of the first polygon
-          const coords = firstFeature.geometry.coordinates[0];
+        if (firstFeature.geometry.type === 'Polygon' || firstFeature.geometry.type === 'MultiPolygon') {
+          const coords = firstFeature.geometry.coordinates[0][0] || firstFeature.geometry.coordinates[0];
           let lat = 0, lng = 0;
           coords.forEach(([coordLng, coordLat]: [number, number]) => {
             lat += coordLat;
@@ -71,7 +208,7 @@ export default function MapPage() {
     <>
       <PageHeader
         title="Mapa del Establecimiento"
-        description="Visualice la finca, sus lotes y las condiciones climáticas de la zona."
+        description="Visualice la finca, sus lotes y genere alertas climáticas con IA."
       />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-6">
         <Card>
@@ -80,6 +217,9 @@ export default function MapPage() {
                     <MapIcon className="h-6 w-6 text-primary" />
                     Mapa Interactivo de Lotes
                 </CardTitle>
+                 <CardDescription>
+                    Haga clic en un lote para ver un resumen de sus datos.
+                </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
@@ -103,6 +243,9 @@ export default function MapPage() {
                 </div>
             </CardContent>
         </Card>
+        <div className="xl:col-span-2">
+            <AIAlertsPanel />
+        </div>
       </div>
     </>
   );
