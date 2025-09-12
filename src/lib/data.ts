@@ -48,7 +48,35 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   economics: {
     objective: "Maximizar rendimiento y calidad para mercado fresco."
   },
-  geoJsonData: "",
+  geoJsonData: `{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": { "L001": "Lote de frutillas 1" },
+        "geometry": {
+          "coordinates": [
+            [
+              [-65.221, -26.831],
+              [-65.220, -26.831],
+              [-65.220, -26.830],
+              [-65.221, -26.830],
+              [-65.221, -26.831]
+            ]
+          ],
+          "type": "Polygon"
+        }
+      },
+      {
+        "type": "Feature",
+        "properties": { "Bomba de Riego": "Punto de control de riego principal" },
+        "geometry": {
+          "coordinates": [-65.2205, -26.8305],
+          "type": "Point"
+        }
+      }
+    ]
+  }`,
 };
 
 
