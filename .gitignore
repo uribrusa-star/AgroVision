@@ -32,3 +32,4 @@ public/swe-worker-*.js
 # Environment variables
 .env
 .env*.local
+public/sw.js
