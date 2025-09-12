@@ -14,39 +14,19 @@ type WeatherMapProps = {
     };
 };
 
-// --- CAPA DE DIAGNÓSTICO: Relieve de Mapbox ---
-const terrainSource: any = {
-    id: 'mapbox-terrain',
-    type: 'raster-dem',
-    url: 'mapbox://mapbox.terrain-rgb',
-    tileSize: 512,
-    maxzoom: 14
+const precipitationSource: any = {
+    id: 'owm-precipitation',
+    type: 'raster',
+    tiles: [`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`],
+    tileSize: 256,
 };
 
-const hillshadeLayer: LayerProps = {
-    id: 'hillshade',
-    source: 'mapbox-terrain',
-    type: 'hillshade',
-    paint: {
-        'hillshade-illumination-direction': 335,
-        'hillshade-shadow-color': '#000',
-    }
+const precipitationLayer: LayerProps = {
+    id: 'precipitation_layer',
+    type: 'raster',
+    source: 'owm-precipitation',
+    paint: { 'raster-opacity': 0.7 },
 };
-
-// --- CAPA ORIGINAL (comentada para diagnóstico) ---
-// const precipitationSource: any = {
-//     id: 'owm-precipitation',
-//     type: 'raster',
-//     tiles: [`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`],
-//     tileSize: 256,
-// };
-
-// const precipitationLayer: LayerProps = {
-//     id: 'precipitation_layer',
-//     type: 'raster',
-//     source: 'owm-precipitation',
-//     paint: { 'raster-opacity': 0.7 },
-// };
 
 
 const WeatherMapComponent = ({ center }: WeatherMapProps) => {
@@ -74,17 +54,9 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
             }}
             mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
         >
-            {/* Capa de diagnóstico */}
-            <Source {...terrainSource}>
-                <Layer {...hillshadeLayer} />
-            </Source>
-
-            {/* Capa original de clima (desactivada) */}
-            {/* 
             <Source {...precipitationSource}>
                 <Layer {...precipitationLayer} />
-            </Source> 
-            */}
+            </Source>
         </Map>
     );
 };
