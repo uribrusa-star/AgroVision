@@ -14,25 +14,25 @@ type WeatherMapProps = {
     };
 };
 
-const precipitationSource: any = {
-    id: 'rainviewer',
+const radarSource: any = {
+    id: 'mapbox-weather-radar',
     type: 'raster',
-    tiles: [
-        'https://tilecache.rainviewer.com/v2/radar/nowcast/{z}/{x}/{y}/256/1_1.png'
-    ],
-    tileSize: 256,
+    url: 'mapbox://mapbox.weather-radar-v2'
 };
 
-const precipitationLayer: LayerProps = {
-    id: 'precipitation_layer',
+const radarLayer: LayerProps = {
+    id: 'weather-radar-layer',
     type: 'raster',
-    source: 'rainviewer',
-    paint: { 'raster-opacity': 0.7 },
+    source: 'mapbox-weather-radar',
+    paint: {
+        'raster-fade-duration': 0,
+        'raster-opacity': 0.6
+    }
 };
 
 
 const WeatherMapComponent = ({ center }: WeatherMapProps) => {
-    const [showPrecipitation, setShowPrecipitation] = React.useState(false);
+    const [showPrecipitation, setShowPrecipitation] = React.useState(true);
 
     if (!MAPBOX_TOKEN) {
         return (
@@ -54,13 +54,13 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
                 initialViewState={{
                     longitude: center.lng,
                     latitude: center.lat,
-                    zoom: 1
+                    zoom: 8
                 }}
                 mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
             >
                 {showPrecipitation && (
-                    <Source {...precipitationSource}>
-                        <Layer {...precipitationLayer} />
+                    <Source {...radarSource}>
+                        <Layer {...radarLayer} />
                     </Source>
                 )}
             </Map>
