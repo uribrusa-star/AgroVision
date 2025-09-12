@@ -27,16 +27,6 @@ const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
 
 export default function MapPage() {
   const { establishmentData } = useContext(AppDataContext);
-
-  const mapCenter = useMemo(() => {
-    if (establishmentData?.location.coordinates) {
-      const [lat, lng] = establishmentData.location.coordinates.split(',').map(Number);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return { lat, lng };
-      }
-    }
-    return { lat: -31.9518, lng: -60.9341 }; // Default center if no coordinates
-  }, [establishmentData]);
   
   const parsedGeoJson = useMemo(() => {
       try {
@@ -45,6 +35,37 @@ export default function MapPage() {
           return null;
       }
   }, [establishmentData?.geoJsonData]);
+
+  const mapCenter = useMemo(() => {
+    if (parsedGeoJson && parsedGeoJson.features && parsedGeoJson.features.length > 0) {
+      const firstFeature = parsedGeoJson.features[0];
+      if (firstFeature.geometry) {
+        if (firstFeature.geometry.type === 'Point') {
+          const [lng, lat] = firstFeature.geometry.coordinates;
+          return { lat, lng };
+        }
+        if (firstFeature.geometry.type === 'Polygon') {
+          // Calculate centroid of the first polygon
+          const coords = firstFeature.geometry.coordinates[0];
+          let lat = 0, lng = 0;
+          coords.forEach(([coordLng, coordLat]: [number, number]) => {
+            lat += coordLat;
+            lng += coordLng;
+          });
+          return { lat: lat / coords.length, lng: lng / coords.length };
+        }
+      }
+    }
+    // Fallback to location coordinates or default
+    if (establishmentData?.location.coordinates) {
+      const [lat, lng] = establishmentData.location.coordinates.split(',').map(Number);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng };
+      }
+    }
+    return { lat: -26.83, lng: -65.22 }; // Default center
+  }, [parsedGeoJson, establishmentData]);
+
 
   return (
     <>
