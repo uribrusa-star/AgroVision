@@ -32,6 +32,8 @@ export default function MapPage() {
       }
   }, [establishmentData?.geoJsonData]);
 
+  const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN || "";
+
   return (
     <>
       <PageHeader
@@ -64,7 +66,7 @@ export default function MapPage() {
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
-                   <WeatherMapComponent center={mapCenter} />
+                   <WeatherMapComponent center={mapCenter} mapboxAccessToken={mapboxToken} />
                 </div>
             </CardContent>
         </Card>

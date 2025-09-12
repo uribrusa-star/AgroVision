@@ -5,13 +5,12 @@ import Map, { Source, Layer, LayerProps } from 'react-map-gl';
 import { Button } from './ui/button';
 import { CloudRain } from 'lucide-react';
 
-const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-
 type WeatherMapProps = {
     center: {
         lat: number;
         lng: number;
     };
+    mapboxAccessToken: string;
 };
 
 const radarSource: any = {
@@ -31,30 +30,28 @@ const radarLayer: LayerProps = {
 };
 
 
-const WeatherMapComponent = ({ center }: WeatherMapProps) => {
+const WeatherMapComponent = ({ center, mapboxAccessToken }: WeatherMapProps) => {
     const [showPrecipitation, setShowPrecipitation] = React.useState(true);
 
-    if (!MAPBOX_TOKEN) {
+    if (!mapboxAccessToken) {
         return (
             <div className="flex items-center justify-center h-full bg-muted-foreground/10">
-                <p className="text-destructive-foreground p-4 bg-destructive rounded-md">
+                <p className="text-destructive p-4 bg-destructive-foreground rounded-md">
                     El token de acceso de Mapbox no está configurado.
                 </p>
             </div>
         );
     }
     
-    const mapKey = `weather-map-${MAPBOX_TOKEN}`;
-
     return (
         <div className="relative w-full h-full">
             <Map
-                key={mapKey}
-                mapboxAccessToken={MAPBOX_TOKEN}
+                key={mapboxAccessToken}
+                mapboxAccessToken={mapboxAccessToken}
                 initialViewState={{
                     longitude: center.lng,
                     latitude: center.lat,
-                    zoom: 8
+                    zoom: 1
                 }}
                 mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
             >
