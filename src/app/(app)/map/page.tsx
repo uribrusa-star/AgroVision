@@ -4,7 +4,7 @@ import React, { useContext, useMemo } from "react";
 import dynamic from "next/dynamic";
 
 import { PageHeader } from "@/components/page-header";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Map, CloudRain } from 'lucide-react';
 import { AppDataContext } from "@/context/app-data-context";
 
@@ -58,9 +58,12 @@ export default function MapPage() {
                     <CloudRain className="h-6 w-6 text-primary" />
                     Mapa del Clima (Radar)
                 </CardTitle>
+                <CardDescription>
+                    Use el botón para activar o desactivar la capa de precipitación.
+                </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
+                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
                    <WeatherMapComponent center={mapCenter} />
                 </div>
             </CardContent>

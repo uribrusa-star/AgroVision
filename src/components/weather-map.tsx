@@ -3,6 +3,8 @@
 import 'mapbox-gl/dist/mapbox-gl.css';
 import * as React from 'react';
 import Map, { Source, Layer, LayerProps } from 'react-map-gl';
+import { Button } from './ui/button';
+import { CloudRain } from 'lucide-react';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
 const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
@@ -30,6 +32,7 @@ const precipitationLayer: LayerProps = {
 
 
 const WeatherMapComponent = ({ center }: WeatherMapProps) => {
+    const [showPrecipitation, setShowPrecipitation] = React.useState(false);
 
     if (!MAPBOX_TOKEN) {
         return (
@@ -44,20 +47,34 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
     const mapKey = `weather-map-${MAPBOX_TOKEN}`;
 
     return (
-        <Map
-            key={mapKey}
-            mapboxAccessToken={MAPBOX_TOKEN}
-            initialViewState={{
-                longitude: center.lng,
-                latitude: center.lat,
-                zoom: 1
-            }}
-            mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
-        >
-            <Source {...precipitationSource}>
-                <Layer {...precipitationLayer} />
-            </Source>
-        </Map>
+        <div className="relative w-full h-full">
+            <Map
+                key={mapKey}
+                mapboxAccessToken={MAPBOX_TOKEN}
+                initialViewState={{
+                    longitude: center.lng,
+                    latitude: center.lat,
+                    zoom: 1
+                }}
+                mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
+            >
+                {showPrecipitation && (
+                    <Source {...precipitationSource}>
+                        <Layer {...precipitationLayer} />
+                    </Source>
+                )}
+            </Map>
+            <div className="absolute top-2 right-2 z-10">
+                <Button 
+                    variant={showPrecipitation ? "default" : "secondary"} 
+                    size="icon"
+                    onClick={() => setShowPrecipitation(!showPrecipitation)}
+                    title="Mostrar/Ocultar Precipitación"
+                >
+                    <CloudRain className="h-5 w-5" />
+                </Button>
+            </div>
+        </div>
     );
 };
 
