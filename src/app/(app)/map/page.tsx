@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles } from 'lucide-react';
+import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone } from 'lucide-react';
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -18,14 +18,16 @@ import { generateWeatherAlerts } from "@/ai/flows/generate-weather-alerts";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
-const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
+const WindyMapEmbed = ({ lat, lng, key }: { lat: number, lng: number, key: number }) => {
   const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=8&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
 
   return (
     <iframe
+      key={key}
       width="100%"
       height="100%"
       src={windyUrl}
@@ -227,6 +229,16 @@ export default function MapPage() {
     }
     return { lat: -31.953363, lng: -60.9346299 }; // Default center Coronda
   }, [parsedGeoJson, establishmentData]);
+  
+  const [windyCoords, setWindyCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng, key: Date.now()});
+  
+  useEffect(() => {
+    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng, key: Date.now() });
+  }, [mapCenter]);
+
+  const resetWindyMap = () => {
+    setWindyCoords({ lat: -31.9533630, lng: -60.9346299, key: Date.now() });
+  };
 
 
   return (
@@ -263,7 +275,24 @@ export default function MapPage() {
             </CardHeader>
             <CardContent>
                 <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
-                   <WindyMapEmbed lat={mapCenter.lat} lng={mapCenter.lng} />
+                   <WindyMapEmbed lat={windyCoords.lat} lng={windyCoords.lng} key={windyCoords.key} />
+                   <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                             <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="absolute top-2 right-2 z-10 bg-background/70 backdrop-blur-sm"
+                                onClick={resetWindyMap}
+                              >
+                                <Milestone className="h-4 w-4" />
+                              </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Volver a la ubicación del establecimiento</p>
+                        </TooltipContent>
+                    </Tooltip>
+                   </TooltipProvider>
                 </div>
             </CardContent>
         </Card>
