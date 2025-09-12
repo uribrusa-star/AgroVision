@@ -50,7 +50,7 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
             initialViewState={{
                 longitude: center.lng,
                 latitude: center.lat,
-                zoom: 8
+                zoom: 1
             }}
             mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
         >
