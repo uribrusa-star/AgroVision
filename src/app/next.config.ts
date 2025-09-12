@@ -11,7 +11,7 @@ const withPWA = require('@ducanh2912/next-pwa').default({
     disableDevLogs: true,
     runtimeCaching: [
       {
-        urlPattern: /^https?:\/\/firestore\.googleapis\.com\/.*/,
+        urlPattern: ({url}) => url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
         handler: 'NetworkOnly',
       },
       {
@@ -23,6 +23,10 @@ const withPWA = require('@ducanh2912/next-pwa').default({
             maxEntries: 50,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
           },
+          // Excluir las solicitudes a la API de Firestore
+          exclude: [
+            ({url}) => url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
+          ]
         },
       },
     ],
