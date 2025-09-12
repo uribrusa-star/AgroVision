@@ -245,7 +245,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error("Failed to edit collector and related documents:", error);
         toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
-        // Refetch data even on error to revert UI to a consistent state
         await fetchData(); 
       }
     };
@@ -514,5 +513,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+    
 
     
