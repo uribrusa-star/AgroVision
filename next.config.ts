@@ -2,42 +2,32 @@
 import type {NextConfig} from 'next';
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  swcMinify: true,
+  register: true,
+  skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  workboxOptions: {
-    disableDevLogs: true,
-    runtimeCaching: [
-      {
-        urlPattern: ({url}) => url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
-        handler: 'NetworkOnly',
-      },
-      {
-        urlPattern: /.*/,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'pages-cache',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-          },
-          // Excluir explícitamente las solicitudes a la API de Firestore de esta regla
-          exclude: [
-            ({url}) => url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
-          ]
+  runtimeCaching: [
+    {
+      urlPattern: /^https:\/\/firestore\.googleapis\.com\/.*/i,
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /^https?.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages-cache',
+        expiration: {
+          maxEntries: 50,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
         },
       },
-    ],
-  },
+    },
+  ],
   fallbacks: {
     document: '/offline',
   }
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
