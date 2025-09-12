@@ -2,9 +2,10 @@
 'use client';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import * as React from 'react';
-import Map, { Source, Layer, MapLayerMouseEvent } from 'react-map-gl';
+import Map, { Source, Layer } from 'react-map-gl';
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+const OPENWEATHER_API_KEY = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
 
 type WeatherMapProps = {
     center: {
@@ -15,13 +16,6 @@ type WeatherMapProps = {
 
 const WeatherMapComponent = ({ center }: WeatherMapProps) => {
 
-    const imageCoordinates = [
-        [center.lng - 1, center.lat + 1],
-        [center.lng + 1, center.lat + 1],
-        [center.lng + 1, center.lat - 1],
-        [center.lng - 1, center.lat - 1]
-    ];
-
     if (!MAPBOX_TOKEN) {
         return (
             <div className="flex items-center justify-center h-full bg-muted-foreground/10">
@@ -31,7 +25,24 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
             </div>
         );
     }
+
+    if (!OPENWEATHER_API_KEY) {
+        return (
+            <div className="flex items-center justify-center h-full bg-muted-foreground/10">
+                <p className="text-destructive-foreground p-4 bg-destructive rounded-md">
+                    La clave de API de OpenWeatherMap no está configurada.
+                </p>
+            </div>
+        );
+    }
     
+    const precipitationLayer = {
+        id: 'precipitation_layer',
+        type: 'raster',
+        source: 'owm-precipitation',
+        paint: {'raster-opacity': 0.7}
+    };
+
     return (
         <Map
             mapboxAccessToken={MAPBOX_TOKEN}
@@ -43,16 +54,12 @@ const WeatherMapComponent = ({ center }: WeatherMapProps) => {
             mapStyle="mapbox://styles/mapbox/satellite-streets-v12"
         >
             <Source
-                id="radar-source"
-                type="image"
-                url="https://docs.mapbox.com/mapbox-gl-js/assets/radar.gif"
-                coordinates={imageCoordinates}
+                id="owm-precipitation"
+                type="raster"
+                tiles={[`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OPENWEATHER_API_KEY}`]}
+                tileSize={256}
             >
-                <Layer
-                    id="radar-layer"
-                    type="raster"
-                    paint={{ 'raster-fade-duration': 0 }}
-                />
+                <Layer {...precipitationLayer} />
             </Source>
         </Map>
     );
