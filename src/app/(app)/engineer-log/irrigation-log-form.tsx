@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context';
-import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -45,18 +44,19 @@ export function IrrigationLogForm() {
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
-      const newLog: Omit<AgronomistLog, 'id'> = {
+      await addAgronomistLog({
         date: new Date().toISOString(),
         type: data.type,
         batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: data.product,
         notes: data.notes,
-      };
-      await addAgronomistLog(newLog);
+      });
+      
       toast({
         title: "¡Registro Exitoso!",
         description: `Se ha agregado un nuevo registro de ${data.type}.`,
       });
+      
       form.reset({
         type: 'Riego',
         batchId: 'general',
