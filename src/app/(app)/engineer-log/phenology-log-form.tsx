@@ -53,7 +53,7 @@ export function PhenologyLogForm() {
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(async () => {
-      const newLog: Omit<PhenologyLog, 'id'> = {
+      await addPhenologyLog({
         date: new Date().toISOString(),
         developmentState: data.developmentState,
         batchId: data.batchId === 'general' ? undefined : data.batchId,
@@ -62,12 +62,13 @@ export function PhenologyLogForm() {
         notes: data.notes,
         imageUrl: data.image || "",
         ...(data.image && { imageHint: 'crop phenology' }),
-      };
-      await addPhenologyLog(newLog);
+      });
+
       toast({
         title: "¡Registro Exitoso!",
         description: `Se ha agregado un nuevo registro de fenología.`,
       });
+
       form.reset({
         developmentState: undefined,
         batchId: 'general',
