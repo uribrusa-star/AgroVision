@@ -11,7 +11,7 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   producer: "Finca Las Fresas",
   technicalManager: "Ing. Agr. Juan Pérez",
   location: {
-    coordinates: "-31.974, -60.923",
+    coordinates: "-31.9533630, -60.9346299",
     locality: "Coronda",
     province: "Santa Fe"
   },
@@ -49,7 +49,7 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
   economics: {
     objective: "Maximizar rendimiento y calidad para mercado fresco."
   },
-  geoJsonData: `{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"L001":"Lote de frutillas 1"},"geometry":{"coordinates":[[[-60.924,-31.975],[-60.922,-31.975],[-60.922,-31.973],[-60.924,-31.973],[-60.924,-31.975]]],"type":"Polygon"}},{"type":"Feature","properties":{"Bomba de Riego":"Punto de control de riego principal"},"geometry":{"coordinates":[-60.923,-31.974],"type":"Point"}}]}`,
+  geoJsonData: `{"type":"FeatureCollection","features":[{"type":"Feature","properties":{"L001":"Lote de frutillas 1"},"geometry":{"coordinates":[[[-60.935,-31.954],[-60.933,-31.954],[-60.933,-31.952],[-60.935,-31.952],[-60.935,-31.954]]],"type":"Polygon"}},{"type":"Feature","properties":{"Bomba de Riego":"Punto de control de riego principal"},"geometry":{"coordinates":[-60.9346299,-31.953363],"type":"Point"}}]}`,
 };
 
 
@@ -63,5 +63,6 @@ export const producerLogs: ProducerLog[] = [];
 export const transactions: Transaction[] = [];
 export const batches: Batch[] = [];
 export const collectorPaymentLogs: CollectorPaymentLog[] = [];
+
 
 
