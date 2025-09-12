@@ -1,46 +1,9 @@
 import type { NextConfig } from 'next';
-const withPWA = require('@ducanh2912/next-pwa').default({
-  dest: 'public',
-  cacheOnFrontEndNav: true,
-  aggressiveFrontEndNavCaching: true,
-  reloadOnOnline: true,
-  swcMinify: true,
-  disable: process.env.NODE_ENV === 'development',
-  workboxOptions: {
-    disableDevLogs: true,
-    runtimeCaching: [
-      // Excluir Firestore
-      {
-        urlPattern: ({ url }) =>
-          url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
-        handler: 'NetworkOnly',
-      },
-      // Todo lo demás
-      {
-        urlPattern: /.*/,
-        handler: 'NetworkFirst',
-        options: {
-          cacheName: 'pages-cache',
-          expiration: {
-            maxEntries: 50,
-            maxAgeSeconds: 30 * 24 * 60 * 60, // 30 días
-          },
-        },
-      },
-    ],
-  },
-  fallbacks: {
-    document: '/offline',
-  },
-});
+import withPWA from '@ducanh2912/next-pwa';
 
 const nextConfig: NextConfig = {
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: 'placehold.co', pathname: '/**' },
@@ -52,4 +15,27 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default withPWA({
+  dest: 'public',
+  disable: process.env.NODE_ENV === 'development',
+  register: true,
+  skipWaiting: true,
+  runtimeCaching: [
+    {
+      urlPattern: ({ url }) =>
+        url.protocol === 'https:' && url.hostname === 'firestore.googleapis.com',
+      handler: 'NetworkOnly',
+    },
+    {
+      urlPattern: /.*/,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'pages-cache',
+        expiration: { maxEntries: 50, maxAgeSeconds: 30 * 24 * 60 * 60 },
+      },
+    },
+  ],
+  fallbacks: {
+    document: '/offline',
+  },
+})(nextConfig);
