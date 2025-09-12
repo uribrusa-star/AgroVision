@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Link from 'next/link';
@@ -191,7 +190,11 @@ function UserMenu() {
   const handleUserChange = (userId: string) => {
     const selectedUser = users.find(u => u.id === userId);
     if(selectedUser) {
+<<<<<<< HEAD
+        setCurrentUser(selectedUser, true);
+=======
         setCurrentUser(selectedUser);
+>>>>>>> fdefadc509101384e27ee8ee8e7d6d718229ce3b
     }
   }
 
