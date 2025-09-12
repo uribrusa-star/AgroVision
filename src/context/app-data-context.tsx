@@ -228,8 +228,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const editCollector = async (updatedCollector: Collector) => {
-      const originalCollectors = [...collectors];
+      const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
+
+      // Optimistic Update
       setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
+      setHarvests(prev => prev.map(h => h.collector.id === updatedCollector.id ? { ...h, collector: { ...h.collector, name: updatedCollector.name } } : h));
+      setCollectorPaymentLogs(prev => prev.map(p => p.collectorId === updatedCollector.id ? { ...p, collectorName: updatedCollector.name } : p));
       
       try {
         const batch = writeBatch(db);
@@ -250,11 +254,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
         
         await batch.commit();
-        // On success, we just need to refetch to ensure full consistency
-        await fetchData();
       } catch (error) {
         console.error("Failed to edit collector:", error);
-        setCollectors(originalCollectors); // Rollback
+        // Rollback
+        setCollectors(originalState.collectors);
+        setHarvests(originalState.harvests);
+        setCollectorPaymentLogs(originalState.collectorPaymentLogs);
         toast({ title: "Error", description: "No se pudo actualizar el recolector.", variant: "destructive"});
       }
     };
@@ -592,4 +597,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
+    
     
