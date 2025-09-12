@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -40,8 +40,8 @@ export function EnvironmentalLogForm() {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    startTransition(async () => {
-      await addAgronomistLog({
+    startTransition(() => {
+      addAgronomistLog({
         date: new Date().toISOString(),
         type: 'Condiciones Ambientales',
         product: `T: ${data.minTemp}°C - ${data.maxTemp}°C / H: ${data.humidity}%`,

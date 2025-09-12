@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,8 +43,8 @@ export function IrrigationLogForm() {
   const applicationType = form.watch('type');
 
   const onSubmit = (data: LogFormValues) => {
-    startTransition(async () => {
-      await addAgronomistLog({
+    startTransition(() => {
+      addAgronomistLog({
         date: new Date().toISOString(),
         type: data.type,
         batchId: data.batchId === 'general' ? undefined : data.batchId,

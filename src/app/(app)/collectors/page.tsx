@@ -3,7 +3,7 @@
 
 import Image from 'next/image';
 import { MoreHorizontal } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -19,9 +19,10 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Collector } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
 
 const CollectorSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
@@ -32,6 +33,8 @@ export default function CollectorsPage() {
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const { toast } = useToast();
 
   const form = useForm<z.infer<typeof CollectorSchema>>({
     resolver: zodResolver(CollectorSchema),
@@ -39,10 +42,12 @@ export default function CollectorsPage() {
   });
 
   useEffect(() => {
-    if (selectedCollector) {
+    if (isEditDialogOpen && selectedCollector) {
       form.reset({ name: selectedCollector.name });
+    } else if (isAddDialogOpen) {
+      form.reset({ name: '' });
     }
-  }, [selectedCollector, form]);
+  }, [selectedCollector, isEditDialogOpen, isAddDialogOpen, form]);
 
 
   const getCollectorHistory = (collectorId: string) => {
@@ -55,29 +60,37 @@ export default function CollectorsPage() {
   };
   
   const handleDelete = (collectorId: string) => {
-    deleteCollector(collectorId);
+     startTransition(() => {
+        deleteCollector(collectorId);
+        toast({ title: "Recolector Eliminado", description: "El recolector y sus datos asociados han sido eliminados." });
+    });
   };
 
   const onEditSubmit = (values: z.infer<typeof CollectorSchema>) => {
     if (selectedCollector) {
-      editCollector({ ...selectedCollector, name: values.name });
-      setIsEditDialogOpen(false);
-      setSelectedCollector(null);
+       startTransition(() => {
+        editCollector({ ...selectedCollector, name: values.name });
+        toast({ title: "Recolector Actualizado", description: "Los datos del recolector se han guardado." });
+        setIsEditDialogOpen(false);
+        setSelectedCollector(null);
+      });
     }
   };
 
   const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
-    const newCollector = {
-      name: values.name,
-      avatar: `${collectors.length + 1}`,
-      totalHarvested: 0,
-      hoursWorked: 0,
-      productivity: 0,
-      joinDate: new Date().toISOString(),
-    };
-    addCollector(newCollector);
-    setIsAddDialogOpen(false);
-    form.reset({ name: '' });
+    startTransition(() => {
+        addCollector({
+          name: values.name,
+          avatar: `${collectors.length + 1}`,
+          totalHarvested: 0,
+          hoursWorked: 0,
+          productivity: 0,
+          joinDate: new Date().toISOString(),
+        });
+        toast({ title: "Recolector Agregado", description: `Se ha agregado a ${values.name} al sistema.` });
+        setIsAddDialogOpen(false);
+        form.reset({ name: '' });
+    });
   };
 
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
@@ -110,7 +123,7 @@ export default function CollectorsPage() {
                                     <FormItem>
                                         <FormLabel>Nombre</FormLabel>
                                         <FormControl>
-                                            <Input {...field} placeholder="Ej. Juan Pérez" />
+                                            <Input {...field} placeholder="Ej. Juan Pérez" disabled={isPending} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -120,7 +133,7 @@ export default function CollectorsPage() {
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">Cancelar</Button>
                                 </DialogClose>
-                                <Button type="submit">Agregar Recolector</Button>
+                                <Button type="submit" disabled={isPending}>{isPending ? 'Agregando...' : 'Agregar Recolector'}</Button>
                             </DialogFooter>
                         </form>
                     </Form>
@@ -146,32 +159,32 @@ export default function CollectorsPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {loading && (
-                <TableRow>
-                    <TableCell colSpan={canManage ? 5 : 4}>
-                    <div className="flex items-center gap-3">
-                        <Skeleton className="h-10 w-10 rounded-full" />
-                        <div className="space-y-2">
-                        <Skeleton className="h-4 w-[250px]" />
+                {loading && Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={`skeleton-${i}`}>
+                    <TableCell>
+                        <div className="flex items-center gap-3">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="space-y-2">
+                            <Skeleton className="h-4 w-[150px]" />
+                            </div>
                         </div>
-                    </div>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">
-                    <Skeleton className="h-4 w-[50px]" />
+                        <Skeleton className="h-4 w-[60px]" />
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                    <Skeleton className="h-4 w-[50px]" />
+                        <Skeleton className="h-4 w-[40px]" />
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                    <Skeleton className="h-4 w-[80px]" />
+                        <Skeleton className="h-4 w-[80px]" />
                     </TableCell>
                     {canManage && (
-                    <TableCell>
-                        <Skeleton className="h-8 w-8" />
-                    </TableCell>
+                        <TableCell>
+                            <Skeleton className="h-8 w-8" />
+                        </TableCell>
                     )}
                 </TableRow>
-                )}
+                ))}
                 {!loading && collectors.map((collector) => (
                 <TableRow key={collector.id}>
                     <TableCell>
@@ -192,7 +205,7 @@ export default function CollectorsPage() {
                         <AlertDialog>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <Button aria-haspopup="true" size="icon" variant="ghost" disabled={isPending}>
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Toggle menu</span>
                                 </Button>
@@ -290,7 +303,7 @@ export default function CollectorsPage() {
                   <FormItem>
                     <FormLabel>Nombre</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} disabled={isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -300,7 +313,7 @@ export default function CollectorsPage() {
                 <DialogClose asChild>
                   <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="submit">Guardar Cambios</Button>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Cambios'}</Button>
               </DialogFooter>
             </form>
           </Form>

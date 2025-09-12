@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { PhenologyLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -52,8 +52,8 @@ export function PhenologyLogForm() {
   const imageUrl = form.watch('image');
 
   const onSubmit = (data: LogFormValues) => {
-    startTransition(async () => {
-      await addPhenologyLog({
+    startTransition(() => {
+      addPhenologyLog({
         date: new Date().toISOString(),
         developmentState: data.developmentState,
         batchId: data.batchId === 'general' ? undefined : data.batchId,

@@ -14,9 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import type { CollectorPaymentLog, Harvest } from '@/lib/types';
 import { validateProductionData } from '@/ai/flows/validate-production-data';
 import { ProductionPaymentHistory } from '../production-payment-history';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -61,51 +60,47 @@ export function ProductionForm() {
   }, [batches]);
 
   const saveHarvestData = (values: ProductionFormValues) => {
-    startTransition(async () => {
-      const farmer = collectors.find(c => c.id === values.farmerId);
-      if (!farmer) {
-        toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
-        return;
-      }
+    const farmer = collectors.find(c => c.id === values.farmerId);
+    if (!farmer) {
+      toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
+      return;
+    }
 
-      const newHarvestId = await addHarvest({
+    addHarvest({
         date: values.date.toISOString(),
         batchNumber: values.batchId,
         kilograms: values.kilosPerBatch,
         collector: {
-          id: values.farmerId,
-          name: farmer.name,
+        id: values.farmerId,
+        name: farmer.name,
         }
-      }, values.hoursWorked);
-      
-      if(!newHarvestId) return;
-      
-      const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+    }, values.hoursWorked).then(newHarvestId => {
+        if(!newHarvestId) return;
+        
+        const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
 
-      await addCollectorPaymentLog({
-        harvestId: newHarvestId, 
-        date: values.date.toISOString(),
-        collectorId: values.farmerId,
-        collectorName: farmer.name,
-        kilograms: values.kilosPerBatch,
-        hours: values.hoursWorked,
-        ratePerKg: values.ratePerKg,
-        payment: calculatedPayment,
-      });
+        addCollectorPaymentLog({
+            harvestId: newHarvestId, 
+            date: values.date.toISOString(),
+            collectorId: values.farmerId,
+            collectorName: farmer.name,
+            kilograms: values.kilosPerBatch,
+            hours: values.hoursWorked,
+            ratePerKg: values.ratePerKg,
+            payment: calculatedPayment,
+        });
+    });
 
-      toast({
+    toast({
         title: '¡Éxito!',
-        description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
-      });
+        description: `Cosecha para el lote ${values.batchId} con ${values.kilosPerBatch}kg registrada.`,
+    });
 
-      form.reset({
-        date: new Date(),
+    form.reset({
+        ...form.getValues(), // keep date, rate, hours
         batchId: '',
         kilosPerBatch: 0,
         farmerId: '',
-        ratePerKg: 0.45,
-        hoursWorked: 8,
-      });
     });
   }
   
@@ -119,8 +114,6 @@ export function ProductionForm() {
       const averageKilos = historicalDataForFarmer.length > 0 ? totalKilos / historicalDataForFarmer.length : values.kilosPerBatch;
       
       try {
-          // AI validation might still take time if offline, but we let it.
-          // The critical part is `saveHarvestData` which now behaves optimistically.
           const validationResult = await validateProductionData({
               kilosPerBatch: values.kilosPerBatch,
               batchId: values.batchId,

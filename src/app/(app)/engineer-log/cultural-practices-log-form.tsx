@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { AgronomistLog } from '@/lib/types';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
@@ -39,8 +39,8 @@ export function CulturalPracticesLogForm() {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    startTransition(async () => {
-      await addAgronomistLog({
+    startTransition(() => {
+      addAgronomistLog({
         date: new Date().toISOString(),
         type: 'Labor Cultural',
         batchId: data.batchId === 'general' ? undefined : data.batchId,

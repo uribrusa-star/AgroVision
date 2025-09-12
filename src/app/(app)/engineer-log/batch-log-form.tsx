@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormDescription as FormDescriptionComponent, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Batch } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -37,18 +37,18 @@ export function BatchLogForm() {
         form.setError("id", { type: "manual", message: "Este ID de lote ya existe." });
         return;
     }
-    startTransition(async () => {
-      const newBatch: Omit<Batch, 'id' | 'status'> & { id: string, preloadedDate: string, status: string } = {
-        id: data.id, // Keep the user-provided ID
-        preloadedDate: new Date().toISOString(),
-        status: 'pending',
-      };
-      await addBatch(newBatch);
-      toast({
-        title: "¡Lote Pre-cargado!",
-        description: `El lote ${data.id} está listo para ser cosechado.`,
-      });
-      form.reset({id: ''});
+    
+    startTransition(() => {
+        addBatch({
+            id: data.id,
+            preloadedDate: new Date().toISOString(),
+            status: 'pending',
+        });
+        toast({
+            title: "¡Lote Pre-cargado!",
+            description: `El lote ${data.id} está listo para ser cosechado.`,
+        });
+        form.reset({id: ''});
     });
   };
 

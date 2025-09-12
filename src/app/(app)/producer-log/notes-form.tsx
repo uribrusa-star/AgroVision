@@ -8,7 +8,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -29,8 +29,8 @@ export function NotesForm() {
   });
 
   const onSubmit = (data: LogFormValues) => {
-    startTransition(async () => {
-      await addProducerLog({
+    startTransition(() => {
+      addProducerLog({
         date: new Date().toISOString(),
         notes: data.notes,
       });

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
 
 const TransactionSchema = z.object({
@@ -43,8 +43,8 @@ export function TransactionForm() {
   const incomeCategories = ['Venta Mayorista', 'Venta Minorista', 'Otro'];
 
   const onSubmit = (data: TransactionFormValues) => {
-    startTransition(async () => {
-      await addTransaction({
+    startTransition(() => {
+      addTransaction({
         date: new Date().toISOString(),
         ...data
       });
