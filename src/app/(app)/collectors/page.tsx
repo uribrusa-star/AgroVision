@@ -51,7 +51,7 @@ export default function CollectorsPage() {
 
 
   const getCollectorHistory = (collectorId: string) => {
-    return harvests.filter(h => h.collector.id === collectorId).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return harvests.filter(h => h.collector.id === collectorId);
   };
 
   const handleEdit = (collector: Collector) => {
@@ -67,9 +67,17 @@ export default function CollectorsPage() {
   };
 
   const onEditSubmit = (values: z.infer<typeof CollectorSchema>) => {
+    if (collectors.some(c => c.name.trim().toLowerCase() === values.name.trim().toLowerCase() && c.id !== selectedCollector?.id)) {
+      form.setError('name', {
+        type: 'manual',
+        message: 'Ya existe un recolector con este nombre.',
+      });
+      return;
+    }
+
     if (selectedCollector) {
        startTransition(() => {
-        editCollector({ ...selectedCollector, name: values.name });
+        editCollector({ ...selectedCollector, name: values.name.trim() });
         toast({ title: "Recolector Actualizado", description: "Los datos del recolector se han guardado." });
         setIsEditDialogOpen(false);
         setSelectedCollector(null);
@@ -78,16 +86,24 @@ export default function CollectorsPage() {
   };
 
   const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
+    if (collectors.some(c => c.name.trim().toLowerCase() === values.name.trim().toLowerCase())) {
+      form.setError('name', {
+        type: 'manual',
+        message: 'Ya existe un recolector con este nombre.',
+      });
+      return;
+    }
+    
     startTransition(() => {
         addCollector({
-          name: values.name,
+          name: values.name.trim(),
           avatar: `${collectors.length + 1}`,
           totalHarvested: 0,
           hoursWorked: 0,
           productivity: 0,
           joinDate: new Date().toISOString(),
         });
-        toast({ title: "Recolector Agregado", description: `Se ha agregado a ${values.name} al sistema.` });
+        toast({ title: "Recolector Agregado", description: `Se ha agregado a ${values.name.trim()} al sistema.` });
         setIsAddDialogOpen(false);
         form.reset({ name: '' });
     });
