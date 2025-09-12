@@ -51,7 +51,7 @@ export function PhenologyHistory() {
   });
 
   useEffect(() => {
-    if (selectedLog) {
+    if (selectedLog && isEditDialogOpen) {
       form.reset({
         developmentState: selectedLog.developmentState,
         batchId: selectedLog.batchId || 'general',
@@ -61,7 +61,7 @@ export function PhenologyHistory() {
         image: selectedLog.imageUrl,
       });
     }
-  }, [selectedLog, form]);
+  }, [selectedLog, isEditDialogOpen, form]);
 
   const handleEdit = (log: PhenologyLog) => {
     setSelectedLog(log);
@@ -100,9 +100,9 @@ export function PhenologyHistory() {
             title: "Registro Actualizado",
             description: "La entrada del registro ha sido actualizada exitosamente.",
           });
+          setIsEditDialogOpen(false);
+          setSelectedLog(null);
       });
-      setIsEditDialogOpen(false);
-      setSelectedLog(null);
     }
   };
 
@@ -151,25 +151,25 @@ export function PhenologyHistory() {
                 {!loading && [...phenologyLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const stateInfo = getStateInfo(log.developmentState);
                     return (
-                        <TableRow key={log.id} onClick={() => handleDetails(log)} className="cursor-pointer">
-                            <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
-                            <TableCell>
+                        <TableRow key={log.id}>
+                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
+                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                                 <Badge variant={stateInfo.variant as any} className="gap-1">
                                     <stateInfo.icon className="h-3 w-3" />
                                     {stateInfo.label}
                                 </Badge>
                             </TableCell>
-                             <TableCell>
+                             <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                                 {log.batchId ? <Badge variant="outline">{log.batchId}</Badge> : <span className="text-xs text-muted-foreground">General</span>}
                             </TableCell>
-                            <TableCell className="text-xs">
+                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer" className="text-xs">
                                 <p>Flores: {log.flowerCount ?? '-'}</p>
                                 <p>Frutos: {log.fruitCount ?? '-'}</p>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                               <p className="text-sm text-muted-foreground max-w-xs truncate">{log.notes}</p>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                             {log.imageUrl && (
                                 <div className="relative w-24 h-16 rounded-md overflow-hidden">
                                     <Image 
@@ -183,7 +183,7 @@ export function PhenologyHistory() {
                             )}
                             </TableCell>
                             {canManage && (
-                                <TableCell onClick={(e) => e.stopPropagation()}>
+                                <TableCell>
                                 <AlertDialog>
                                     <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
@@ -197,7 +197,7 @@ export function PhenologyHistory() {
                                         <DropdownMenuItem onSelect={() => handleDetails(log)}>Ver Detalles</DropdownMenuItem>
                                         <DropdownMenuItem onSelect={() => handleEdit(log)}>Editar</DropdownMenuItem>
                                         <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                          <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                         </AlertDialogTrigger>
                                     </DropdownMenuContent>
                                     </DropdownMenu>

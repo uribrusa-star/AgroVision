@@ -48,7 +48,7 @@ export function ApplicationHistory() {
   });
 
   useEffect(() => {
-    if (selectedLog) {
+    if (selectedLog && isEditDialogOpen) {
       form.reset({
         type: selectedLog.type,
         batchId: selectedLog.batchId || 'general',
@@ -57,7 +57,7 @@ export function ApplicationHistory() {
         image: selectedLog.imageUrl,
       });
     }
-  }, [selectedLog, form]);
+  }, [selectedLog, isEditDialogOpen, form]);
 
   const handleEdit = (log: AgronomistLog) => {
     setSelectedLog(log);
@@ -95,9 +95,9 @@ export function ApplicationHistory() {
             title: "Registro Actualizado",
             description: "La entrada del registro ha sido actualizada exitosamente.",
           });
+          setIsEditDialogOpen(false);
+          setSelectedLog(null);
       });
-      setIsEditDialogOpen(false);
-      setSelectedLog(null);
     }
   };
 
@@ -149,22 +149,22 @@ export function ApplicationHistory() {
                 {!loading && [...agronomistLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const typeInfo = getTypeInfo(log.type);
                     return (
-                    <TableRow key={log.id} onClick={() => handleDetails(log)} className="cursor-pointer">
-                        <TableCell>{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
-                        <TableCell>
+                    <TableRow key={log.id}>
+                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
+                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                           <Badge variant={typeInfo.variant as any} className="gap-1">
                             <typeInfo.icon className="h-3 w-3" />
                             {typeInfo.label}
                           </Badge>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                           {log.batchId ? <Badge variant="outline">{log.batchId}</Badge> : <span className="text-xs text-muted-foreground">General</span>}
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                           <p className="font-medium">{log.product || '-'}</p>
                           <p className="text-sm text-muted-foreground max-w-xs truncate">{log.notes}</p>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                           {log.imageUrl && (
                             <div className="relative w-24 h-16 rounded-md overflow-hidden">
                                 <Image 
@@ -178,7 +178,7 @@ export function ApplicationHistory() {
                           )}
                         </TableCell>
                         {canManage && (
-                            <TableCell onClick={(e) => e.stopPropagation()}>
+                            <TableCell>
                             <AlertDialog>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -192,7 +192,7 @@ export function ApplicationHistory() {
                                     <DropdownMenuItem onSelect={() => handleDetails(log)}>Ver Detalles</DropdownMenuItem>
                                     <DropdownMenuItem onSelect={() => handleEdit(log)}>Editar</DropdownMenuItem>
                                     <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                      <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                     </AlertDialogTrigger>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
