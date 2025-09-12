@@ -278,7 +278,7 @@ export default function MapPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
+                <div className="h-[600px] w-full rounded-md overflow-hidden z-0 bg-muted">
                    <MapComponent center={mapCenter} geoJsonData={parsedGeoJson} />
                 </div>
             </CardContent>
@@ -293,7 +293,7 @@ export default function MapPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
+                <div className="h-[600px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
                    <WindyMapEmbed key={windyCoords.key} lat={windyCoords.lat} lng={windyCoords.lng} />
                    <TooltipProvider>
                     <Tooltip>
