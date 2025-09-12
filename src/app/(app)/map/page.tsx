@@ -1,6 +1,6 @@
 
 'use client';
-import React, { useContext, useMemo, useState, useTransition } from "react";
+import React, { useContext, useMemo, useState, useTransition, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -44,10 +44,11 @@ const AlertSchema = z.object({
 type Alert = z.infer<typeof AlertSchema>;
 
 const WeatherAlertsSchema = z.object({
-  forecast: z.string().min(10, "La descripción del pronóstico es muy corta."),
+  latitude: z.coerce.number(),
+  longitude: z.coerce.number(),
 });
 
-const AIAlertsPanel = () => {
+const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}) => {
     const { phenologyLogs } = useContext(AppDataContext);
     const [isPending, startTransition] = useTransition();
     const [alerts, setAlerts] = useState<Alert[] | null>(null);
@@ -56,16 +57,25 @@ const AIAlertsPanel = () => {
     const form = useForm<z.infer<typeof WeatherAlertsSchema>>({
         resolver: zodResolver(WeatherAlertsSchema),
         defaultValues: {
-            forecast: "Se esperan lluvias y tormentas aisladas para el fin de semana.",
+            latitude: mapCenter.lat,
+            longitude: mapCenter.lng,
         },
     });
+
+    useEffect(() => {
+        form.reset({
+            latitude: mapCenter.lat,
+            longitude: mapCenter.lng,
+        });
+    }, [mapCenter, form]);
 
     const onSubmit = (values: z.infer<typeof WeatherAlertsSchema>) => {
         setAlerts(null);
         startTransition(async () => {
              try {
                 const result = await generateWeatherAlerts({
-                    weatherForecast: values.forecast,
+                    latitude: values.latitude,
+                    longitude: values.longitude,
                     phenologyLogs: JSON.stringify(phenologyLogs.slice(0, 10)),
                 });
                 if (result.alerts && result.alerts.length > 0) {
@@ -101,20 +111,33 @@ const AIAlertsPanel = () => {
                     Alertas Climáticas con IA
                 </CardTitle>
                 <CardDescription>
-                    Ingrese un pronóstico del tiempo para generar recomendaciones agronómicas.
+                    Ingrese coordenadas para que la IA busque el clima y genere recomendaciones.
                 </CardDescription>
             </CardHeader>
              <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)}>
-                    <CardContent className="space-y-4">
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
-                            name="forecast"
+                            name="latitude"
                             render={({ field }) => (
                                 <FormItem>
-                                <FormLabel>Descripción del Pronóstico</FormLabel>
+                                <FormLabel>Latitud</FormLabel>
                                 <FormControl>
-                                    <Input {...field} placeholder="Ej. Ola de calor, riesgo de heladas..." disabled={isPending} />
+                                    <Input type="number" {...field} placeholder="Ej. -31.953" disabled={isPending} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="longitude"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Longitud</FormLabel>
+                                <FormControl>
+                                    <Input type="number" {...field} placeholder="Ej. -60.934" disabled={isPending} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -126,7 +149,7 @@ const AIAlertsPanel = () => {
                             {isPending ? (
                                 <>
                                     <BrainCircuit className="mr-2 h-4 w-4 animate-spin" />
-                                    Analizando...
+                                    Buscando pronóstico y analizando...
                                 </>
                             ) : "Generar Alertas"}
                         </Button>
@@ -202,7 +225,7 @@ export default function MapPage() {
         return { lat, lng };
       }
     }
-    return { lat: -26.83, lng: -65.22 }; // Default center
+    return { lat: -31.953363, lng: -60.9346299 }; // Default center Coronda
   }, [parsedGeoJson, establishmentData]);
 
 
@@ -245,7 +268,7 @@ export default function MapPage() {
             </CardContent>
         </Card>
         <div className="xl:col-span-2">
-            <AIAlertsPanel />
+            <AIAlertsPanel mapCenter={mapCenter} />
         </div>
       </div>
     </>
