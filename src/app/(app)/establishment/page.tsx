@@ -1,5 +1,4 @@
 
-
 'use client';
 import React, { useContext, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -118,7 +117,7 @@ const InfoItem = ({ label, value, icon: Icon }: { label: string, value: React.Re
     </div>
 );
 
-const EditDialog = ({ open, onOpenChange, title, schema, defaultValues, onSubmit, children }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, schema: any, defaultValues: any, onSubmit: (values: any) => void, children: React.ReactNode }) => {
+const EditDialog = ({ open, onOpenChange, title, description, schema, defaultValues, onSubmit, children }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string, schema: any, defaultValues: any, onSubmit: (values: any) => void, children: React.ReactNode }) => {
     const form = useForm({
         resolver: zodResolver(schema),
         defaultValues: defaultValues,
@@ -135,6 +134,7 @@ const EditDialog = ({ open, onOpenChange, title, schema, defaultValues, onSubmit
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Editar {title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -362,6 +362,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'general'}
           onOpenChange={handleCloseDialog}
           title="Datos Generales"
+          description="Actualice la información principal del establecimiento."
           schema={generalSchema}
           defaultValues={{ 
             producer: establishmentData.producer, 
@@ -387,6 +388,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'area'}
           onOpenChange={handleCloseDialog}
           title="Superficie y Sistema"
+          description="Defina las hectáreas totales y las dedicadas al cultivo."
           schema={areaSchema}
           defaultValues={{ 
               total: establishmentData.area.total,
@@ -408,6 +410,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'soil'}
           onOpenChange={handleCloseDialog}
           title="Suelo y Cobertura"
+          description="Especifique las características del suelo y el tipo de mulching."
           schema={soilSchema}
           defaultValues={{ type: establishmentData.soil.type, analysis: establishmentData.soil.analysis, mulching: establishmentData.planting.mulching }}
           onSubmit={(values) => handleSubmit('soil', values)}
@@ -425,6 +428,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'planting'}
           onOpenChange={handleCloseDialog}
           title="Implantación del Cultivo"
+          description="Detalles sobre la variedad, fecha y densidad de plantación."
           schema={plantingSchema}
           defaultValues={{ ...establishmentData.planting, date: establishmentData.planting.date.split('T')[0] }}
           onSubmit={(values) => handleSubmit('planting', values)}
@@ -443,6 +447,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'irrigation'}
           onOpenChange={handleCloseDialog}
           title="Riego y Fertirrigación"
+          description="Información sobre el sistema de riego y la calidad del agua."
           schema={irrigationSchema}
           defaultValues={{ ...establishmentData.irrigation }}
           onSubmit={(values) => handleSubmit('irrigation', values)}
@@ -461,6 +466,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'management'}
           onOpenChange={handleCloseDialog}
           title="Manejo y Cosecha"
+          description="Defina las estrategias de manejo del cultivo y la logística de cosecha."
           schema={managementSchema}
           defaultValues={{ weeds: establishmentData.management.weeds, sanitaryPlan: establishmentData.management.sanitaryPlan, period: establishmentData.harvest.period, frequency: establishmentData.harvest.frequency }}
           onSubmit={(values) => handleSubmit('management', { ...establishmentData.management, weeds: values.weeds, sanitaryPlan: values.sanitaryPlan, harvest: { ...establishmentData.harvest, period: values.period, frequency: values.frequency } })}
@@ -479,6 +485,7 @@ export default function EstablishmentPage() {
           open={editingSection === 'commercialization'}
           onOpenChange={handleCloseDialog}
           title="Comercialización"
+          description="Establezca el destino de la producción y los objetivos económicos."
           schema={commercializationSchema}
           defaultValues={{ destination: establishmentData.harvest.destination, objective: establishmentData.economics.objective }}
           onSubmit={(values) => handleSubmit('commercialization', values)}
@@ -529,5 +536,3 @@ export default function EstablishmentPage() {
     </>
   );
 }
-
-    
