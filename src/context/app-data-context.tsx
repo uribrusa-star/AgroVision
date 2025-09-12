@@ -222,48 +222,44 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const editCollector = async (updatedCollector: Collector) => {
-        const originalCollectors = [...collectors];
-        const originalHarvests = [...harvests];
-        const originalPaymentLogs = [...collectorPaymentLogs];
+    const editCollector = (updatedCollector: Collector) => {
+        const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
 
         // Optimistic UI updates
         setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
         setHarvests(prev => prev.map(h => h.collector.id === updatedCollector.id ? { ...h, collector: { ...h.collector, name: updatedCollector.name } } : h));
         setCollectorPaymentLogs(prev => prev.map(p => p.collectorId === updatedCollector.id ? { ...p, collectorName: updatedCollector.name } : p));
 
-        try {
+        const runUpdate = async () => {
             const batch = writeBatch(db);
 
-            // 1. Update the collector document
             const collectorRef = doc(db, 'collectors', updatedCollector.id);
             const { id, ...collectorData } = updatedCollector;
             batch.set(collectorRef, collectorData, { merge: true });
 
-            // 2. Find and update related harvests
             const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
             const harvestsSnapshot = await getDocs(harvestsQuery);
             harvestsSnapshot.forEach(doc => {
                 batch.update(doc.ref, { 'collector.name': updatedCollector.name });
             });
 
-            // 3. Find and update related payment logs
             const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
             const paymentsSnapshot = await getDocs(paymentsQuery);
             paymentsSnapshot.forEach(doc => {
                 batch.update(doc.ref, { collectorName: updatedCollector.name });
             });
-
-            // 4. Commit all changes
+            
             await batch.commit();
-        } catch (error) {
+        };
+
+        runUpdate().catch(error => {
             console.error("Failed to edit collector and related documents:", error);
             // Rollback optimistic updates
-            setCollectors(originalCollectors);
-            setHarvests(originalHarvests);
-            setCollectorPaymentLogs(originalPaymentLogs);
+            setCollectors(originalState.collectors);
+            setHarvests(originalState.harvests);
+            setCollectorPaymentLogs(originalState.collectorPaymentLogs);
             toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
-        }
+        });
     };
 
     const deleteCollector = (collectorId: string) => {
