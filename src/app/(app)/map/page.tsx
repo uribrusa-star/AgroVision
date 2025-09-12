@@ -22,7 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
 const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
-  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=8&overlay=wind&metricWind=default&metricTemp=default&product=ecmwf&menu_panels=wind,rain,temp`;
+  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=8&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
 
   return (
     <iframe
@@ -124,7 +124,7 @@ const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}
                                 <FormItem>
                                 <FormLabel>Latitud</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} placeholder="Ej. -31.953" disabled={isPending} />
+                                    <Input type="number" step="any" {...field} placeholder="Ej. -31.953" disabled={isPending} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -137,7 +137,7 @@ const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}
                                 <FormItem>
                                 <FormLabel>Longitud</FormLabel>
                                 <FormControl>
-                                    <Input type="number" {...field} placeholder="Ej. -60.934" disabled={isPending} />
+                                    <Input type="number" step="any" {...field} placeholder="Ej. -60.934" disabled={isPending} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -207,7 +207,7 @@ export default function MapPage() {
         }
         if (firstFeature.geometry.type === 'Polygon') {
           const coords = firstFeature.geometry.coordinates[0];
-          if (!coords || coords.length === 0) return { lat: -26.83, lng: -65.22 }; // Fallback
+          if (!coords || coords.length === 0) return { lat: -31.953363, lng: -60.9346299 }; // Fallback
           
           let lat = 0, lng = 0;
           coords.forEach(([coordLng, coordLat]: [number, number]) => {
@@ -220,7 +220,7 @@ export default function MapPage() {
     }
     // Fallback to location coordinates or default
     if (establishmentData?.location.coordinates) {
-      const [lat, lng] = establishmentData.location.coordinates.split(',').map(Number);
+      const [lat, lng] = establishmentData.location.coordinates.split(',').map(s => parseFloat(s.trim()));
       if (!isNaN(lat) && !isNaN(lng)) {
         return { lat, lng };
       }
