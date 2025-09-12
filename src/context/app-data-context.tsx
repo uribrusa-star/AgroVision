@@ -183,17 +183,20 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         fetchData();
     }, [fetchData]);
 
-    const addHarvest = (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string> => {
-        return new Promise(async (resolve, reject) => {
-            const tempId = `harvest_${Date.now()}`;
-            const newHarvest: Harvest = { id: tempId, ...harvest };
-            
-            const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
-            if (!collectorDoc) {
-                toast({ title: "Error", description: "Recolector no encontrado.", variant: "destructive"});
-                return reject('Collector not found');
-            }
+    const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
+        const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
+        if (!collectorDoc) {
+            toast({ title: "Error", description: "Recolector no encontrado.", variant: "destructive"});
+            return undefined;
+        }
 
+        try {
+            const batch = writeBatch(db);
+            
+            const newHarvestRef = doc(collection(db, 'harvests'));
+            batch.set(newHarvestRef, harvest);
+
+            const collectorRef = doc(db, 'collectors', harvest.collector.id);
             const newTotalHarvested = collectorDoc.totalHarvested + harvest.kilograms;
             const newHoursWorked = collectorDoc.hoursWorked + hoursWorked;
             const updatedCollectorData = {
@@ -201,25 +204,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 hoursWorked: newHoursWorked,
                 productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
             };
+            batch.update(collectorRef, updatedCollectorData);
             
-            setHarvests(prev => [newHarvest, ...prev]);
-            setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? { ...c, ...updatedCollectorData } : c));
+            await batch.commit();
+            await fetchData(); // Refetch to ensure UI is consistent
+            return newHarvestRef.id;
 
-            try {
-                const newHarvestRef = await addDoc(collection(db, 'harvests'), harvest);
-                const collectorRef = doc(db, 'collectors', harvest.collector.id);
-                await setDoc(collectorRef, updatedCollectorData, { merge: true });
-
-                setHarvests(prev => prev.map(h => h.id === tempId ? { ...h, id: newHarvestRef.id } : h));
-                resolve(newHarvestRef.id);
-            } catch(error) {
-                console.error("Failed to add harvest:", error);
-                setHarvests(prev => prev.filter(h => h.id !== tempId));
-                setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? collectorDoc : c));
-                toast({ title: "Error", description: "No se pudo guardar la cosecha.", variant: "destructive"});
-                reject(error);
-            }
-        });
+        } catch(error) {
+            console.error("Failed to add harvest:", error);
+            toast({ title: "Error", description: "No se pudo guardar la cosecha.", variant: "destructive"});
+            return undefined;
+        }
     };
 
     const editCollector = async (updatedCollector: Collector) => {
@@ -247,7 +242,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         console.error("Failed to edit collector and related documents:", error);
         toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
-        await fetchData(); // Refetch data even on error to revert UI to a consistent state
+        // Refetch data even on error to revert UI to a consistent state
+        await fetchData(); 
       }
     };
 
@@ -571,3 +567,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+    
