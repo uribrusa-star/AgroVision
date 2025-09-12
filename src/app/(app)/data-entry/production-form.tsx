@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useContext, useMemo, useState, useTransition } from 'react';
+import { useContext, useMemo, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -57,93 +57,89 @@ export function ProductionForm() {
   });
   
   const availableBatches = useMemo(() => {
-    // Show all batches. Let users log multiple harvests for the same batch.
     return batches;
   }, [batches]);
 
   const saveHarvestData = (values: ProductionFormValues) => {
     startTransition(async () => {
-        const farmer = collectors.find(c => c.id === values.farmerId);
-        if (!farmer) {
-          toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
-          return;
+      const farmer = collectors.find(c => c.id === values.farmerId);
+      if (!farmer) {
+        toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
+        return;
+      }
+
+      const newHarvestId = await addHarvest({
+        date: values.date.toISOString(),
+        batchNumber: values.batchId,
+        kilograms: values.kilosPerBatch,
+        collector: {
+          id: values.farmerId,
+          name: farmer.name,
         }
+      }, values.hoursWorked);
+      
+      if(!newHarvestId) return;
+      
+      const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
 
-        const newHarvestData: Omit<Harvest, 'id'> = {
-          date: values.date.toISOString(),
-          batchNumber: values.batchId,
-          kilograms: values.kilosPerBatch,
-          collector: {
-            id: values.farmerId,
-            name: farmer.name,
-          }
-        };
-        
-        const newHarvestId = await addHarvest(newHarvestData, values.hoursWorked);
-        if(!newHarvestId) {
-          return;
-        }
-        
-        const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+      await addCollectorPaymentLog({
+        harvestId: newHarvestId, 
+        date: values.date.toISOString(),
+        collectorId: values.farmerId,
+        collectorName: farmer.name,
+        kilograms: values.kilosPerBatch,
+        hours: values.hoursWorked,
+        ratePerKg: values.ratePerKg,
+        payment: calculatedPayment,
+      });
 
-        const newPaymentLogData: Omit<CollectorPaymentLog, 'id'> = {
-          harvestId: newHarvestId, 
-          date: values.date.toISOString(),
-          collectorId: values.farmerId,
-          collectorName: farmer.name,
-          kilograms: values.kilosPerBatch,
-          hours: values.hoursWorked,
-          ratePerKg: values.ratePerKg,
-          payment: calculatedPayment,
-        };
+      toast({
+        title: '¡Éxito!',
+        description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
+      });
 
-        await addCollectorPaymentLog(newPaymentLogData);
-
-        toast({
-          title: '¡Éxito!',
-          description: `Lote ${values.batchId} con ${values.kilosPerBatch}kg cargado.`,
-        });
-
-        form.reset({
-          date: new Date(),
-          batchId: '',
-          kilosPerBatch: 0,
-          farmerId: '',
-          ratePerKg: 0.45,
-          hoursWorked: 8,
-        });
+      form.reset({
+        date: new Date(),
+        batchId: '',
+        kilosPerBatch: 0,
+        farmerId: '',
+        ratePerKg: 0.45,
+        hoursWorked: 8,
+      });
     });
   }
   
   const onSubmit = (values: ProductionFormValues) => {
     startTransition(async () => {
-        const farmer = collectors.find(c => c.id === values.farmerId);
-        if(!farmer) return;
+      const farmer = collectors.find(c => c.id === values.farmerId);
+      if(!farmer) return;
 
-        const historicalDataForFarmer = harvests.filter(h => h.collector.id === values.farmerId);
-        const totalKilos = historicalDataForFarmer.reduce((sum, h) => sum + h.kilograms, 0);
-        const averageKilos = historicalDataForFarmer.length > 0 ? totalKilos / historicalDataForFarmer.length : values.kilosPerBatch;
-        
-        try {
-            const validationResult = await validateProductionData({
-                kilosPerBatch: values.kilosPerBatch,
-                batchId: values.batchId,
-                timestamp: values.date.toISOString(),
-                farmerId: values.farmerId,
-                averageKilosPerBatch: averageKilos,
-                historicalData: JSON.stringify(historicalDataForFarmer),
-            });
-            
-            if (validationResult.isValid) {
-                saveHarvestData(values);
-            } else {
-                setValidationAlert({ open: true, reason: validationResult.reason || 'Anomalía detectada.', data: values });
-            }
+      const historicalDataForFarmer = harvests.filter(h => h.collector.id === values.farmerId);
+      const totalKilos = historicalDataForFarmer.reduce((sum, h) => sum + h.kilograms, 0);
+      const averageKilos = historicalDataForFarmer.length > 0 ? totalKilos / historicalDataForFarmer.length : values.kilosPerBatch;
+      
+      try {
+          // AI validation might still take time if offline, but we let it.
+          // The critical part is `saveHarvestData` which now behaves optimistically.
+          const validationResult = await validateProductionData({
+              kilosPerBatch: values.kilosPerBatch,
+              batchId: values.batchId,
+              timestamp: values.date.toISOString(),
+              farmerId: values.farmerId,
+              averageKilosPerBatch: averageKilos,
+              historicalData: JSON.stringify(historicalDataForFarmer),
+          });
+          
+          if (validationResult.isValid) {
+              saveHarvestData(values);
+          } else {
+              setValidationAlert({ open: true, reason: validationResult.reason || 'Anomalía detectada.', data: values });
+          }
 
-        } catch (aiError) {
-             console.error("AI validation failed, saving data directly.", aiError);
-             saveHarvestData(values);
-        }
+      } catch (aiError) {
+           console.error("AI validation failed, saving data directly.", aiError);
+           saveHarvestData(values);
+      }
     });
   }
 
