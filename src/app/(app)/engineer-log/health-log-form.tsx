@@ -3,7 +3,7 @@
 
 import React, { useState, useTransition } from 'react';
 import Image from 'next/image';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import type { ImageWithHint } from '@/lib/types';
 
 const LogSchema = z.object({
   observationType: z.enum(['Plaga', 'Enfermedad'], {
@@ -23,7 +25,9 @@ const LogSchema = z.object({
   product: z.string().min(1, "El producto o agente observado es requerido."),
   severity: z.string().min(3, "La incidencia o severidad es requerida."),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
-  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
+  images: z.array(z.object({
+    url: z.string().url("Debe ser una URL de imagen válida.").or(z.literal('')),
+  })).optional(),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -43,22 +47,28 @@ export function HealthLogForm() {
       product: '',
       severity: '',
       notes: '',
-      image: '',
+      images: [{ url: '' }],
     },
   });
 
-  const imageUrl = form.watch('image');
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "images"
+  });
 
   const onSubmit = (data: LogFormValues) => {
     startTransition(() => {
+        const imagesWithHints: ImageWithHint[] = (data.images || [])
+            .filter(img => img.url)
+            .map(img => ({ url: img.url, hint: 'crop disease pest'}));
+
       addAgronomistLog({
         date: new Date().toISOString(),
         type: 'Sanidad',
         batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: `${data.observationType}: ${data.product}`,
         notes: `Incidencia: ${data.severity}. Observaciones: ${data.notes}`,
-        imageUrl: data.image || "",
-        ...(data.image && { imageHint: 'crop disease pest' }),
+        images: imagesWithHints,
       });
 
       toast({
@@ -72,22 +82,10 @@ export function HealthLogForm() {
         product: '',
         severity: '',
         notes: '',
-        image: '',
+        images: [{ url: '' }],
       });
     });
   };
-  
-  const getDisplayImageUrl = (url: string | undefined): string | undefined => {
-    if (!url) return undefined;
-    if (url.includes('imgur.com') && !url.includes('i.imgur.com')) {
-      const parts = url.split('/');
-      const hash = parts.pop();
-      return `https://i.imgur.com/${hash}.jpg`;
-    }
-    return url;
-  }
-  
-  const displayImageUrl = getDisplayImageUrl(imageUrl);
 
   return (
     <Card>
@@ -190,35 +188,44 @@ export function HealthLogForm() {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="image"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>URL de Imagen (Opcional)</FormLabel>
-                  <FormControl>
-                     <Input 
-                        placeholder="https://ejemplo.com/imagen.jpg" 
-                        {...field} 
-                        disabled={!canManage || isPending}
-                      />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {displayImageUrl && (
-                <div className="flex justify-center p-4 border-dashed border-2 border-muted rounded-md">
-                    <div className="relative w-full max-w-xs aspect-video">
-                        <Image
-                        src={displayImageUrl}
-                        alt="Vista previa de la imagen"
-                        fill
-                        className="object-contain rounded-md"
-                        />
-                    </div>
+            <div className="space-y-4">
+              <FormLabel>Imágenes (Opcional)</FormLabel>
+              {fields.map((item, index) => (
+                <div key={item.id} className="flex items-center gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`images.${index}.url`}
+                    render={({ field }) => (
+                      <FormItem className="flex-grow">
+                        <FormControl>
+                          <Input placeholder={`https://ejemplo.com/imagen-${index + 1}.jpg`} {...field} disabled={!canManage || isPending} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => remove(index)}
+                    disabled={!canManage || isPending || fields.length <= 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-            )}
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => append({ url: '' })}
+                disabled={!canManage || isPending || fields.length >= 5}
+              >
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Añadir Imagen
+              </Button>
+            </div>
           </CardContent>
           {canManage && (
             <CardFooter>

@@ -89,8 +89,8 @@ export function AgronomistReport() {
             docInstance.line(15, 30, pageWidth - 15, 30);
         };
         
-        const checkAndAddPage = () => {
-            if (yPos > pageHeight - 25) {
+        const checkAndAddPage = (neededHeight = 0) => {
+            if (yPos + neededHeight > pageHeight - 25) {
                 doc.addPage();
                 addPageHeader(doc);
                 yPos = 40;
@@ -98,7 +98,7 @@ export function AgronomistReport() {
         };
 
         const addSection = (title: string, content: string) => {
-            checkAndAddPage();
+            checkAndAddPage(20);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.setTextColor(40);
@@ -111,7 +111,7 @@ export function AgronomistReport() {
             
             const splitContent = doc.splitTextToSize(content, pageWidth - 30);
             splitContent.forEach((line: string) => {
-                checkAndAddPage();
+                checkAndAddPage(5);
                 doc.text(line, 15, yPos, { align: 'justify' });
                 yPos += 5;
             });
@@ -119,7 +119,7 @@ export function AgronomistReport() {
         };
 
         const addTable = (title: string, head: any, body: any) => {
-            checkAndAddPage();
+            checkAndAddPage(20);
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
             doc.setTextColor(40);
@@ -140,7 +140,23 @@ export function AgronomistReport() {
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 columnStyles: {
                     2: { cellWidth: 'auto' }
-                }
+                },
+                didDrawCell: (data) => {
+                    // Check if we are drawing the image column
+                    if (data.column.index === head[0].length - 1 && data.row.section === 'body' && body[data.row.index][data.column.index] !== 'No') {
+                      const imgData = body[data.row.index][data.column.index];
+                      // Clear the cell content
+                      data.cell.text = '';
+                      // Draw image
+                      try {
+                        doc.addImage(imgData, 'JPEG', data.cell.x + 2, data.cell.y + 2, 10, 10);
+                      } catch (e) {
+                          console.error("Error adding image to PDF table", e);
+                          doc.text("Error", data.cell.x + 2, data.cell.y + 8);
+                      }
+                    }
+                },
+                rowPageBreak: 'auto',
             });
             yPos = doc.lastAutoTable.finalY + 15;
         }
@@ -177,26 +193,28 @@ export function AgronomistReport() {
         addSection("Análisis Técnico (IA)", aiResult.technicalAnalysis);
         addSection("Conclusiones y Recomendaciones (IA)", aiResult.conclusionsAndRecommendations);
 
-        const sortedAgronomistLogs = [...agronomistLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedAgronomistLogs = [...agronomistLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         addTable("Bitácora de Actividades",
-            [['Fecha', 'Tipo', 'Producto/Detalle', 'Notas']],
+            [['Fecha', 'Tipo', 'Producto/Detalle', 'Notas', 'Imagen']],
             sortedAgronomistLogs.map((log: AgronomistLog) => [
                 new Date(log.date).toLocaleDateString('es-ES'),
                 log.type,
                 log.product || '-',
                 log.notes,
+                log.images && log.images.length > 0 ? log.images[0].url : 'No',
             ])
         );
         
         checkAndAddPage();
         
-        const sortedPhenologyLogs = [...phenologyLogs].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const sortedPhenologyLogs = [...phenologyLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
         addTable("Bitácora de Fenología",
-            [['Fecha', 'Estado', 'Notas']],
+            [['Fecha', 'Estado', 'Notas', 'Imagen']],
             sortedPhenologyLogs.map((log: PhenologyLog) => [
                 new Date(log.date).toLocaleDateString('es-ES'),
                 log.developmentState,
                 log.notes,
+                log.images && log.images.length > 0 ? log.images[0].url : 'No',
             ])
         );
         

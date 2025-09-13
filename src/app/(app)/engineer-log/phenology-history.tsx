@@ -3,16 +3,16 @@
 
 import React, { useState, useContext, useEffect, useTransition } from 'react';
 import Image from 'next/image';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Flower, Grape, Sun, Calendar, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Flower, Grape, Sun, Calendar, Trash2, PlusCircle, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
-import type { PhenologyLog } from '@/lib/types';
+import type { PhenologyLog, ImageWithHint } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 const LogSchema = z.object({
   developmentState: z.enum(['Floración', 'Fructificación', 'Maduración'], {
@@ -31,7 +32,9 @@ const LogSchema = z.object({
   flowerCount: z.coerce.number().optional(),
   fruitCount: z.coerce.number().optional(),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
-  image: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
+  images: z.array(z.object({
+    url: z.string().url("Debe ser una URL de imagen válida.").or(z.literal('')),
+  })).optional(),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
@@ -50,6 +53,11 @@ export function PhenologyHistory() {
     resolver: zodResolver(LogSchema),
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "images"
+  });
+
   useEffect(() => {
     if (selectedLog && isEditDialogOpen) {
       form.reset({
@@ -58,7 +66,7 @@ export function PhenologyHistory() {
         flowerCount: selectedLog.flowerCount,
         fruitCount: selectedLog.fruitCount,
         notes: selectedLog.notes,
-        image: selectedLog.imageUrl,
+        images: selectedLog.images?.map(img => ({ url: img.url })) || [{ url: '' }],
       });
     }
   }, [selectedLog, isEditDialogOpen, form]);
@@ -75,20 +83,23 @@ export function PhenologyHistory() {
 
   const handleDelete = (logId: string) => {
     startTransition(() => {
-        deletePhenologyLog(logId).then(() => {
-          toast({
-            title: "Registro Eliminado",
-            description: "La entrada del registro de fenología ha sido eliminada exitosamente.",
-          });
-          setIsDetailOpen(false); // Close detail view on successful delete
-          setSelectedLog(null);
+        deletePhenologyLog(logId);
+        toast({
+          title: "Registro Eliminado",
+          description: "La entrada del registro de fenología ha sido eliminada exitosamente.",
         });
+        setIsDetailOpen(false);
+        setSelectedLog(null);
     });
   };
 
   const onEditSubmit = (values: LogFormValues) => {
     if (selectedLog) {
       startTransition(() => {
+          const imagesWithHints: ImageWithHint[] = (values.images || [])
+            .filter(img => img.url)
+            .map(img => ({ url: img.url, hint: 'crop phenology' }));
+
           editPhenologyLog({
             ...selectedLog,
             developmentState: values.developmentState,
@@ -96,8 +107,7 @@ export function PhenologyHistory() {
             flowerCount: values.flowerCount,
             fruitCount: values.fruitCount,
             notes: values.notes,
-            imageUrl: values.image || "",
-            imageHint: values.image ? (selectedLog.imageHint || 'crop phenology') : undefined,
+            images: imagesWithHints,
           });
           toast({
             title: "Registro Actualizado",
@@ -134,7 +144,7 @@ export function PhenologyHistory() {
                     <TableHead>Lote</TableHead>
                     <TableHead>Conteos</TableHead>
                     <TableHead>Notas</TableHead>
-                    <TableHead>Imagen</TableHead>
+                    <TableHead>Imágenes</TableHead>
                     {canManage && <TableHead><span className="sr-only">Acciones</span></TableHead>}
                 </TableRow>
                 </TableHeader>
@@ -173,17 +183,12 @@ export function PhenologyHistory() {
                               <p className="text-sm text-muted-foreground max-w-xs truncate">{log.notes}</p>
                             </TableCell>
                             <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
-                            {log.imageUrl && (
-                                <div className="relative w-24 h-16 rounded-md overflow-hidden">
-                                    <Image 
-                                    src={log.imageUrl}
-                                    alt={log.notes}
-                                    fill
-                                    className="object-cover"
-                                    data-ai-hint={log.imageHint}
-                                    />
+                            {log.images && log.images.length > 0 ? (
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <ImageIcon className="h-4 w-4" />
+                                    <span>{log.images.length}</span>
                                 </div>
-                            )}
+                            ) : null}
                             </TableCell>
                             {canManage && (
                                 <TableCell>
@@ -237,7 +242,7 @@ export function PhenologyHistory() {
             </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4 max-h-[70vh] overflow-y-auto pr-6">
                <div className="grid md:grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
@@ -331,20 +336,45 @@ export function PhenologyHistory() {
                     </FormItem>
                 )}
                 />
-                <FormField
-                  control={form.control}
-                  name="image"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>URL de Imagen (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="https://ejemplo.com/imagen.jpg" {...field} disabled={!canManage || isPending} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <DialogFooter>
+                <div className="space-y-4">
+                  <FormLabel>Imágenes</FormLabel>
+                  {fields.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-2">
+                      <FormField
+                        control={form.control}
+                        name={`images.${index}.url`}
+                        render={({ field }) => (
+                          <FormItem className="flex-grow">
+                            <FormControl>
+                              <Input placeholder={`https://ejemplo.com/imagen-${index + 1}.jpg`} {...field} disabled={!canManage || isPending} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => remove(index)}
+                        disabled={!canManage || isPending || fields.length <= 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => append({ url: '' })}
+                    disabled={!canManage || isPending || fields.length >= 5}
+                  >
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir URL de Imagen
+                  </Button>
+                </div>
+                <DialogFooter className="pt-4">
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
@@ -361,7 +391,7 @@ export function PhenologyHistory() {
            {selectedLog && (() => {
               const stateInfo = getStateInfo(selectedLog.developmentState);
               return (
-                 <>
+                 <AlertDialog>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
                            <stateInfo.icon className="h-5 w-5" />
@@ -371,7 +401,7 @@ export function PhenologyHistory() {
                            Revisión de la entrada de la bitácora.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
+                    <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Calendar className="h-4 w-4" />
                             <span>{new Date(selectedLog.date).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</span>
@@ -406,18 +436,32 @@ export function PhenologyHistory() {
                                     <p className="text-foreground whitespace-pre-wrap">{selectedLog.notes}</p>
                                 </div>
                                 
-                                {selectedLog.imageUrl && (
+                                {selectedLog.images && selectedLog.images.length > 0 && (
                                     <div className="space-y-2">
-                                        <p className="text-sm font-medium text-muted-foreground">Imagen Adjunta</p>
-                                        <div className="relative w-full aspect-video rounded-md overflow-hidden border">
-                                            <Image
-                                                src={selectedLog.imageUrl}
-                                                alt={selectedLog.notes}
-                                                fill
-                                                className="object-cover"
-                                                data-ai-hint={selectedLog.imageHint}
-                                            />
-                                        </div>
+                                        <p className="text-sm font-medium text-muted-foreground">Imágenes Adjuntas</p>
+                                         <Carousel className="w-full">
+                                          <CarouselContent>
+                                            {selectedLog.images.map((image, index) => (
+                                              <CarouselItem key={index}>
+                                                <div className="relative w-full aspect-video rounded-md overflow-hidden border">
+                                                  <Image
+                                                    src={image.url}
+                                                    alt={`${selectedLog.notes} - Imagen ${index + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                    data-ai-hint={image.hint}
+                                                  />
+                                                </div>
+                                              </CarouselItem>
+                                            ))}
+                                          </CarouselContent>
+                                          {selectedLog.images.length > 1 && (
+                                            <>
+                                              <CarouselPrevious className="-left-8" />
+                                              <CarouselNext className="-right-8" />
+                                            </>
+                                          )}
+                                        </Carousel>
                                     </div>
                                 )}
                             </CardContent>
@@ -448,7 +492,7 @@ export function PhenologyHistory() {
                         ) : <div />}
                         <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
                     </DialogFooter>
-                 </>
+                 </AlertDialog>
               );
            })()}
         </DialogContent>

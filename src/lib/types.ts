@@ -60,6 +60,10 @@ export type AgronomistLogType =
     | 'Riego'
     | 'Condiciones Ambientales';
 
+export type ImageWithHint = {
+    url: string;
+    hint?: string;
+}
 
 export type AgronomistLog = {
     id: string;
@@ -68,8 +72,7 @@ export type AgronomistLog = {
     batchId?: string;
     product?: string;
     notes: string;
-    imageUrl?: string;
-    imageHint?: string;
+    images?: ImageWithHint[];
 }
 
 export type PhenologyLog = {
@@ -80,8 +83,7 @@ export type PhenologyLog = {
     flowerCount?: number;
     fruitCount?: number;
     notes: string;
-    imageUrl?: string;
-    imageHint?: string;
+    images?: ImageWithHint[];
 }
 
 export type CollectorPaymentLog = {
