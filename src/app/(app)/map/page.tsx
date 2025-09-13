@@ -24,7 +24,7 @@ import type { AgronomistLog } from "@/lib/types";
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
 const WindyMapEmbed = ({ lat, lng }: { lat: number, lng: number }) => {
-  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=11&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
+  const windyUrl = `https://embed.windy.com/embed.html?lat=${lat}&lon=${lng}&zoom=12&overlay=wind&product=ecmwf&menu_panels=wind,rain,temp&metricWind=default&metricTemp=default`;
 
   return (
     <iframe
@@ -322,4 +322,5 @@ export default function MapPage() {
     </>
   );
 }
+
 

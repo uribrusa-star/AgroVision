@@ -156,7 +156,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 height: '100%',
             }}
             center={center}
-            zoom={15}
+            zoom={17}
             options={{
                 streetViewControl: false,
                 mapTypeControl: false,
