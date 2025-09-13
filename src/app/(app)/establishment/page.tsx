@@ -80,7 +80,7 @@ const geoJsonSchema = z.object({
       }
     },
     { message: "El texto ingresado debe ser un objeto GeoJSON válido." }
-  ),
+  ).optional(),
 });
 
 const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
@@ -156,6 +156,20 @@ export default function EstablishmentPage() {
   const { toast } = useToast();
   const [editingSection, setEditingSection] = useState<string | null>(null);
 
+  const geoJsonForm = useForm<z.infer<typeof geoJsonSchema>>({
+    resolver: zodResolver(geoJsonSchema),
+    defaultValues: {
+      geoJsonData: establishmentData?.geoJsonData || "",
+    },
+  });
+
+  React.useEffect(() => {
+    if (editingSection === 'geoJson') {
+      geoJsonForm.reset({ geoJsonData: establishmentData?.geoJsonData || "" });
+    }
+  }, [editingSection, establishmentData, geoJsonForm]);
+
+
   const handleEdit = (section: string) => {
     setEditingSection(section);
   }
@@ -203,7 +217,7 @@ export default function EstablishmentPage() {
       } else if (section === 'planting' || section === 'irrigation') {
           updatedData = { [section]: values };
       } else if (section === 'geoJson') {
-          updatedData = { geoJsonData: values.geoJsonData };
+          updatedData = { geoJsonData: values.geoJsonData || '' };
       }
 
       try {
@@ -499,40 +513,43 @@ export default function EstablishmentPage() {
       </EditDialog>
 
       <Dialog open={editingSection === 'geoJson'} onOpenChange={handleCloseDialog}>
-            <DialogContent className="sm:max-w-2xl">
-                <DialogHeader>
-                    <DialogTitle>Editar Datos GeoJSON</DialogTitle>
-                    <DialogDescription>
-                        Pegue aquí el contenido de su archivo GeoJSON para definir los lotes y puntos de interés en el mapa.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...useForm({ resolver: zodResolver(geoJsonSchema), defaultValues: { geoJsonData: establishmentData.geoJsonData || '' } })}>
-                    <form onSubmit={useForm().handleSubmit((data) => handleSubmit('geoJson', data))} className="space-y-4">
-                       <FormField
-                          control={useForm({ resolver: zodResolver(geoJsonSchema), defaultValues: { geoJsonData: establishmentData.geoJsonData || '' } }).control}
-                          name="geoJsonData"
-                          render={({ field }) => (
-                              <FormItem>
-                                  <FormLabel>Contenido GeoJSON</FormLabel>
-                                  <FormControl>
-                                      <Textarea
-                                          className="min-h-[300px] font-mono text-xs"
-                                          placeholder='{ "type": "FeatureCollection", "features": [ ... ] }'
-                                          {...field}
-                                      />
-                                  </FormControl>
-                                  <FormMessage />
-                              </FormItem>
-                          )}
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Datos GeoJSON</DialogTitle>
+            <DialogDescription>
+              Pegue aquí el contenido de su archivo GeoJSON para definir los lotes y puntos de interés en el mapa.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...geoJsonForm}>
+            <form onSubmit={geoJsonForm.handleSubmit((data) => handleSubmit('geoJson', data))} className="space-y-4">
+              <FormField
+                control={geoJsonForm.control}
+                name="geoJsonData"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contenido GeoJSON</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        className="min-h-[300px] font-mono text-xs"
+                        placeholder='{ "type": "FeatureCollection", "features": [ ... ] }'
+                        {...field}
                       />
-                        <DialogFooter>
-                            <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
-                            <Button type="submit">Guardar GeoJSON</Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
+                <Button type="submit">Guardar GeoJSON</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
     </>
   );
 }
+
+    

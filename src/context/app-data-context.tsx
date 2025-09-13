@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -479,8 +478,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setEstablishmentData(prev => prev ? { ...prev, ...data } : null);
         
         try {
-            const { id, ...updateData } = data;
             const establishmentRef = doc(db, 'establishment', 'main');
+            // Remove undefined values before sending to Firestore
+            const updateData = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
             await setDoc(establishmentRef, updateData, { merge: true });
         } catch(error) {
             console.error("Failed to update establishment data:", error);
@@ -596,3 +596,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+    
