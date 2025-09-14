@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import Image from 'next/image';
@@ -24,16 +23,17 @@ import { AppDataContext } from '@/context/app-data-context';
 import type { Collector } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CollectorSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
 });
 
 export default function CollectorsPage() {
-  const { loading, collectors, harvests, addCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
+  const { loading, collectors, harvests, addCollector, editCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -43,14 +43,21 @@ export default function CollectorsPage() {
   });
 
   useEffect(() => {
-    if (isAddDialogOpen) {
+    if (isEditDialogOpen && selectedCollector) {
+      form.reset({ name: selectedCollector.name });
+    } else if (isAddDialogOpen) {
       form.reset({ name: '' });
     }
-  }, [isAddDialogOpen, form]);
+  }, [selectedCollector, isEditDialogOpen, isAddDialogOpen, form]);
 
 
   const getCollectorHistory = (collectorId: string) => {
     return harvests.filter(h => h.collector.id === collectorId);
+  };
+
+  const handleEdit = (collector: Collector) => {
+    setSelectedCollector(collector);
+    setIsEditDialogOpen(true);
   };
   
   const handleDelete = (collectorId: string) => {
@@ -59,26 +66,40 @@ export default function CollectorsPage() {
         toast({ title: "Recolector Eliminado", description: "El recolector y sus datos asociados han sido eliminados." });
     });
   };
+  
+  const onEditSubmit = (values: z.infer<typeof CollectorSchema>) => {
+    if (selectedCollector) {
+      const newName = values.name.trim();
+      if (collectors.some(c => c.name.toLowerCase() === newName.toLowerCase() && c.id !== selectedCollector.id)) {
+        form.setError('name', { type: 'manual', message: 'Ya existe un recolector con este nombre.' });
+        return;
+      }
+      startTransition(async () => {
+        await editCollector({ ...selectedCollector, name: newName });
+        toast({ title: "Recolector Actualizado", description: "Los datos del recolector se han guardado." });
+        setIsEditDialogOpen(false);
+        setSelectedCollector(null);
+      });
+    }
+  };
 
   const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
-    if (collectors.some(c => c.name.trim().toLowerCase() === values.name.trim().toLowerCase())) {
-      form.setError('name', {
-        type: 'manual',
-        message: 'Ya existe un recolector con este nombre.',
-      });
+    const newName = values.name.trim();
+    if (collectors.some(c => c.name.toLowerCase() === newName.toLowerCase())) {
+      form.setError('name', { type: 'manual', message: 'Ya existe un recolector con este nombre.' });
       return;
     }
     
     startTransition(async () => {
         await addCollector({
-          name: values.name.trim(),
+          name: newName,
           avatar: `${Math.floor(Math.random() * 1000)}`,
           totalHarvested: 0,
           hoursWorked: 0,
           productivity: 0,
           joinDate: new Date().toISOString(),
         });
-        toast({ title: "Recolector Agregado", description: `Se ha agregado a ${values.name.trim()} al sistema.` });
+        toast({ title: "Recolector Agregado", description: `Se ha agregado a ${newName} al sistema.` });
         setIsAddDialogOpen(false);
         form.reset({ name: '' });
     });
@@ -120,13 +141,6 @@ export default function CollectorsPage() {
                                     </FormItem>
                                 )}
                             />
-                            <Alert variant="destructive" className="mt-4">
-                              <AlertCircle className="h-4 w-4" />
-                              <AlertTitle>Atención</AlertTitle>
-                              <AlertDescription>
-                                Una vez que se agrega un recolector, su nombre no se puede modificar.
-                              </AlertDescription>
-                            </Alert>
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">Cancelar</Button>
@@ -200,7 +214,6 @@ export default function CollectorsPage() {
                     <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString('es-ES')}</TableCell>
                     {canManage && (
                     <TableCell>
-                        <Dialog>
                         <AlertDialog>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -211,9 +224,8 @@ export default function CollectorsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => {e.preventDefault(); setSelectedCollector(collector)}}>Ver Historial</DropdownMenuItem>
-                                </DialogTrigger>
+                                <DropdownMenuItem onSelect={() => { setSelectedCollector(collector); setIsHistoryOpen(true); }}>Ver Historial</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
                                 <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                 </AlertDialogTrigger>
@@ -234,7 +246,6 @@ export default function CollectorsPage() {
                             </AlertDialogContent>
 
                         </AlertDialog>
-                        </Dialog>
                     </TableCell>
                     )}
                 </TableRow>
@@ -245,7 +256,7 @@ export default function CollectorsPage() {
         </Card>
       </div>
       
-      <Dialog open={!!selectedCollector} onOpenChange={(isOpen) => !isOpen && setSelectedCollector(null)}>
+      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
         <DialogContent className="sm:max-w-2xl">
           {selectedCollector && (
             <>
@@ -286,12 +297,48 @@ export default function CollectorsPage() {
                   </Table>
               </div>
               <DialogFooter>
-                  <Button variant="outline" onClick={() => setSelectedCollector(null)}>Cerrar</Button>
+                  <Button variant="outline" onClick={() => setIsHistoryOpen(false)}>Cerrar</Button>
               </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Recolector</DialogTitle>
+            <DialogDescription>
+              Actualice el nombre del recolector. Este cambio se reflejará en todos los registros históricos.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={isPending} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Cambios'}</Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
+    
