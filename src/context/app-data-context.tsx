@@ -519,13 +519,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const userRef = doc(db, 'users', userId);
             await setDoc(userRef, { password: newPassword }, { merge: true });
             if (currentUser?.id === userId) {
-                setCurrentUser(updatedUser, true); 
+                // Determine if the current session uses localStorage
+                const wasRemembered = window.localStorage.getItem('currentUser') !== null;
+                setCurrentUser(updatedUser, wasRemembered); 
             }
         } catch (error) {
             console.error("Failed to update password:", error);
             setUsers(originalUsers);
             if (currentUser?.id === userId) {
-                setCurrentUser(currentUser, true);
+                const wasRemembered = window.localStorage.getItem('currentUser') !== null;
+                setCurrentUser(currentUser, wasRemembered);
             }
             throw error;
         }

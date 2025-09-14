@@ -200,8 +200,9 @@ function UserMenu() {
   const handleUserChange = (userId: string) => {
     const selectedUser = users.find(u => u.id === userId);
     if(selectedUser) {
-        // No need to pass rememberMe, the hook will preserve the existing storage mechanism
-        setCurrentUser(selectedUser);
+        // Determine if the current session uses localStorage to persist the "rememberMe" choice
+        const wasRemembered = window.localStorage.getItem('currentUser') !== null;
+        setCurrentUser(selectedUser, wasRemembered);
     }
   }
 
