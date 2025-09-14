@@ -104,7 +104,8 @@ export function ProductionForm() {
               collectorId: '',
           });
       }).catch(error => {
-        // Error is handled inside the context, but we can add a fallback toast here if needed
+        // Optimistic UI will handle errors, but a fallback can be useful for debugging.
+        console.error("Error saving harvest data:", error);
       });
     });
   }
