@@ -147,7 +147,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           producerLogsSnapshot,
           transactionsSnapshot,
         ] = await Promise.all([
-          getDocs(collection(db, 'juntadores')),
+          getDocs(collection(db, 'collectors')),
           getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
@@ -208,7 +208,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const newHarvestRef = doc(collection(db, 'harvests'));
             batch.set(newHarvestRef, harvest);
 
-            const juntadorRef = doc(db, 'juntadores', harvest.juntador.id);
+            const juntadorRef = doc(db, 'collectors', harvest.juntador.id);
             const { id, ...juntadorUpdateData } = updatedJuntador;
             batch.update(juntadorRef, juntadorUpdateData);
             
@@ -237,7 +237,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         try {
             const batchOp = writeBatch(db);
-            batchOp.delete(doc(db, 'juntadores', juntadorId));
+            batchOp.delete(doc(db, 'collectors', juntadorId));
             const harvestsQuery = query(collection(db, 'harvests'), where('juntador.id', '==', juntadorId));
             const paymentsQuery = query(collection(db, 'juntadorPaymentLogs'), where('juntadorId', '==', juntadorId));
             const [harvestsSnapshot, paymentsSnapshot] = await Promise.all([getDocs(harvestsQuery), getDocs(paymentsQuery)]);
@@ -258,7 +258,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setJuntadores(prev => [...prev, { id: tempId, ...juntador }]);
         
         try {
-            const ref = await addDoc(collection(db, 'juntadores'), juntador);
+            const ref = await addDoc(collection(db, 'collectors'), juntador);
             setJuntadores(prev => prev.map(c => c.id === tempId ? { ...c, id: ref.id } : c));
         } catch (error) {
             console.error("Failed to add juntador:", error);
@@ -418,7 +418,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             batchOp.delete(doc(db, 'juntadorPaymentLogs', logId));
             batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
             if (juntadorDoc) {
-                const juntadorRef = doc(db, 'juntadores', logToDelete.juntadorId);
+                const juntadorRef = doc(db, 'collectors', logToDelete.juntadorId);
                 const newTotalHarvested = juntadorDoc.totalHarvested - logToDelete.kilograms;
                 const newHoursWorked = juntadorDoc.hoursWorked - logToDelete.hours;
                 batchOp.update(juntadorRef, {
@@ -576,3 +576,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+
+    
