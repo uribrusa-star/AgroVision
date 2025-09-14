@@ -89,6 +89,10 @@ export function AgronomistReport() {
             docInstance.text("Informe Técnico Agronómico", pageWidth / 2, 22, { align: 'center' });
             docInstance.setDrawColor(180);
             docInstance.line(15, 30, pageWidth - 15, 30);
+             // Reset font for content
+            docInstance.setFont('helvetica', 'normal');
+            docInstance.setFontSize(10);
+            docInstance.setTextColor(80);
         };
         
         const checkAndAddPage = (neededHeight = 0) => {
@@ -144,12 +148,11 @@ export function AgronomistReport() {
                     2: { cellWidth: 'auto' }
                 },
                 didDrawCell: (data) => {
-                    const imgColIndex = head[0].length - 1; // Dynamic image column index
+                    const imgColIndex = head[0].length - 1; 
                     if (data.column.index === imgColIndex && data.row.section === 'body' && body[data.row.index]) {
                       const cellValue = body[data.row.index][imgColIndex];
                       if (cellValue && cellValue !== 'No') {
-                          // Clear cell text
-                          data.cell.text = '';
+                          data.cell.text = []; // Clear cell text effectively
                           const imgUrl = cellValue;
                           try {
                               const imgX = data.cell.x + 2;
@@ -160,10 +163,9 @@ export function AgronomistReport() {
                               doc.link(imgX, imgY, imgWidth, imgHeight, { url: imgUrl });
                           } catch (e) {
                               console.error("Error adding image to PDF table", e);
-                              // If image fails, add a clickable link text instead
-                              doc.setTextColor(42, 157, 244); // blue color for link
+                              doc.setTextColor(42, 157, 244);
                               doc.textWithLink('Link', data.cell.x + 2, data.cell.y + 8, { url: imgUrl });
-                              doc.setTextColor(80); // reset color
+                              doc.setTextColor(80);
                           }
                       }
                     }
