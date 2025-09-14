@@ -389,7 +389,7 @@ export function PhenologyHistory() {
 
     {/* Detail View Dialog */}
      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-2xl">
            {selectedLog && (() => {
               const stateInfo = getStateInfo(selectedLog.developmentState);
               return (
@@ -503,3 +503,5 @@ export function PhenologyHistory() {
   )
 }
 
+
+    

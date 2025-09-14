@@ -370,7 +370,7 @@ export function ApplicationHistory() {
 
     {/* Detail View Dialog */}
      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-2xl">
            {selectedLog && (() => {
               const typeInfo = getTypeInfo(selectedLog.type);
               return (
@@ -477,3 +477,5 @@ export function ApplicationHistory() {
     </>
   )
 }
+
+    

@@ -104,7 +104,7 @@ export function TransactionHistory() {
         </Card>
 
         <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-2xl">
                 {selectedTransaction && (
                     <>
                         <DialogHeader>
@@ -180,3 +180,4 @@ export function TransactionHistory() {
   )
 }
 
+    
