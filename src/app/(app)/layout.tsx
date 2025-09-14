@@ -39,7 +39,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { AppDataContext, AppContextProvider } from '@/context/app-data-context.tsx';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -142,9 +142,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AppContextProvider>
-      <AppLayoutContent>{children}</AppLayoutContent>
-    </AppContextProvider>
+    <>
+      {children}
+    </>
   );
 }
 
@@ -200,6 +200,7 @@ function UserMenu() {
   const handleUserChange = (userId: string) => {
     const selectedUser = users.find(u => u.id === userId);
     if(selectedUser) {
+        // No need to pass rememberMe, the hook will preserve the existing storage mechanism
         setCurrentUser(selectedUser);
     }
   }
