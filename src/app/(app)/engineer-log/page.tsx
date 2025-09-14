@@ -18,6 +18,7 @@ import { EnvironmentalLogForm } from './environmental-log-form';
 import { IrrigationLogForm } from './irrigation-log-form';
 import { AgronomistReport } from './agronomist-report';
 import { ActivityOmissionLogForm } from './activity-omission-log-form';
+import { NotesHistory } from '../producer-log/notes-history';
 
 
 export default function EngineerLogPage() {
@@ -90,8 +91,11 @@ export default function EngineerLogPage() {
             <div className="lg:col-span-2">
               <ApplicationHistory />
             </div>
-            <div className="lg:col-span-2">
+             <div className="lg:col-span-2">
               <PhenologyHistory />
+            </div>
+            <div className="lg:col-span-2">
+                <NotesHistory />
             </div>
           </div>
         </div>
