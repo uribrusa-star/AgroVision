@@ -13,10 +13,11 @@ import { DollarSign } from 'lucide-react';
 import { AppDataContext } from '@/context/app-data-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CostDistributionChart } from '../dashboard/cost-distribution-chart';
+import { IncomeChart } from './income-chart';
 
 
 export default function ProducerLogPage() {
-  const { loading, collectorPaymentLogs } = React.useContext(AppDataContext);
+  const { loading, collectorPaymentLogs, transactions } = React.useContext(AppDataContext);
   const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
   
   return (
@@ -28,6 +29,7 @@ export default function ProducerLogPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-8">
           <TransactionForm />
+          <IncomeChart transactions={transactions} />
           <TransactionHistory />
            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
