@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from 'react';
@@ -7,29 +6,32 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-react";
+import { BarChart as BarChartIcon, CalendarDays, DollarSign, Weight } from "lucide-react";
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Harvest } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
-import { ProductionPaymentHistory } from '@/app/(app)/production-payment-history';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
-import { PackagingHistory } from '../data-entry/packaging-history';
+import { CostDistributionChart } from './cost-distribution-chart';
 
 
 export default function DashboardPage() {
-  const { loading, harvests, collectors } = React.useContext(AppDataContext);
+  const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs } = React.useContext(AppDataContext);
 
-  const calculateDashboardStats = (harvests: Harvest[]) => {
+  const calculateDashboardStats = (harvests: Harvest[], paymentLogs: typeof collectorPaymentLogs, packagingLogs: typeof packagingLogs) => {
     if (harvests.length === 0) {
       return {
         totalHarvest: 0,
         averageYield: 0,
         peakDay: null,
+        totalLaborCost: 0,
       };
     }
 
     const totalHarvest = harvests.reduce((acc, h) => acc + h.kilograms, 0);
+    const totalHarvestLaborCost = paymentLogs.reduce((acc, p) => acc + p.payment, 0);
+    const totalPackagingLaborCost = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
+    const totalLaborCost = totalHarvestLaborCost + totalPackagingLaborCost;
     
     const harvestsByBatch = harvests.reduce((acc, h) => {
         if (!acc[h.batchNumber]) {
@@ -43,7 +45,6 @@ export default function DashboardPage() {
     const averageYield = numberOfBatches > 0 ? totalHarvest / numberOfBatches : 0;
 
     const dailyHarvests: { [key: string]: number } = harvests.reduce((acc, h) => {
-      // Use local date string to avoid timezone issues with toISOString()
       const date = new Date(h.date).toLocaleDateString('es-ES');
       if (!acc[date]) {
         acc[date] = 0;
@@ -61,14 +62,13 @@ export default function DashboardPage() {
       totalHarvest,
       averageYield,
       peakDay,
+      totalLaborCost,
     };
   };
   
 
-  const dashboardStats = {
-    ...calculateDashboardStats(harvests),
-    activeCollectors: collectors.length,
-  };
+  const dashboardStats = calculateDashboardStats(harvests, collectorPaymentLogs, packagingLogs);
+  const sortedHarvests = [...harvests].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <>
@@ -86,6 +86,16 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Costo de Mano de Obra</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${dashboardStats.totalLaborCost.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`}</div>
+            <p className="text-xs text-muted-foreground">Cosecha + Embalaje</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Rendimiento Promedio</CardTitle>
             <BarChartIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -96,28 +106,23 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recolectores Activos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : `+${dashboardStats.activeCollectors.toLocaleString('es-ES')}`}</div>
-            <p className="text-xs text-muted-foreground">Actualmente en el campo</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Día Pico</CardTitle>
+            <CardTitle className="text-sm font-medium">Día Pico de Cosecha</CardTitle>
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : (dashboardStats.peakDay || 'N/A')}</div>
-            <p className="text-xs text-muted-foreground">Cosecha más alta esta temporada</p>
+            <p className="text-xs text-muted-foreground">El día más productivo</p>
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-        <MonthlyHarvestChart harvests={harvests} />
-        <BatchYieldChart />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+        <div className="lg:col-span-2">
+          <MonthlyHarvestChart harvests={harvests} />
+        </div>
+        <CostDistributionChart />
+        <div className="lg:col-span-3">
+          <BatchYieldChart />
+        </div>
         <div className="lg:col-span-2">
             <Card>
             <CardHeader>
@@ -136,17 +141,17 @@ export default function DashboardPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {loading && (
-                    <TableRow>
-                        <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
-                    </TableRow>
-                    )}
-                    {!loading && harvests.length === 0 && (
+                    {loading && Array.from({ length: 3 }).map((_,i) => (
+                      <TableRow key={i}>
+                          <TableCell colSpan={4}><Skeleton className="h-10 w-full" /></TableCell>
+                      </TableRow>
+                    ))}
+                    {!loading && sortedHarvests.length === 0 && (
                         <TableRow>
                             <TableCell colSpan={4} className="text-center">No hay cosechas recientes.</TableCell>
                         </TableRow>
                     )}
-                    {!loading && harvests.slice(0, 5).map((harvest) => (
+                    {!loading && sortedHarvests.slice(0, 5).map((harvest) => (
                     <TableRow key={harvest.id}>
                         <TableCell>
                         <Badge variant="outline">{harvest.batchNumber}</Badge>
@@ -162,39 +167,29 @@ export default function DashboardPage() {
             </CardContent>
             </Card>
         </div>
-        <div className="lg:col-span-2">
-          <ProductionPaymentHistory />
-        </div>
-        <div className="lg:col-span-2">
-          <PackagingHistory />
-        </div>
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-1">
             <Card>
                 <CardHeader>
-                    <CardTitle>Visión General de Productividad de Recolectores</CardTitle>
+                    <CardTitle>Productividad</CardTitle>
                     <CardDescription>Resumen del rendimiento de cada recolector.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="max-h-[300px] overflow-auto">
                     <Table>
                         <TableHeader>
                         <TableRow>
                             <TableHead>Nombre</TableHead>
-                            <TableHead className="text-right">Total Cosechado (kg)</TableHead>
-                            <TableHead className="text-right">Horas Trabajadas</TableHead>
-                            <TableHead className="text-right">Productividad (kg/hr)</TableHead>
+                            <TableHead className="text-right">kg/hr</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
-                        {loading && (
-                           <TableRow>
-                            <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                        {loading && Array.from({ length: 3 }).map((_,i) => (
+                           <TableRow key={i}>
+                            <TableCell colSpan={2}><Skeleton className="h-8 w-full" /></TableCell>
                            </TableRow>
-                        )}
-                        {!loading && collectors.map((collector) => (
+                        ))}
+                        {!loading && [...collectors].sort((a,b) => b.productivity - a.productivity).map((collector) => (
                             <TableRow key={collector.id}>
                             <TableCell className="font-medium">{collector.name}</TableCell>
-                            <TableCell className="text-right">{collector.totalHarvested.toLocaleString('es-ES')}</TableCell>
-                            <TableCell className="text-right">{collector.hoursWorked.toLocaleString('es-ES')}</TableCell>
                             <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
