@@ -45,6 +45,7 @@ export function ApplicationHistory() {
   const [selectedLog, setSelectedLog] = useState<AgronomistLog | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const form = useForm<LogFormValues>({

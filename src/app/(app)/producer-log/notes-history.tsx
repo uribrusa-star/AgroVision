@@ -23,6 +23,7 @@ export function NotesHistory() {
   const [selectedLog, setSelectedLog] = useState<ProducerLog | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor';
 
   const sortedLogs = useMemo(() => 

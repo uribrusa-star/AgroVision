@@ -15,6 +15,8 @@ import { useToast } from '@/hooks/use-toast';
 export function BatchHistory() {
   const { loading, batches, deleteBatch, currentUser, harvests } = useContext(AppDataContext);
   const { toast } = useToast();
+  
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const handleDelete = (batchId: string) => {

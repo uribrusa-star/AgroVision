@@ -31,6 +31,7 @@ export function ActivityOmissionLogForm() {
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
   
   const form = useForm<LogFormValues>({

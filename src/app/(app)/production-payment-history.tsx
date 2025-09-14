@@ -21,7 +21,8 @@ function ProductionPaymentHistoryComponent() {
   const [isPending, startTransition] = useTransition();
   const [selectedLog, setSelectedLog] = useState<CollectorPaymentLog | null>(null);
 
-  const canManage = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
+  if (!currentUser) return null; // Guard clause
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
 
   const handleDelete = (logId: string) => {
     startTransition(async () => {

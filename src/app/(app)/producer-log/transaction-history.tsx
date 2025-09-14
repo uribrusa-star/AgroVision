@@ -22,6 +22,7 @@ export function TransactionHistory() {
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor';
 
   const sortedTransactions = useMemo(() => 
@@ -35,13 +36,12 @@ export function TransactionHistory() {
 
   const handleDelete = (transactionId: string) => {
     startTransition(() => {
-        deleteTransaction(transactionId).then(() => {
-          toast({
-              title: "Transacción Eliminada",
-              description: "El registro financiero ha sido eliminado exitosamente.",
-          });
-          setSelectedTransaction(null);
+        deleteTransaction(transactionId);
+        toast({
+            title: "Transacción Eliminada",
+            description: "El registro financiero ha sido eliminado exitosamente.",
         });
+        setSelectedTransaction(null);
     });
   }
 
@@ -179,5 +179,3 @@ export function TransactionHistory() {
     </>
   )
 }
-
-    

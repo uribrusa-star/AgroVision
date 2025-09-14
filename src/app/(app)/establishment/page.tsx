@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { useContext, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -85,6 +86,7 @@ const geoJsonSchema = z.object({
 
 const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
   const { currentUser } = useContext(AppDataContext);
+  if (!currentUser) return null; // Guard clause
   const canEdit = editableBy ? editableBy.includes(currentUser.role) : false;
 
   return (
@@ -551,5 +553,3 @@ export default function EstablishmentPage() {
     </>
   );
 }
-
-    

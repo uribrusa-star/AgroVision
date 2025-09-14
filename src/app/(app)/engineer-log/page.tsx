@@ -25,6 +25,8 @@ import { NotesHistory } from '../producer-log/notes-history';
 export default function EngineerLogPage() {
   const { loading, collectors, harvests, currentUser } = useContext(AppDataContext);
   
+  if (!currentUser) return null; // Guard clause
+
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
   
   const harvestedBatchIds = [...new Set(harvests.map(h => h.batchNumber))];

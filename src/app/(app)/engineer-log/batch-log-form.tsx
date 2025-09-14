@@ -23,6 +23,8 @@ export function BatchLogForm() {
   const { addBatch, batches, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const form = useForm<BatchLogFormValues>({

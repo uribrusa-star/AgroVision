@@ -29,6 +29,8 @@ export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
   const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs } = useContext(AppDataContext);
   const { toast } = useToast();
+
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
   const logoRef = useRef<HTMLDivElement>(null);

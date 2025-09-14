@@ -48,6 +48,7 @@ export function PhenologyHistory() {
   const [selectedLog, setSelectedLog] = useState<PhenologyLog | null>(null);
   const [isPending, startTransition] = useTransition();
 
+  if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo' || currentUser.role === 'Encargado';
 
   const form = useForm<LogFormValues>({
