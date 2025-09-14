@@ -18,11 +18,11 @@ import { PlusCircle, Trash2 } from 'lucide-react';
 import type { ImageWithHint } from '@/lib/types';
 
 const LogSchema = z.object({
-  observationType: z.enum(['Plaga', 'Enfermedad'], {
+  observationType: z.enum(['Plaga', 'Enfermedad', 'Deficiencia', 'Exceso'], {
     required_error: "El tipo de observación es requerido.",
   }),
   batchId: z.string().optional(),
-  product: z.string().min(1, "El producto o agente observado es requerido."),
+  product: z.string().min(1, "El agente o nutriente observado es requerido."),
   severity: z.string().min(3, "La incidencia o severidad es requerida."),
   notes: z.string().min(5, "Las notas deben tener al menos 5 caracteres."),
   images: z.array(z.object({
@@ -60,7 +60,7 @@ export function HealthLogForm() {
     startTransition(() => {
         const imagesWithHints: ImageWithHint[] = (data.images || [])
             .filter(img => img.url)
-            .map(img => ({ url: img.url, hint: 'crop disease pest'}));
+            .map(img => ({ url: img.url, hint: 'crop disease pest deficiency'}));
 
       addAgronomistLog({
         date: new Date().toISOString(),
@@ -91,7 +91,7 @@ export function HealthLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registrar Sanidad y Monitoreo</CardTitle>
-        <CardDescription>Observe plagas y enfermedades, y asócielas a un lote específico.</CardDescription>
+        <CardDescription>Observe plagas, enfermedades, deficiencias o excesos nutricionales.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -112,6 +112,8 @@ export function HealthLogForm() {
                         <SelectContent>
                             <SelectItem value="Plaga">Plaga</SelectItem>
                             <SelectItem value="Enfermedad">Enfermedad</SelectItem>
+                            <SelectItem value="Deficiencia">Deficiencia</SelectItem>
+                            <SelectItem value="Exceso">Exceso</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -123,9 +125,9 @@ export function HealthLogForm() {
                     name="product"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Agente Observado</FormLabel>
+                        <FormLabel>Agente/Nutriente Observado</FormLabel>
                         <FormControl>
-                        <Input placeholder="Ej. Ácaros, Botritis" {...field} disabled={!canManage || isPending} />
+                        <Input placeholder="Ej. Ácaros, Calcio, Nitrógeno" {...field} disabled={!canManage || isPending} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -178,7 +180,7 @@ export function HealthLogForm() {
                   <FormLabel>Notas Adicionales</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Describa la ubicación, condiciones, etc."
+                      placeholder="Describa la ubicación, síntomas, condiciones, etc."
                       className="resize-none"
                       {...field}
                       disabled={!canManage || isPending}
