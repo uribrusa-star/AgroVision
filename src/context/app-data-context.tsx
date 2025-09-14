@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -38,6 +39,7 @@ export const AppDataContext = React.createContext<AppData>({
   deleteCollectorPaymentLog: async () => { throw new Error('Not implemented') },
   updateEstablishmentData: async () => { throw new Error('Not implemented') },
   addProducerLog: async () => { throw new Error('Not implemented') },
+  deleteProducerLog: async () => { throw new Error('Not implemented') },
   addTransaction: async () => { throw new Error('Not implemented') },
   deleteTransaction: async () => { throw new Error('Not implemented') },
   updateUserPassword: async () => { throw new Error('Not implemented') },
@@ -503,6 +505,19 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const deleteProducerLog = async (logId: string) => {
+        const originalLogs = [...producerLogs];
+        setProducerLogs(prev => prev.filter(l => l.id !== logId));
+        
+        try {
+            await deleteDoc(doc(db, 'producerLogs', logId));
+        } catch(error) {
+            console.error("Failed to delete producer log:", error);
+            setProducerLogs(originalLogs);
+            toast({ title: "Error", description: "No se pudo eliminar la nota.", variant: "destructive"});
+        }
+    };
+
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
         const tempId = `transaction_${Date.now()}`;
         setTransactions(prev => [{ id: tempId, ...transaction }, ...prev]);
@@ -584,6 +599,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         deleteCollectorPaymentLog,
         updateEstablishmentData,
         addProducerLog,
+        deleteProducerLog,
         addTransaction,
         deleteTransaction,
         updateUserPassword,

@@ -1,6 +1,5 @@
 
 
-
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -196,6 +195,7 @@ export type AppData = {
   deleteCollectorPaymentLog: (logId: string) => Promise<void>;
   updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
   addProducerLog: (log: Omit<ProducerLog, 'id'>) => Promise<void>;
+  deleteProducerLog: (logId: string) => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   deleteTransaction: (transactionId: string) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
