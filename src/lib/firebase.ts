@@ -20,20 +20,15 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Firestore's SDK handles the check for the browser environment internally.
 let db;
 try {
+    // By providing no arguments to persistentLocalCache, we get the default, stable, single-tab persistence.
     db = initializeFirestore(app, {
-        localCache: persistentLocalCache({
-            tabManager: 'firestore-multitab'
-        }),
+        localCache: persistentLocalCache({}),
         cacheSizeBytes: CACHE_SIZE_UNLIMITED
     });
 } catch (e: any) {
-    if (e.code === 'failed-precondition' || e.code === 'unimplemented') {
-        console.warn(`Firestore persistence failed to enable in this tab. This is likely because another tab is already open or the browser does not support it. Offline capabilities may be limited.`);
-        db = getFirestore(app);
-    } else {
-        console.error("Could not initialize Firestore with persistence", e);
-        db = getFirestore(app);
-    }
+    console.error("Could not initialize Firestore with persistence", e);
+    // Fallback to in-memory persistence if persistent cache fails
+    db = getFirestore(app);
 }
 
 

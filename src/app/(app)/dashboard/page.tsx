@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { BarChart as BarChartIcon, CalendarDays, DollarSign, Weight } from "lucide-react";
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { Harvest } from '@/lib/types';
+import type { Harvest, CollectorPaymentLog, PackagingLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
@@ -20,7 +20,7 @@ import { PackagingHistory } from '../data-entry/packaging-history';
 export default function DashboardPage() {
   const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs } = React.useContext(AppDataContext);
 
-  const calculateDashboardStats = (harvests: Harvest[], paymentLogs: typeof collectorPaymentLogs, packagingLogs: typeof packagingLogs) => {
+  const calculateDashboardStats = (harvests: Harvest[], paymentLogs: CollectorPaymentLog[], packagingLogs: PackagingLog[]) => {
     if (harvests.length === 0) {
       return {
         totalHarvest: 0,
@@ -31,8 +31,8 @@ export default function DashboardPage() {
     }
 
     const totalHarvest = harvests.reduce((acc, h) => acc + h.kilograms, 0);
-    const totalHarvestLaborCost = paymentLogs.reduce((acc, p) => acc + p.payment, 0);
-    const totalPackagingLaborCost = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
+    const totalHarvestLaborCost = (paymentLogs || []).reduce((acc, p) => acc + p.payment, 0);
+    const totalPackagingLaborCost = (packagingLogs || []).reduce((acc, p) => acc + p.payment, 0);
     const totalLaborCost = totalHarvestLaborCost + totalPackagingLaborCost;
     
     const harvestsByBatch = harvests.reduce((acc, h) => {
