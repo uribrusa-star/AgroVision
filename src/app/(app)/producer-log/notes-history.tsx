@@ -102,7 +102,7 @@ export function NotesHistory() {
             return (
                 <AlertDialog>
                     <DialogHeader>
-                        <DialogTitle className="flex items-center gap-2"><Icon className="h-5 w-5" />{title}</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">{Icon && <Icon className="h-5 w-5" />}{title}</DialogTitle>
                         <DialogDescription>
                             Revisión de la nota registrada en la bitácora.
                         </DialogDescription>
@@ -143,6 +143,9 @@ export function NotesHistory() {
                                                         </div>
                                                       </DialogTrigger>
                                                       <DialogContent className="max-w-4xl h-[90vh] flex items-center justify-center p-2">
+                                                        <DialogHeader>
+                                                          <DialogTitle className="sr-only">Imagen: {`${selectedLog.notes} - ${index + 1}`}</DialogTitle>
+                                                        </DialogHeader>
                                                         <Image
                                                           src={image.url}
                                                           alt={`${selectedLog.notes} - Imagen ${index + 1}`}
@@ -177,7 +180,7 @@ export function NotesHistory() {
                               </Button>
                             </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setSelectedLog(null)} variant="outline">Cerrar</Button>
+                        <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
                     </DialogFooter>
                     <AlertDialogContent>
                         <AlertDialogHeader>

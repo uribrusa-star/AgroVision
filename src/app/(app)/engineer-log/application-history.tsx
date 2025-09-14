@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer, Calendar, Trash2, PlusCircle, Image as ImageIcon } from 'lucide-react';
+import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer, Trash2, PlusCircle, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { AgronomistLog, AgronomistLogType, ImageWithHint } from '@/lib/types';
@@ -375,7 +375,7 @@ export function ApplicationHistory() {
                  <AlertDialog>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                           <typeInfo.icon className="h-5 w-5" />
+                           {typeInfo.icon && <typeInfo.icon className="h-5 w-5" />}
                            Detalle del Registro de Actividad
                         </DialogTitle>
                         <DialogDescription>
@@ -384,7 +384,7 @@ export function ApplicationHistory() {
                     </DialogHeader>
                     <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Calendar className="h-4 w-4" />
+                            <MoreHorizontal className="h-4 w-4" />
                             <span>{new Date(selectedLog.date).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</span>
                         </div>
                         <Card>
@@ -433,6 +433,9 @@ export function ApplicationHistory() {
                                                     </div>
                                                   </DialogTrigger>
                                                   <DialogContent className="max-w-4xl h-[90vh] flex items-center justify-center p-2">
+                                                     <DialogHeader>
+                                                      <DialogTitle className="sr-only">Imagen: {`${selectedLog.notes} - ${index + 1}`}</DialogTitle>
+                                                    </DialogHeader>
                                                     <Image
                                                       src={image.url}
                                                       alt={`${selectedLog.notes} - Imagen ${index + 1}`}
@@ -460,14 +463,14 @@ export function ApplicationHistory() {
                     </div>
                     <DialogFooter className="flex flex-row justify-between w-full pt-2">
                         {canManage ? (
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" disabled={isPending}>
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Eliminar</span>
-                                </Button>
+                           <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="icon" disabled={isPending}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Eliminar</span>
+                              </Button>
                             </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} variant="outline">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="secondary">Cerrar</Button>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
