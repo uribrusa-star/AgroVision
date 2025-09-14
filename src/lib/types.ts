@@ -180,6 +180,7 @@ export type AppData = {
   producerLogs: ProducerLog[];
   transactions: Transaction[];
   addHarvest: (harvest: Omit<Harvest, 'id'>, hoursWorked: number) => Promise<string | undefined>;
+  editCollector: (collector: Collector) => Promise<void>;
   deleteCollector: (collectorId: string) => Promise<void>;
   addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => Promise<void>;
   editAgronomistLog: (log: AgronomistLog) => Promise<void>;

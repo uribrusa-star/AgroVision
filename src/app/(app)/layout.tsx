@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -56,7 +57,7 @@ const allNavItems = [
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { currentUser, isClient, loading, users } = React.useContext(AppDataContext);
+  const { currentUser, isClient, loading } = React.useContext(AppDataContext);
   const router = useRouter();
 
   // If we are on the client, but the user is not logged in, redirect to login page.
@@ -68,7 +69,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   }, [isClient, loading, currentUser, router]);
 
   // If the app is not client-rendered yet, or if there's no user, show a global loader.
-  if (!isClient || !currentUser) {
+  if (!isClient || loading || !currentUser) {
     return (
         <div className="flex items-center justify-center h-screen">
           <div className="flex flex-col items-center gap-4">
@@ -128,14 +129,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 </div>
             </header>
             <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
-                {loading ? (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="flex flex-col items-center gap-4">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                      <p className="text-muted-foreground">Cargando datos...</p>
-                    </div>
-                  </div>
-                ) : children}
+                {children}
             </main>
           </div>
         </div>
