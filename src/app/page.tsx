@@ -2,15 +2,12 @@
 'use client';
 
 import React from 'react';
-import { AppContextProvider } from '@/context/app-data-context.tsx';
+// AppContextProvider is no longer needed here as it's provided in the root layout
 import LoginPageContent from '@/app/(app)/page.tsx';
 
 
 export default function LoginPage() {
-
-  return (
-    <AppContextProvider>
-      <LoginPageContent />
-    </AppContextProvider>
-  );
+  // We can directly render the content, as the context is provided by the parent layout.
+  return <LoginPageContent />;
 }
+

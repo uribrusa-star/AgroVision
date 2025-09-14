@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useContext, useTransition } from 'react';
+import React, { useContext, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,7 +28,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPageContent() {
-  const { users, setCurrentUser } = useContext(AppDataContext);
+  const { users, currentUser, setCurrentUser, isClient } = useContext(AppDataContext);
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -42,6 +42,13 @@ export default function LoginPageContent() {
     },
   });
 
+  useEffect(() => {
+    if (isClient && currentUser) {
+      router.replace('/dashboard');
+    }
+  }, [isClient, currentUser, router]);
+
+
   const onSubmit = (values: LoginFormValues) => {
     startTransition(() => {
         const user = users.find(u => u.email === values.email && u.password === values.password);
@@ -52,12 +59,17 @@ export default function LoginPageContent() {
                 title: `Bienvenido, ${user.name}!`,
                 description: "Ha iniciado sesión correctamente.",
             });
-            router.push('/dashboard');
+            // The useEffect above will handle the redirection.
         } else {
             form.setError("root", { message: "Correo electrónico o contraseña incorrectos."});
         }
     });
   };
+
+  // If already logged in, don't render the form, let useEffect redirect.
+  if (currentUser) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
@@ -147,3 +159,4 @@ export default function LoginPageContent() {
     </div>
   );
 }
+

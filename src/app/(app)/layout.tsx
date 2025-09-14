@@ -59,12 +59,15 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentUser, isClient, loading, users } = React.useContext(AppDataContext);
   const router = useRouter();
 
+  // If we are on the client, but the user is not logged in, redirect to login page.
+  // This prevents flashing the layout for non-authenticated users.
   useEffect(() => {
     if (isClient && !currentUser) {
       router.replace('/');
     }
   }, [isClient, currentUser, router]);
 
+  // If the app is not client-rendered yet, or if there's no user, show a global loader.
   if (!isClient || !currentUser) {
     return (
         <div className="flex items-center justify-center h-screen">
@@ -76,7 +79,15 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
   
+  // Filter nav items based on the current user's role.
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
+
+  // If the user somehow lands on a page they don't have access to, redirect them.
+  // This is a client-side safeguard.
+  if (isClient && !navItems.some(item => item.href === pathname) && pathname !== '/') {
+      router.replace('/dashboard');
+      return null;
+  }
 
   return (
       <SidebarProvider>
