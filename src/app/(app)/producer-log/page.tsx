@@ -18,8 +18,8 @@ import { IncomeChart } from './income-chart';
 
 export default function ProducerLogPage() {
   const { loading, collectorPaymentLogs, packagingLogs, transactions } = React.useContext(AppDataContext);
-  const totalHarvestLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
-  const totalPackagingLaborCost = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
+  const totalHarvestLaborCost = (collectorPaymentLogs || []).reduce((acc, p) => acc + p.payment, 0);
+  const totalPackagingLaborCost = (packagingLogs || []).reduce((acc, p) => acc + p.payment, 0);
   
   return (
     <>
