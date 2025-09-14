@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Bug, Hand, Leaf, SprayCan, Wind, Thermometer, Calendar, Trash2, PlusCircle, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { AgronomistLog, AgronomistLogType, ImageWithHint } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -446,7 +446,7 @@ export function ApplicationHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter className="flex w-full justify-between pt-2">
+                    <DialogFooter className="flex-row justify-between w-full pt-2">
                         {canManage ? (
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" size="icon" disabled={isPending}>
@@ -455,7 +455,7 @@ export function ApplicationHistory() {
                                     </Button>
                                 </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} className="ml-auto" variant="outline">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="outline">Cerrar</Button>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>

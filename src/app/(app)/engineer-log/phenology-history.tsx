@@ -469,7 +469,7 @@ export function PhenologyHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter className="flex w-full justify-between pt-2">
+                    <DialogFooter className="flex-row justify-between w-full pt-2">
                        {canManage ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -492,7 +492,7 @@ export function PhenologyHistory() {
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} variant="outline" className="ml-auto">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="outline">Cerrar</Button>
                     </DialogFooter>
                  </AlertDialog>
               );

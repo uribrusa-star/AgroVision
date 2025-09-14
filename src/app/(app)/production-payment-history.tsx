@@ -140,7 +140,7 @@ function ProductionPaymentHistoryComponent() {
                   </Card>
               </div>
 
-               <DialogFooter className="flex w-full justify-between pt-2">
+               <DialogFooter className="flex-row justify-between w-full pt-2">
                   {canManage ? (
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
@@ -163,7 +163,7 @@ function ProductionPaymentHistoryComponent() {
                           </AlertDialogContent>
                       </AlertDialog>
                   ) : <div />}
-                  <Button onClick={() => setSelectedLog(null)} variant="outline" className="ml-auto">Cerrar</Button>
+                  <Button onClick={() => setSelectedLog(null)} variant="outline">Cerrar</Button>
               </DialogFooter>
             </>
           )}
