@@ -28,7 +28,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPageContent() {
-  const { users, currentUser, setCurrentUser, isClient } = useContext(AppDataContext);
+  const { users, currentUser, setCurrentUser, isClient, loading } = useContext(AppDataContext);
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -43,10 +43,11 @@ export default function LoginPageContent() {
   });
 
   useEffect(() => {
-    if (isClient && currentUser) {
+    // Only redirect if not loading and a user is already logged in
+    if (isClient && !loading && currentUser) {
       router.replace('/dashboard');
     }
-  }, [isClient, currentUser, router]);
+  }, [isClient, loading, currentUser, router]);
 
 
   const onSubmit = (values: LoginFormValues) => {
@@ -159,4 +160,3 @@ export default function LoginPageContent() {
     </div>
   );
 }
-

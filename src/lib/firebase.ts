@@ -15,21 +15,30 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize Firestore
-const db = getFirestore(app);
+let db;
 
-// Enable multi-tab persistence only on the client-side
+// Initialize Firestore with persistence only on the client-side
 if (typeof window !== 'undefined') {
-  enableMultiTabIndexedDbPersistence(db).catch((err) => {
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: 'MEMORY' }),
+    });
+    enableMultiTabIndexedDbPersistence(db).catch((err) => {
       if (err.code === 'failed-precondition') {
-          // This can happen if another tab is already open and has exclusive access.
-          // The app will still work with memory-only persistence in this tab.
           console.warn('Firestore persistence failed to enable in this tab. This is likely because another tab is already open. Offline capabilities may be limited.');
       } else if (err.code === 'unimplemented') {
-          // The current browser does not support all of the features required to enable this persistence mode.
           console.warn('This browser does not support the necessary features for multi-tab persistence.');
       }
-  });
+    });
+  } catch (e) {
+    console.error("Could not initialize Firestore with persistence", e);
+    // Fallback to memory cache if persistence fails
+    db = initializeFirestore(app, { localCache: memoryLocalCache() });
+  }
+} else {
+  // For server-side rendering, use memory cache
+  db = initializeFirestore(app, { localCache: memoryLocalCache() });
 }
+
 
 export { db };

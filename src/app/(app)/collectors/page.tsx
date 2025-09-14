@@ -29,7 +29,7 @@ const JuntadorSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
 });
 
-export default function JuntadoresPage() {
+export default function CollectorsPage() {
   const { loading, juntadores, harvests, addJuntador, deleteJuntador, currentUser } = React.useContext(AppDataContext);
   const [selectedJuntador, setSelectedJuntador] = useState<Juntador | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -89,19 +89,19 @@ export default function JuntadoresPage() {
   return (
     <>
       <PageHeader
-        title="Gestión de Juntadores"
-        description="Vea, gestione y siga la productividad de sus juntadores."
+        title="Gestión de Recolectores"
+        description="Vea, gestione y siga la productividad de sus recolectores."
       >
         {canManage && (
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                    <Button>Agregar Nuevo Juntador</Button>
+                    <Button>Agregar Nuevo Recolector</Button>
                 </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Agregar Nuevo Juntador</DialogTitle>
+                        <DialogTitle>Agregar Nuevo Recolector</DialogTitle>
                         <DialogDescription>
-                            Complete los detalles para agregar un nuevo juntador al sistema.
+                            Complete los detalles para agregar un nuevo recolector al sistema.
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
@@ -123,14 +123,14 @@ export default function JuntadoresPage() {
                               <AlertCircle className="h-4 w-4" />
                               <AlertTitle>Atención</AlertTitle>
                               <AlertDescription>
-                                Una vez que se agrega un juntador, su nombre no se puede modificar.
+                                Una vez que se agrega un recolector, su nombre no se puede modificar.
                               </AlertDescription>
                             </Alert>
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">Cancelar</Button>
                                 </DialogClose>
-                                <Button type="submit" disabled={isPending}>{isPending ? 'Agregando...' : 'Agregar Juntador'}</Button>
+                                <Button type="submit" disabled={isPending}>{isPending ? 'Agregando...' : 'Agregar Recolector'}</Button>
                             </DialogFooter>
                         </form>
                     </Form>
@@ -142,8 +142,8 @@ export default function JuntadoresPage() {
       <div className="w-full max-w-7xl mx-auto">
         <Card>
         <CardHeader>
-            <CardTitle>Todos los Juntadores</CardTitle>
-            <CardDescription>Una lista de todos los juntadores en su organización.</CardDescription>
+            <CardTitle>Todos los Recolectores</CardTitle>
+            <CardDescription>Una lista de todos los recolectores en su organización.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
@@ -223,7 +223,7 @@ export default function JuntadoresPage() {
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Esto eliminará permanentemente al juntador y todos sus datos de cosecha asociados.
+                                        Esta acción no se puede deshacer. Esto eliminará permanentemente al recolector y todos sus datos de cosecha asociados.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -251,7 +251,7 @@ export default function JuntadoresPage() {
               <DialogHeader>
                   <DialogTitle>Historial de Cosecha: {selectedJuntador.name}</DialogTitle>
                   <DialogDescription>
-                  Revise todas las entradas de cosecha para este juntador.
+                  Revise todas las entradas de cosecha para este recolector.
                   </DialogDescription>
               </DialogHeader>
               <div className="max-h-[60vh] overflow-auto">

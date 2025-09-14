@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { BarChart as BarChartIcon, CalendarDays, Users, Weight } from "lucide-react";
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Harvest } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
@@ -95,7 +95,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Juntadores Activos</CardTitle>
+            <CardTitle className="text-sm font-medium">Recolectores Activos</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                 <TableHeader>
                     <TableRow>
                     <TableHead>Lote</TableHead>
-                    <TableHead>Juntador</TableHead>
+                    <TableHead>Recolector</TableHead>
                     <TableHead className="text-right">Kilogramos</TableHead>
                     <TableHead>Fecha</TableHead>
                     </TableRow>
@@ -167,8 +167,8 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Visión General de Productividad de Juntadores</CardTitle>
-                    <CardDescription>Resumen del rendimiento de cada juntador.</CardDescription>
+                    <CardTitle>Visión General de Productividad de Recolectores</CardTitle>
+                    <CardDescription>Resumen del rendimiento de cada recolector.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>

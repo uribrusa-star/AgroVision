@@ -55,7 +55,7 @@ function ProductionPaymentHistoryComponent() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Lote</TableHead>
-                    <TableHead>Juntador</TableHead>
+                    <TableHead>Recolector</TableHead>
                     <TableHead className="text-right">Pago</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -115,7 +115,7 @@ function ProductionPaymentHistoryComponent() {
                               <Badge variant="outline">{getHarvestForLog(selectedLog)?.batchNumber || 'N/A'}</Badge>
                            </div>
                            <div className="flex items-center justify-between">
-                              <span className="text-sm text-muted-foreground">Juntador</span>
+                              <span className="text-sm text-muted-foreground">Recolector</span>
                               <span className="font-semibold">{selectedLog.juntadorName}</span>
                            </div>
                             <hr />
@@ -153,7 +153,7 @@ function ProductionPaymentHistoryComponent() {
                               <AlertDialogHeader>
                                   <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                      Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y el pago asociado, y reajustará las estadísticas del juntador.
+                                      Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y el pago asociado, y reajustará las estadísticas del recolector.
                                   </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -174,5 +174,3 @@ function ProductionPaymentHistoryComponent() {
 }
 
 export const ProductionPaymentHistory = React.memo(ProductionPaymentHistoryComponent);
-
-    

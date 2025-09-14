@@ -67,7 +67,7 @@ export default function EngineerLogPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Juntadores</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Recolectores</CardTitle>
             <HardHat className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>

@@ -28,7 +28,7 @@ const ProductionSchema = z.object({
   }),
   batchId: z.string().min(1, "El ID del lote es requerido."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
-  juntadorId: z.string().min(1, "El juntador es requerido."),
+  juntadorId: z.string().min(1, "El recolector es requerido."),
   ratePerKg: z.coerce.number().min(0.01, "La tarifa por kg es requerida."),
   hoursWorked: z.coerce.number().min(0.5, "Las horas trabajadas son requeridas."),
 });
@@ -62,7 +62,7 @@ export function ProductionForm() {
   const saveHarvestData = (values: ProductionFormValues) => {
     const juntador = juntadores.find(c => c.id === values.juntadorId);
     if (!juntador) {
-      toast({ title: 'Error', description: 'Juntador no encontrado.', variant: 'destructive'});
+      toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
       return;
     }
     
@@ -152,7 +152,7 @@ export function ProductionForm() {
       <Card>
         <CardHeader>
           <CardTitle>Registrar Carga de Producción</CardTitle>
-          <CardDescription>Ingrese los detalles de la cosecha y calcule el pago del juntador.</CardDescription>
+          <CardDescription>Ingrese los detalles de la cosecha y calcule el pago del recolector.</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -275,11 +275,11 @@ export function ProductionForm() {
                 name="juntadorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Juntador</FormLabel>
+                    <FormLabel>Recolector</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage || isPending}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccione un juntador" />
+                          <SelectValue placeholder="Seleccione un recolector" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>

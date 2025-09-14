@@ -51,7 +51,7 @@ const allNavItems = [
   { href: '/producer-log', label: 'Bitácora del Productor', icon: NotebookPen, roles: ['Productor'] },
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
-  { href: '/juntadores', label: 'Juntadores', icon: HardHat, roles: ['Productor', 'Encargado'] },
+  { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
 ];
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
@@ -62,10 +62,10 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   // If we are on the client, but the user is not logged in, redirect to login page.
   // This prevents flashing the layout for non-authenticated users.
   useEffect(() => {
-    if (isClient && !currentUser) {
+    if (isClient && !loading && !currentUser) {
       router.replace('/');
     }
-  }, [isClient, currentUser, router]);
+  }, [isClient, loading, currentUser, router]);
 
   // If the app is not client-rendered yet, or if there's no user, show a global loader.
   if (!isClient || !currentUser) {
@@ -81,13 +81,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   
   // Filter nav items based on the current user's role.
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
-
-  // If the user somehow lands on a page they don't have access to, redirect them.
-  // This is a client-side safeguard.
-  if (isClient && !navItems.some(item => item.href === pathname) && pathname !== '/') {
-      router.replace('/dashboard');
-      return null;
-  }
 
   return (
       <SidebarProvider>

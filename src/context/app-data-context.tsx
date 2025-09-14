@@ -249,7 +249,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setJuntadores(originalState.juntadores);
             setHarvests(originalState.harvests);
             setJuntadorPaymentLogs(originalState.juntadorPaymentLogs);
-            toast({ title: "Error", description: "No se pudo eliminar al juntador.", variant: "destructive"});
+            toast({ title: "Error", description: "No se pudo eliminar al recolector.", variant: "destructive"});
         }
     };
 
@@ -263,7 +263,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         } catch (error) {
             console.error("Failed to add juntador:", error);
             setJuntadores(prev => prev.filter(c => c.id !== tempId));
-            toast({ title: "Error", description: "No se pudo agregar al juntador.", variant: "destructive"});
+            toast({ title: "Error", description: "No se pudo agregar al recolector.", variant: "destructive"});
         }
     };
 
@@ -500,7 +500,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         
         try {
             await deleteDoc(doc(db, 'transactions', transactionId));
-        } catch(error) {
+        } catch (error) {
             console.error("Failed to delete transaction:", error);
             setTransactions(originalTransactions);
             toast({ title: "Error", description: "No se pudo eliminar la transacción.", variant: "destructive"});
@@ -576,6 +576,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
-
-    
