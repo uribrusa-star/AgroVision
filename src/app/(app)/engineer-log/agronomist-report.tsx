@@ -144,8 +144,8 @@ export function AgronomistReport() {
                     2: { cellWidth: 'auto' }
                 },
                 didDrawCell: (data) => {
-                    const imgColIndex = head[0].length - 1;
-                    if (data.column.index === imgColIndex && data.row.section === 'body') {
+                    const imgColIndex = head[0].length - 1; // Dynamic image column index
+                    if (data.column.index === imgColIndex && data.row.section === 'body' && body[data.row.index]) {
                       const cellValue = body[data.row.index][imgColIndex];
                       if (cellValue && cellValue !== 'No') {
                           // Clear cell text
@@ -156,7 +156,7 @@ export function AgronomistReport() {
                               const imgY = data.cell.y + 2;
                               const imgWidth = 10;
                               const imgHeight = 10;
-                              doc.addImage(imgUrl, 'JPEG', imgX, imgY, imgWidth, imgHeight);
+                              doc.addImage(imgUrl, 'JPEG', imgX, imgY, imgWidth, imgHeight, '', 'FAST');
                               doc.link(imgX, imgY, imgWidth, imgHeight, { url: imgUrl });
                           } catch (e) {
                               console.error("Error adding image to PDF table", e);
