@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useTransition, useContext } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -21,9 +21,11 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function ActivityOmissionLogForm() {
-  const { addProducerLog } = React.useContext(AppDataContext);
+  const { addProducerLog, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
+  
+  const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
   
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
@@ -44,7 +46,7 @@ export function ActivityOmissionLogForm() {
 
       toast({
         title: "¡Registro Guardado!",
-        description: "La falta de actividad ha sido registrada en la bitácora.",
+        description: "La falta de actividad ha sido registrada en la bitácora del productor.",
       });
 
       form.reset();
@@ -55,7 +57,7 @@ export function ActivityOmissionLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registro de Falta de Actividad</CardTitle>
-        <CardDescription>Anote una labor importante que no se realizó y la razón.</CardDescription>
+        <CardDescription>Anote una labor importante que no se realizó y la razón. El registro aparecerá en la bitácora del productor.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -66,7 +68,7 @@ export function ActivityOmissionLogForm() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Actividad Omitida</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isPending || !canManage}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Seleccione una actividad..." />
@@ -94,7 +96,7 @@ export function ActivityOmissionLogForm() {
                       placeholder="Ej. 'No se pudo regar por corte de energía en la bomba.'"
                       className="resize-y min-h-[100px]"
                       {...field}
-                      disabled={isPending}
+                      disabled={isPending || !canManage}
                     />
                   </FormControl>
                   <FormMessage />
@@ -102,9 +104,11 @@ export function ActivityOmissionLogForm() {
               )}
             />
           </CardContent>
-          <CardFooter>
-              <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
-          </CardFooter>
+          {canManage && (
+            <CardFooter>
+                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Registro'}</Button>
+            </CardFooter>
+          )}
         </form>
       </Form>
     </Card>

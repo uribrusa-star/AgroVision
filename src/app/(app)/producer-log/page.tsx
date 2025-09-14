@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from 'react';
@@ -14,7 +13,6 @@ import { DollarSign } from 'lucide-react';
 import { AppDataContext } from '@/context/app-data-context';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CostDistributionChart } from '../dashboard/cost-distribution-chart';
-import { ActivityOmissionLogForm } from './activity-omission-log-form';
 
 
 export default function ProducerLogPage() {
@@ -45,7 +43,6 @@ export default function ProducerLogPage() {
         </div>
         <div className="space-y-8">
           <NotesForm />
-          <ActivityOmissionLogForm />
           <NotesHistory />
         </div>
         <div className="lg:col-span-2">

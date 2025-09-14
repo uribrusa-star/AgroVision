@@ -17,6 +17,7 @@ import { CulturalPracticesLogForm } from './cultural-practices-log-form';
 import { EnvironmentalLogForm } from './environmental-log-form';
 import { IrrigationLogForm } from './irrigation-log-form';
 import { AgronomistReport } from './agronomist-report';
+import { ActivityOmissionLogForm } from './activity-omission-log-form';
 
 
 export default function EngineerLogPage() {
@@ -81,6 +82,7 @@ export default function EngineerLogPage() {
              {canManageApplications ? <IrrigationLogForm /> : null}
              {canManageApplications ? <HealthLogForm /> : null}
              {canManageApplications ? <CulturalPracticesLogForm /> : null}
+             {canManageApplications ? <ActivityOmissionLogForm /> : null}
              {canManageApplications ? <PhenologyLogForm /> : null}
             <div className="lg:col-span-2">
               <AgronomistReport />
