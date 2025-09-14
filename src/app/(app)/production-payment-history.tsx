@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar, HardHat, Info, Trash2, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
 import type { CollectorPaymentLog } from '@/lib/types';
 
@@ -140,13 +140,13 @@ function ProductionPaymentHistoryComponent() {
                   </Card>
               </div>
 
-               <DialogFooter className="grid grid-cols-1 sm:flex sm:flex-row sm:justify-between w-full gap-2 pt-2">
+               <DialogFooter className="flex w-full justify-between pt-2">
                   {canManage ? (
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
-                              <Button variant="destructive" className="w-full sm:w-auto" disabled={isPending}>
+                              <Button variant="destructive" size="sm" disabled={isPending}>
                                   <Trash2 className="mr-2 h-4 w-4" />
-                                  {isPending ? 'Eliminando...' : 'Eliminar Registro'}
+                                  {isPending ? 'Eliminando...' : 'Eliminar'}
                               </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -163,7 +163,7 @@ function ProductionPaymentHistoryComponent() {
                           </AlertDialogContent>
                       </AlertDialog>
                   ) : <div />}
-                  <Button onClick={() => setSelectedLog(null)} className="w-full sm:w-auto" variant="outline">Cerrar</Button>
+                  <Button onClick={() => setSelectedLog(null)} variant="outline">Cerrar</Button>
               </DialogFooter>
             </>
           )}

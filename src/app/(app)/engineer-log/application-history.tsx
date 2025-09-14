@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useContext, useEffect, useTransition } from 'react';
@@ -445,16 +446,16 @@ export function ApplicationHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter className="grid grid-cols-1 sm:flex sm:flex-row sm:justify-between w-full gap-2 pt-2">
+                    <DialogFooter className="flex w-full justify-between pt-2">
                         {canManage ? (
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" className="w-full sm:w-auto" disabled={isPending}>
+                                    <Button variant="destructive" size="sm" disabled={isPending}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         {isPending ? 'Eliminando...' : 'Eliminar'}
                                     </Button>
                                 </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} className="w-full sm:w-auto" variant="outline">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} className="ml-auto" variant="outline">Cerrar</Button>
                     </DialogFooter>
                     <AlertDialogContent>
                         <AlertDialogHeader>

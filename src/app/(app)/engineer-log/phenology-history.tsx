@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from '@/components/ui/button';
 import { MoreHorizontal, Flower, Grape, Sun, Calendar, Trash2, PlusCircle, Image as ImageIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { PhenologyLog, ImageWithHint } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -469,11 +469,11 @@ export function PhenologyHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter className="grid grid-cols-1 sm:flex sm:flex-row sm:justify-between w-full gap-2 pt-2">
+                    <DialogFooter className="flex w-full justify-between pt-2">
                        {canManage ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" className="w-full sm:w-auto" disabled={isPending}>
+                                    <Button variant="destructive" size="sm" disabled={isPending}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         {isPending ? 'Eliminando...' : 'Eliminar'}
                                     </Button>
@@ -492,7 +492,7 @@ export function PhenologyHistory() {
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} variant="outline" className="w-full sm:w-auto">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="outline" className="ml-auto">Cerrar</Button>
                     </DialogFooter>
                  </AlertDialog>
               );

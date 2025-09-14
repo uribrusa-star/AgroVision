@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { ArrowDownCircle, ArrowUpCircle, Calendar, Trash2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -147,11 +147,11 @@ export function TransactionHistory() {
                                 </CardContent>
                              </Card>
                         </div>
-                        <DialogFooter className="grid grid-cols-1 sm:flex sm:flex-row sm:justify-between w-full gap-2 pt-2">
+                        <DialogFooter className="flex w-full justify-between pt-2">
                             {canManage ? (
                               <AlertDialog>
                                   <AlertDialogTrigger asChild>
-                                      <Button variant="destructive" className="w-full sm:w-auto" disabled={isPending}>
+                                      <Button variant="destructive" size="sm" disabled={isPending}>
                                           <Trash2 className="mr-2 h-4 w-4" />
                                           {isPending ? 'Eliminando...' : 'Eliminar'}
                                       </Button>
@@ -170,7 +170,7 @@ export function TransactionHistory() {
                                   </AlertDialogContent>
                               </AlertDialog>
                             ) : <div />}
-                            <Button onClick={() => setSelectedTransaction(null)} variant="outline" className="w-full sm:w-auto">Cerrar</Button>
+                            <Button onClick={() => setSelectedTransaction(null)} variant="outline" className="ml-auto">Cerrar</Button>
                         </DialogFooter>
                     </>
                 )}
