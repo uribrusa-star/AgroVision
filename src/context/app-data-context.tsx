@@ -2,7 +2,7 @@
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction } from '@/lib/types';
+import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog } from '@/lib/types';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -15,6 +15,8 @@ export const AppDataContext = React.createContext<AppData>({
   setCurrentUser: () => {},
   harvests: [],
   collectors: [],
+  packers: [],
+  packagingLogs: [],
   agronomistLogs: [],
   phenologyLogs: [],
   batches: [],
@@ -32,6 +34,8 @@ export const AppDataContext = React.createContext<AppData>({
   editPhenologyLog: async () => { throw new Error('Not implemented') },
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
   addCollector: async () => { throw new Error('Not implemented') },
+  addPacker: async () => { throw new Error('Not implemented') },
+  addPackagingLog: async () => { throw new Error('Not implemented') },
   addBatch: async () => { throw new Error('Not implemented') },
   deleteBatch: async () => { throw new Error('Not implemented') },
   addCollectorPaymentLog: async () => { throw new Error('Not implemented') },
@@ -92,6 +96,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
+    const [packers, setPackers] = useState<Packer[]>([]);
+    const [packagingLogs, setPackagingLogs] = useState<PackagingLog[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
     const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
@@ -139,30 +145,36 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         
         const [
           collectorsSnapshot,
+          packersSnapshot,
           harvestsSnapshot,
           agronomistLogsSnapshot,
           phenologyLogsSnapshot,
           batchesSnapshot,
           collectorPaymentsSnapshot,
+          packagingLogsSnapshot,
           producerLogsSnapshot,
           transactionsSnapshot,
         ] = await Promise.all([
           getDocs(collection(db, 'collectors')),
+          getDocs(collection(db, 'packers')),
           getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
-          getDocs(query(collection(db, 'batches'), orderBy('preloadedDate', 'desc'))),
+          getDocs(collection(db, 'batches')),
           getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'packagingLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'producerLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
         ]);
         
         setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
+        setPackers(packersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Packer[]);
         setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
         setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
         setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
         setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
         setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
+        setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
         setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
         setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
 
@@ -296,6 +308,67 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             console.error("Failed to add collector:", error);
             setCollectors(prev => prev.filter(c => c.id !== tempId));
             toast({ title: "Error", description: "No se pudo agregar al recolector.", variant: "destructive"});
+        }
+    };
+
+    const addPacker = async (packer: Omit<Packer, 'id'>) => {
+        const tempId = `packer_${Date.now()}`;
+        setPackers(prev => [...prev, { id: tempId, ...packer }]);
+
+        try {
+            const ref = await addDoc(collection(db, 'packers'), packer);
+            setPackers(prev => prev.map(p => p.id === tempId ? { ...p, id: ref.id } : p));
+        } catch (error) {
+            console.error("Failed to add packer:", error);
+            setPackers(prev => prev.filter(p => p.id !== tempId));
+            toast({ title: "Error", description: "No se pudo agregar al embalador.", variant: "destructive"});
+        }
+    };
+
+    const addPackagingLog = async (log: Omit<PackagingLog, 'id'>) => {
+        const tempId = `packaginglog_${Date.now()}`;
+        const newLog = { ...log, id: tempId };
+        setPackagingLogs(prev => [newLog, ...prev]);
+
+        const packer = packers.find(p => p.id === log.packerId);
+        if (packer) {
+            const updatedPacker = {
+                ...packer,
+                totalPackaged: packer.totalPackaged + log.kilogramsPackaged,
+                hoursWorked: packer.hoursWorked + log.hoursWorked,
+                packagingRate: (packer.totalPackaged + log.kilogramsPackaged) / (packer.hoursWorked + log.hoursWorked),
+            };
+            setPackers(prev => prev.map(p => p.id === log.packerId ? updatedPacker : p));
+        }
+
+        try {
+            const batch = writeBatch(db);
+            const newLogRef = doc(collection(db, 'packagingLogs'));
+            batch.set(newLogRef, log);
+            
+            if (packer) {
+                const packerRef = doc(db, 'packers', log.packerId);
+                const updatedPacker = {
+                    ...packer,
+                    totalPackaged: packer.totalPackaged + log.kilogramsPackaged,
+                    hoursWorked: packer.hoursWorked + log.hoursWorked,
+                    packagingRate: (packer.totalPackaged + log.kilogramsPackaged) / (packer.hoursWorked + log.hoursWorked),
+                };
+                const { id, ...packerUpdateData } = updatedPacker;
+                batch.update(packerRef, packerUpdateData);
+            }
+            
+            await batch.commit();
+            setPackagingLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: newLogRef.id } : l));
+
+        } catch (error) {
+            console.error("Failed to add packaging log:", error);
+            // Rollback optimistic update
+            setPackagingLogs(prev => prev.filter(l => l.id !== tempId));
+            if (packer) {
+                setPackers(prev => prev.map(p => p.id === log.packerId ? packer : p));
+            }
+            toast({ title: "Error", description: "No se pudo guardar el registro de embalaje.", variant: "destructive"});
         }
     };
 
@@ -573,6 +646,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setCurrentUser,
         harvests,
         collectors,
+        packers,
+        packagingLogs,
         agronomistLogs,
         phenologyLogs,
         batches,
@@ -590,6 +665,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         editPhenologyLog,
         deletePhenologyLog,
         addCollector,
+        addPacker,
+        addPackagingLog,
         addBatch,
         deleteBatch,
         addCollectorPaymentLog,

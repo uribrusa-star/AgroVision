@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound, Package } from 'lucide-react';
 import React, { useEffect, useState, useCallback, ReactNode, useTransition } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -53,6 +53,7 @@ const allNavItems = [
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
+  { href: '/packers', label: 'Embaladores', icon: Package, roles: ['Productor', 'Encargado'] },
 ];
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {

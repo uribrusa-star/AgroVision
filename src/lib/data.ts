@@ -1,6 +1,6 @@
 
 
-import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction } from './types';
+import type { Collector, Harvest, MonthlyData, AgronomistLog, Batch, CollectorPaymentLog, User, EstablishmentData, PhenologyLog, ProducerLog, Transaction, Packer, PackagingLog } from './types';
 
 export const users: User[] = [
   { id: 'user-productor', name: 'Productor', email: 'productor@agrovision.co', role: 'Productor', avatar: 'user-1', password: 'productor123' },
@@ -57,6 +57,7 @@ export const initialEstablishmentData: Omit<EstablishmentData, 'id'> = {
 // The following are now just for type reference and initial structure,
 // but the actual data will be fetched from Firestore.
 export const collectors: Collector[] = [];
+export const packers: Packer[] = [];
 export const harvests: Harvest[] = [];
 export const agronomistLogs: AgronomistLog[] = [];
 export const phenologyLogs: PhenologyLog[] = [];
@@ -64,3 +65,4 @@ export const producerLogs: ProducerLog[] = [];
 export const transactions: Transaction[] = [];
 export const batches: Batch[] = [];
 export const collectorPaymentLogs: CollectorPaymentLog[] = [];
+export const packagingLogs: PackagingLog[] = [];

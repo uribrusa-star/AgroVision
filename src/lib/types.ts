@@ -12,12 +12,22 @@ export type User = {
 };
 
 export type Collector = {
-  id: string;
+  id:string;
   name: string;
   avatar: string;
   totalHarvested: number; // in kg
   hoursWorked: number;
   productivity: number; // kg per hour
+  joinDate: string;
+};
+
+export type Packer = {
+  id: string;
+  name: string;
+  avatar: string;
+  totalPackaged: number; // in kg
+  hoursWorked: number;
+  packagingRate: number; // kg per hour
   joinDate: string;
 };
 
@@ -98,6 +108,18 @@ export type CollectorPaymentLog = {
   payment: number;
 }
 
+export type PackagingLog = {
+  id: string;
+  date: string;
+  packerId: string;
+  packerName: string;
+  kilogramsPackaged: number;
+  hoursWorked: number;
+  costPerHour: number;
+  payment: number;
+};
+
+
 export type EstablishmentData = {
   id: string;
   producer: string;
@@ -172,6 +194,8 @@ export type AppData = {
   setCurrentUser: (user: User | null, rememberMe?: boolean) => void;
   harvests: Harvest[];
   collectors: Collector[];
+  packers: Packer[];
+  packagingLogs: PackagingLog[];
   agronomistLogs: AgronomistLog[];
   phenologyLogs: PhenologyLog[];
   batches: Batch[];
@@ -189,6 +213,8 @@ export type AppData = {
   editPhenologyLog: (log: PhenologyLog) => Promise<void>;
   deletePhenologyLog: (logId: string) => Promise<void>;
   addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
+  addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
+  addPackagingLog: (log: Omit<PackagingLog, 'id'>) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
   deleteBatch: (batchId: string) => Promise<void>;
   addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
@@ -201,5 +227,3 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
-
-    
