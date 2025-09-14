@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { AlertCircle, MoreHorizontal } from 'lucide-react';
+import { AlertCircle, MoreHorizontal, TriangleAlert } from 'lucide-react';
 import React, { useEffect, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -138,6 +138,15 @@ export default function CollectorsPage() {
             </Dialog>
         )}
       </PageHeader>
+      
+      <Alert variant="destructive" className="mb-8">
+        <TriangleAlert className="h-4 w-4" />
+        <AlertTitle>Prueba de Modificación Visual</AlertTitle>
+        <AlertDescription>
+          Si puedes ver este mensaje, el despliegue de código está funcionando. El problema anterior puede estar relacionado con la caché.
+        </AlertDescription>
+      </Alert>
+
       <div className="w-full max-w-7xl mx-auto">
         <Card>
         <CardHeader>
@@ -294,4 +303,3 @@ export default function CollectorsPage() {
   );
 }
 
-    
