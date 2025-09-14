@@ -39,7 +39,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
-import { AppDataContext } from '@/context/app-data-context.tsx';
+import { AppDataContext, AppContextProvider } from '@/context/app-data-context.tsx';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,7 +54,7 @@ const allNavItems = [
   { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
 ];
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { currentUser, isClient, loading, users } = React.useContext(AppDataContext);
   const router = useRouter();
@@ -138,6 +138,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </SidebarProvider>
   );
 }
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AppContextProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </AppContextProvider>
+  );
+}
+
 
 const PasswordSchema = z.object({
   newPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),

@@ -8,12 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { AgroVisionLogo } from '@/components/icons';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { users } from '@/lib/data';
 import type { User } from '@/lib/types';
 
 
-export default function LoginPage() {
+export default function LoginPageContent() {
   const { setCurrentUser } = React.useContext(AppDataContext);
   const router = useRouter();
 
