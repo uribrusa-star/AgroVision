@@ -144,10 +144,14 @@ export type EstablishmentData = {
   geoJsonData?: string;
 };
 
+export type ProducerLogType = 'Nota' | 'Actividad Omitida';
+
 export type ProducerLog = {
     id: string;
     date: string;
     notes: string;
+    type?: ProducerLogType;
+    omittedActivity?: string;
 }
 
 export type Transaction = {
