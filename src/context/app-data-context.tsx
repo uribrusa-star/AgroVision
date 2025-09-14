@@ -6,7 +6,7 @@ import React, { ReactNode, useState, useCallback, useEffect } from 'react';
 import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog } from '@/lib/types';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/firebase';
+import { getFirestoreInstance } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, addDoc, getDoc, orderBy } from 'firebase/firestore';
 
 export const AppDataContext = React.createContext<AppData>({
@@ -115,6 +115,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const fetchData = useCallback(async () => {
       if (!isClient) return;
+      const db = getFirestoreInstance();
       setLoading(true);
       try {
         const usersCollectionRef = collection(db, 'users');
@@ -197,6 +198,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, [fetchData]);
 
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
+        const db = getFirestoreInstance();
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
         if (!collectorDoc) {
             toast({ title: "Error", description: "Recolector no encontrado.", variant: "destructive"});
@@ -241,6 +243,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const editCollector = async (updatedCollector: Collector) => {
+      const db = getFirestoreInstance();
       const originalCollectors = [...collectors];
       setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
 
@@ -273,6 +276,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteCollector = async (collectorId: string) => {
+        const db = getFirestoreInstance();
         const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
         
         // Optimistic Update
@@ -299,6 +303,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addCollector = async (collector: Omit<Collector, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `collector_${Date.now()}`;
         setCollectors(prev => [...prev, { id: tempId, ...collector }]);
         
@@ -313,6 +318,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addPacker = async (packer: Omit<Packer, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `packer_${Date.now()}`;
         setPackers(prev => [...prev, { id: tempId, ...packer }]);
 
@@ -327,6 +333,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addPackagingLog = async (log: Omit<PackagingLog, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `packaginglog_${Date.now()}`;
         const newLog = { ...log, id: tempId };
         setPackagingLogs(prev => [newLog, ...prev]);
@@ -374,6 +381,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `agrolog_${Date.now()}`;
         setAgronomistLogs(prev => [{ id: tempId, ...log }, ...prev]);
 
@@ -388,6 +396,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const editAgronomistLog = async (updatedLog: AgronomistLog) => {
+        const db = getFirestoreInstance();
         const originalLogs = [...agronomistLogs];
         setAgronomistLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
 
@@ -403,6 +412,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteAgronomistLog = async (logId: string) => {
+        const db = getFirestoreInstance();
         const originalLogs = [...agronomistLogs];
         setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
 
@@ -416,6 +426,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addPhenologyLog = async (log: Omit<PhenologyLog, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `phenologylog_${Date.now()}`;
         setPhenologyLogs(prev => [{ id: tempId, ...log }, ...prev]);
 
@@ -430,6 +441,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const editPhenologyLog = async (updatedLog: PhenologyLog) => {
+        const db = getFirestoreInstance();
         const originalLogs = [...phenologyLogs];
         setPhenologyLogs(prev => prev.map(l => l.id === updatedLog.id ? updatedLog : l));
         try {
@@ -444,6 +456,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deletePhenologyLog = async (logId: string) => {
+        const db = getFirestoreInstance();
         const originalLogs = [...phenologyLogs];
         setPhenologyLogs(prev => prev.filter(l => l.id !== logId));
         try {
@@ -456,6 +469,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addBatch = async (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string; preloadedDate: string; status: string }) => {
+        const db = getFirestoreInstance();
         const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
         setBatches(prev => [newBatch, ...prev]);
 
@@ -470,6 +484,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteBatch = async (batchId: string) => {
+        const db = getFirestoreInstance();
         const originalBatches = [...batches];
         setBatches(prev => prev.filter(b => b.id !== batchId));
         
@@ -483,6 +498,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `paymentlog_${Date.now()}`;
         setCollectorPaymentLogs(prev => [{ id: tempId, ...log }, ...prev]);
         
@@ -497,6 +513,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteCollectorPaymentLog = async (logId: string) => {
+        const db = getFirestoreInstance();
         const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
         const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
         if (!logToDelete) {
@@ -544,6 +561,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateEstablishmentData = async (data: Partial<EstablishmentData>) => {
+        const db = getFirestoreInstance();
         const originalData = establishmentData ? {...establishmentData} : null;
         setEstablishmentData(prev => prev ? { ...prev, ...data } : null);
         
@@ -560,6 +578,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addProducerLog = async (log: Omit<ProducerLog, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `producerlog_${Date.now()}`;
         setProducerLogs(prev => [{ id: tempId, ...log }, ...prev]);
         
@@ -574,6 +593,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteProducerLog = async (logId: string) => {
+        const db = getFirestoreInstance();
         const originalLogs = [...producerLogs];
         setProducerLogs(prev => prev.filter(l => l.id !== logId));
         
@@ -587,6 +607,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+        const db = getFirestoreInstance();
         const tempId = `transaction_${Date.now()}`;
         setTransactions(prev => [{ id: tempId, ...transaction }, ...prev]);
         
@@ -601,6 +622,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteTransaction = async (transactionId: string) => {
+        const db = getFirestoreInstance();
         const originalTransactions = [...transactions];
         setTransactions(prev => prev.filter(t => t.id !== transactionId));
         
@@ -614,6 +636,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateUserPassword = async (userId: string, newPassword: string) => {
+        const db = getFirestoreInstance();
         const originalUsers = users;
         const userToUpdate = users.find(u => u.id === userId);
         if (!userToUpdate) throw new Error("User not found");
