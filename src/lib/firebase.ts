@@ -20,10 +20,8 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 // Firestore's SDK handles the check for the browser environment internally.
 let db;
 try {
-    // By providing no arguments to persistentLocalCache, we get the default, stable, single-tab persistence.
     db = initializeFirestore(app, {
-        localCache: persistentLocalCache({}),
-        cacheSizeBytes: CACHE_SIZE_UNLIMITED
+        localCache: persistentLocalCache({ cacheSizeBytes: CACHE_SIZE_UNLIMITED }),
     });
 } catch (e: any) {
     console.error("Could not initialize Firestore with persistence", e);
