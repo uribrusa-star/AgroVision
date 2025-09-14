@@ -29,7 +29,7 @@ const ProductionSchema = z.object({
   }),
   batchId: z.string().min(1, "El ID del lote es requerido."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
-  juntadorId: z.string().min(1, "El recolector es requerido."),
+  collectorId: z.string().min(1, "El recolector es requerido."),
   ratePerKg: z.coerce.number().min(0.01, "La tarifa por kg es requerida."),
   hoursWorked: z.coerce.number().min(0.5, "Las horas trabajadas son requeridas."),
 });
@@ -50,7 +50,7 @@ export function ProductionForm() {
       date: new Date(),
       batchId: '',
       kilosPerBatch: 0,
-      juntadorId: '',
+      collectorId: '',
       ratePerKg: 0.45,
       hoursWorked: 8,
     },
@@ -61,7 +61,7 @@ export function ProductionForm() {
   }, [batches]);
 
   const saveHarvestData = (values: ProductionFormValues) => {
-    const collector = collectors.find(c => c.id === values.juntadorId);
+    const collector = collectors.find(c => c.id === values.collectorId);
     if (!collector) {
       toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
       return;
@@ -73,7 +73,7 @@ export function ProductionForm() {
           batchNumber: values.batchId,
           kilograms: values.kilosPerBatch,
           collector: {
-            id: values.juntadorId,
+            id: values.collectorId,
             name: collector.name,
           }
       }, values.hoursWorked).then(newHarvestId => {
@@ -84,7 +84,7 @@ export function ProductionForm() {
           addCollectorPaymentLog({
               harvestId: newHarvestId, 
               date: values.date.toISOString(),
-              collectorId: values.juntadorId,
+              collectorId: values.collectorId,
               collectorName: collector.name,
               kilograms: values.kilosPerBatch,
               hours: values.hoursWorked,
@@ -101,7 +101,7 @@ export function ProductionForm() {
               ...form.getValues(),
               batchId: '',
               kilosPerBatch: 0,
-              juntadorId: '',
+              collectorId: '',
           });
       }).catch(error => {
         // Error is handled inside the context, but we can add a fallback toast here if needed
@@ -111,21 +111,21 @@ export function ProductionForm() {
   
   const onSubmit = (values: ProductionFormValues) => {
     startTransition(async () => {
-      const collector = collectors.find(c => c.id === values.juntadorId);
+      const collector = collectors.find(c => c.id === values.collectorId);
       if(!collector) return;
 
-      const historicalDataForFarmer = harvests.filter(h => h.collector.id === values.juntadorId);
-      const totalKilos = historicalDataForFarmer.reduce((sum, h) => sum + h.kilograms, 0);
-      const averageKilos = historicalDataForFarmer.length > 0 ? totalKilos / historicalDataForFarmer.length : values.kilosPerBatch;
+      const historicalDataForCollector = harvests.filter(h => h.collector.id === values.collectorId);
+      const totalKilos = historicalDataForCollector.reduce((sum, h) => sum + h.kilograms, 0);
+      const averageKilos = historicalDataForCollector.length > 0 ? totalKilos / historicalDataForCollector.length : values.kilosPerBatch;
       
       try {
           const validationResult = await validateProductionData({
               kilosPerBatch: values.kilosPerBatch,
               batchId: values.batchId,
               timestamp: values.date.toISOString(),
-              farmerId: values.juntadorId,
+              farmerId: values.collectorId,
               averageKilosPerBatch: averageKilos,
-              historicalData: JSON.stringify(historicalDataForFarmer),
+              historicalData: JSON.stringify(historicalDataForCollector),
           });
           
           if (validationResult.isValid) {
@@ -273,7 +273,7 @@ export function ProductionForm() {
 
               <FormField
                 control={form.control}
-                name="juntadorId"
+                name="collectorId"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Recolector</FormLabel>
@@ -325,6 +325,3 @@ export function ProductionForm() {
     </div>
   );
 }
-
-
-    

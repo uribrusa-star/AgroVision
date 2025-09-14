@@ -17,7 +17,7 @@ import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 
 
 export default function DashboardPage() {
-  const { loading, harvests, juntadores } = React.useContext(AppDataContext);
+  const { loading, harvests, collectors } = React.useContext(AppDataContext);
 
   const calculateDashboardStats = (harvests: Harvest[]) => {
     if (harvests.length === 0) {
@@ -66,7 +66,7 @@ export default function DashboardPage() {
 
   const dashboardStats = {
     ...calculateDashboardStats(harvests),
-    activeCollectors: juntadores.length,
+    activeCollectors: collectors.length,
   };
 
   return (
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                         <TableCell>
                         <Badge variant="outline">{harvest.batchNumber}</Badge>
                         </TableCell>
-                        <TableCell>{harvest.juntador.name}</TableCell>
+                        <TableCell>{harvest.collector.name}</TableCell>
                         <TableCell className="text-right font-medium">{harvest.kilograms.toLocaleString('es-ES')} kg</TableCell>
                         <TableCell className="text-right text-muted-foreground">{new Date(harvest.date).toLocaleDateString('es-ES')}</TableCell>
                     </TableRow>
@@ -186,12 +186,12 @@ export default function DashboardPage() {
                             <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
                            </TableRow>
                         )}
-                        {!loading && juntadores.map((juntador) => (
-                            <TableRow key={juntador.id}>
-                            <TableCell className="font-medium">{juntador.name}</TableCell>
-                            <TableCell className="text-right">{juntador.totalHarvested.toLocaleString('es-ES')}</TableCell>
-                            <TableCell className="text-right">{juntador.hoursWorked.toLocaleString('es-ES')}</TableCell>
-                            <TableCell className="text-right font-bold">{juntador.productivity.toFixed(2)}</TableCell>
+                        {!loading && collectors.map((collector) => (
+                            <TableRow key={collector.id}>
+                            <TableCell className="font-medium">{collector.name}</TableCell>
+                            <TableCell className="text-right">{collector.totalHarvested.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right">{collector.hoursWorked.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                         </TableBody>

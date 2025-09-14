@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React from 'react';
@@ -17,8 +18,8 @@ import { IncomeChart } from './income-chart';
 
 
 export default function ProducerLogPage() {
-  const { loading, juntadorPaymentLogs, transactions } = React.useContext(AppDataContext);
-  const totalLaborCost = juntadorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
+  const { loading, collectorPaymentLogs, transactions } = React.useContext(AppDataContext);
+  const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
   
   return (
     <>

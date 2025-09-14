@@ -13,19 +13,19 @@ import { Calendar, HardHat, Info, Trash2, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
-import type { JuntadorPaymentLog } from '@/lib/types';
+import type { CollectorPaymentLog } from '@/lib/types';
 
 function ProductionPaymentHistoryComponent() {
-  const { loading, juntadorPaymentLogs, deleteJuntadorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
+  const { loading, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
-  const [selectedLog, setSelectedLog] = useState<JuntadorPaymentLog | null>(null);
+  const [selectedLog, setSelectedLog] = useState<CollectorPaymentLog | null>(null);
 
   const canManage = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
 
   const handleDelete = (logId: string) => {
     startTransition(async () => {
-      await deleteJuntadorPaymentLog(logId);
+      await deleteCollectorPaymentLog(logId);
       toast({
           title: "Registro Eliminado",
           description: "El registro de producción y pago ha sido eliminado exitosamente.",
@@ -35,11 +35,11 @@ function ProductionPaymentHistoryComponent() {
   }
 
   const sortedLogs = useMemo(() =>
-    [...juntadorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [juntadorPaymentLogs]
+    [...collectorPaymentLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [collectorPaymentLogs]
   );
   
-  const getHarvestForLog = (log: JuntadorPaymentLog) => harvests.find(h => h.id === log.harvestId);
+  const getHarvestForLog = (log: CollectorPaymentLog) => harvests.find(h => h.id === log.harvestId);
 
   return (
     <>
@@ -78,7 +78,7 @@ function ProductionPaymentHistoryComponent() {
                     return (
                       <TableRow key={log.id} onClick={() => setSelectedLog(log)} className="cursor-pointer">
                         <TableCell><Badge variant="outline">{batchNum}</Badge></TableCell>
-                        <TableCell className="font-medium">{log.juntadorName}</TableCell>
+                        <TableCell className="font-medium">{log.collectorName}</TableCell>
                         <TableCell className="text-right font-bold">${log.payment.toLocaleString('es-AR', {minimumFractionDigits: 2})}</TableCell>
                       </TableRow>
                     )
@@ -116,7 +116,7 @@ function ProductionPaymentHistoryComponent() {
                            </div>
                            <div className="flex items-center justify-between">
                               <span className="text-sm text-muted-foreground">Recolector</span>
-                              <span className="font-semibold">{selectedLog.juntadorName}</span>
+                              <span className="font-semibold">{selectedLog.collectorName}</span>
                            </div>
                             <hr />
                            <div className="flex items-center justify-between">

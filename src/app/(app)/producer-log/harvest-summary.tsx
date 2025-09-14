@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useTransition, useMemo, useRef } from 'react';
@@ -26,7 +27,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
-  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, juntadorPaymentLogs } = useContext(AppDataContext);
+  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs } = useContext(AppDataContext);
   const { toast } = useToast();
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
@@ -37,7 +38,7 @@ export function HarvestSummary() {
 
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
   
-  const totalLaborCost = useMemo(() => juntadorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [juntadorPaymentLogs]);
+  const totalLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
   
   const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
 
