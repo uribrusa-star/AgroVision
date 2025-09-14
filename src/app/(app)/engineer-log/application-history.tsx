@@ -370,7 +370,7 @@ export function ApplicationHistory() {
 
     {/* Detail View Dialog */}
      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
            {selectedLog && (() => {
               const typeInfo = getTypeInfo(selectedLog.type);
               return (
@@ -455,7 +455,7 @@ export function ApplicationHistory() {
                                     </Button>
                                 </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} variant="outline">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="secondary">Cerrar</Button>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>

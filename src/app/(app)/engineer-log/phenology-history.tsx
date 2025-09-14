@@ -389,7 +389,7 @@ export function PhenologyHistory() {
 
     {/* Detail View Dialog */}
      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-xl">
            {selectedLog && (() => {
               const stateInfo = getStateInfo(selectedLog.developmentState);
               return (
@@ -492,7 +492,7 @@ export function PhenologyHistory() {
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} variant="outline">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="secondary">Cerrar</Button>
                     </DialogFooter>
                  </AlertDialog>
               );
@@ -502,3 +502,4 @@ export function PhenologyHistory() {
     </>
   )
 }
+

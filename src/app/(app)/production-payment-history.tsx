@@ -91,7 +91,7 @@ function ProductionPaymentHistoryComponent() {
       </Card>
 
       <Dialog open={!!selectedLog} onOpenChange={(isOpen) => !isOpen && setSelectedLog(null)}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           {selectedLog && (
             <>
               <DialogHeader>
@@ -163,7 +163,7 @@ function ProductionPaymentHistoryComponent() {
                           </AlertDialogContent>
                       </AlertDialog>
                   ) : <div />}
-                  <Button onClick={() => setSelectedLog(null)} variant="outline">Cerrar</Button>
+                  <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
               </DialogFooter>
             </>
           )}
@@ -174,3 +174,4 @@ function ProductionPaymentHistoryComponent() {
 }
 
 export const ProductionPaymentHistory = React.memo(ProductionPaymentHistoryComponent);
+

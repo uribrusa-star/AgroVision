@@ -104,7 +104,7 @@ export function TransactionHistory() {
         </Card>
 
         <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
                 {selectedTransaction && (
                     <>
                         <DialogHeader>
@@ -170,7 +170,7 @@ export function TransactionHistory() {
                                   </AlertDialogContent>
                               </AlertDialog>
                             ) : <div />}
-                            <Button onClick={() => setSelectedTransaction(null)} variant="outline">Cerrar</Button>
+                            <Button onClick={() => setSelectedTransaction(null)} variant="secondary">Cerrar</Button>
                         </DialogFooter>
                     </>
                 )}
@@ -179,3 +179,4 @@ export function TransactionHistory() {
     </>
   )
 }
+
