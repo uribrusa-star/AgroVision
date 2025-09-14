@@ -3,6 +3,7 @@
 'use client';
 
 import React, { useContext, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -12,6 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Calendar, AlertCircle, NotebookText } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 
 export function NotesHistory() {
   const { loading, producerLogs } = useContext(AppDataContext);
@@ -88,13 +90,13 @@ export function NotesHistory() {
                         Revisión de la nota registrada en la bitácora.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
+                <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto pr-4">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
                         <span>{new Date(selectedLog.date).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</span>
                     </div>
                     <Card>
-                        <CardContent className="p-4 space-y-2">
+                        <CardContent className="p-4 space-y-4">
                              {selectedLog.omittedActivity && (
                                 <div>
                                     <p className="text-sm font-medium text-muted-foreground">Actividad Omitida</p>
@@ -103,6 +105,35 @@ export function NotesHistory() {
                              )}
                             <p className="text-sm font-medium text-muted-foreground">{selectedLog.omittedActivity ? 'Razón / Notas' : 'Notas'}</p>
                             <p className="text-foreground whitespace-pre-wrap">{selectedLog.notes}</p>
+
+                             {selectedLog.images && selectedLog.images.length > 0 && (
+                                    <div className="space-y-2 pt-4">
+                                        <p className="text-sm font-medium text-muted-foreground">Imágenes Adjuntas</p>
+                                        <Carousel className="w-full">
+                                          <CarouselContent>
+                                            {selectedLog.images.map((image, index) => (
+                                              <CarouselItem key={index}>
+                                                <div className="relative w-full aspect-video rounded-md overflow-hidden border">
+                                                  <Image
+                                                    src={image.url}
+                                                    alt={`${selectedLog.notes} - Imagen ${index + 1}`}
+                                                    fill
+                                                    className="object-cover"
+                                                    data-ai-hint={image.hint}
+                                                  />
+                                                </div>
+                                              </CarouselItem>
+                                            ))}
+                                          </CarouselContent>
+                                          {selectedLog.images.length > 1 && (
+                                            <>
+                                              <CarouselPrevious className="-left-8" />
+                                              <CarouselNext className="-right-8" />
+                                            </>
+                                          )}
+                                        </Carousel>
+                                    </div>
+                                )}
                         </CardContent>
                     </Card>
                 </div>

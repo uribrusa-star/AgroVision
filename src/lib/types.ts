@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -152,6 +153,7 @@ export type ProducerLog = {
     notes: string;
     type?: ProducerLogType;
     omittedActivity?: string;
+    images?: ImageWithHint[];
 }
 
 export type Transaction = {
