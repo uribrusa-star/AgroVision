@@ -18,8 +18,10 @@ import { IncomeChart } from './income-chart';
 
 
 export default function ProducerLogPage() {
-  const { loading, collectorPaymentLogs, transactions } = React.useContext(AppDataContext);
-  const totalLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
+  const { loading, collectorPaymentLogs, packagingLogs, transactions } = React.useContext(AppDataContext);
+  const totalHarvestLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
+  const totalPackagingLaborCost = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
+  const totalLaborCost = totalHarvestLaborCost + totalPackagingLaborCost;
   
   return (
     <>
@@ -39,7 +41,7 @@ export default function ProducerLogPage() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                <p className="text-xs text-muted-foreground">Basado en pagos registrados</p>
+                <p className="text-xs text-muted-foreground">Incluye cosecha y embalaje</p>
               </CardContent>
             </Card>
              <CostDistributionChart />

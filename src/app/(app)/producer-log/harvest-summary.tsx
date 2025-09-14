@@ -27,7 +27,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
-  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs } = useContext(AppDataContext);
+  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs, packagingLogs } = useContext(AppDataContext);
   const { toast } = useToast();
 
   if (!currentUser) return null; // Guard clause
@@ -40,12 +40,13 @@ export function HarvestSummary() {
 
   const totalProduction = useMemo(() => harvests.reduce((acc, h) => acc + h.kilograms, 0), [harvests]);
   
-  const totalLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
+  const totalHarvestLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
+  const totalPackagingLaborCost = useMemo(() => packagingLogs.reduce((acc, p) => acc + p.payment, 0), [packagingLogs]);
   
   const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
 
   const costByCategory = useMemo(() => {
-    const costs: {[key: string]: number} = { 'Mano de Obra': totalLaborCost };
+    const costs: {[key: string]: number} = { 'Mano de Obra': totalHarvestLaborCost + totalPackagingLaborCost };
     
     otherExpenses.forEach(transaction => {
         const { category, amount } = transaction;
@@ -56,7 +57,7 @@ export function HarvestSummary() {
     });
 
     return costs;
-  }, [otherExpenses, totalLaborCost]);
+  }, [otherExpenses, totalHarvestLaborCost, totalPackagingLaborCost]);
   
   const totalCost = useMemo(() => Object.values(costByCategory).reduce((acc, amount) => acc + amount, 0), [costByCategory]);
   const totalIncome = useMemo(() => transactions.filter(t => t.type === 'Ingreso').reduce((acc, t) => acc + t.amount, 0), [transactions]);
@@ -274,7 +275,7 @@ export function HarvestSummary() {
         );
 
         // Section: AI Executive Summary
-        addSection("Resumen Ejecutivo", aiResult.executiveSummary);
+        addSection("Resumen Ejecutivo (IA)", aiResult.executiveSummary);
 
         // Section: Data Tables
         addTable("Resumen de Producción y Rendimiento",
@@ -303,8 +304,8 @@ export function HarvestSummary() {
         await addCharts();
 
         // Section: AI Analysis & Recommendations
-        addSection("Análisis e Interpretación", aiResult.analysisAndInterpretation);
-        addSection("Conclusiones y Recomendaciones", aiResult.conclusionsAndRecommendations);
+        addSection("Análisis e Interpretación (IA)", aiResult.analysisAndInterpretation);
+        addSection("Conclusiones y Recomendaciones (IA)", aiResult.conclusionsAndRecommendations);
         
         addPageFooter(doc);
         

@@ -3,7 +3,7 @@
 
 import React, { useContext, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Pie, PieChart as RechartsPieChart, Cell } from 'recharts';
@@ -39,9 +39,14 @@ const costChartConfig = {
 } as const;
 
 function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boolean}) {
-  const { loading, transactions, collectorPaymentLogs } = useContext(AppDataContext);
+  const { loading, transactions, collectorPaymentLogs, packagingLogs } = useContext(AppDataContext);
 
-  const totalLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
+  const totalLaborCost = useMemo(() => {
+    const harvestLabor = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
+    const packagingLabor = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
+    return harvestLabor + packagingLabor;
+  }, [collectorPaymentLogs, packagingLogs]);
+
   const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
 
   const costByCategory = useMemo(() => {
