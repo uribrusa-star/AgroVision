@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React from 'react';
@@ -29,36 +28,41 @@ export default function ProducerLogPage() {
         description="Registre las finanzas y las observaciones diarias del establecimiento."
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Columna Izquierda: Finanzas */}
         <div className="space-y-8">
           <TransactionForm />
           <IncomeChart transactions={transactions} />
+          <CostDistributionChart />
           <TransactionHistory />
-           <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Cosecha)</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalHarvestLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                <p className="text-xs text-muted-foreground">Solo pagos a recolectores</p>
-              </CardContent>
-            </Card>
-             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Embalaje)</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalPackagingLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                <p className="text-xs text-muted-foreground">Solo pagos a embaladores</p>
-              </CardContent>
-            </Card>
-             <CostDistributionChart />
         </div>
+        
+        {/* Columna Derecha: Observaciones y Resúmenes */}
         <div className="space-y-8">
           <NotesForm />
           <NotesHistory />
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Cosecha)</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalHarvestLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+              <p className="text-xs text-muted-foreground">Solo pagos a recolectores</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Embalaje)</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalPackagingLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+              <p className="text-xs text-muted-foreground">Solo pagos a embaladores</p>
+            </CardContent>
+          </Card>
         </div>
+
+        {/* Sección de Ancho Completo */}
         <div className="lg:col-span-2">
             <HarvestSummary />
         </div>
