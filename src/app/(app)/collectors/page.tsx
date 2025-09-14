@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Image from 'next/image';
@@ -19,25 +20,25 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { Juntador } from '@/lib/types';
+import { AppDataContext } from '@/context/app-data-context';
+import type { Collector } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const JuntadorSchema = z.object({
+const CollectorSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
 });
 
 export default function CollectorsPage() {
-  const { loading, juntadores, harvests, addJuntador, deleteJuntador, currentUser } = React.useContext(AppDataContext);
-  const [selectedJuntador, setSelectedJuntador] = useState<Juntador | null>(null);
+  const { loading, collectors, harvests, addCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
+  const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof JuntadorSchema>>({
-    resolver: zodResolver(JuntadorSchema),
+  const form = useForm<z.infer<typeof CollectorSchema>>({
+    resolver: zodResolver(CollectorSchema),
     defaultValues: { name: '' },
   });
 
@@ -48,36 +49,36 @@ export default function CollectorsPage() {
   }, [isAddDialogOpen, form]);
 
 
-  const getJuntadorHistory = (juntadorId: string) => {
-    return harvests.filter(h => h.juntador.id === juntadorId);
+  const getCollectorHistory = (collectorId: string) => {
+    return harvests.filter(h => h.collector.id === collectorId);
   };
   
-  const handleDelete = (juntadorId: string) => {
+  const handleDelete = (collectorId: string) => {
      startTransition(async () => {
-        await deleteJuntador(juntadorId);
-        toast({ title: "Juntador Eliminado", description: "El juntador y sus datos asociados han sido eliminados." });
+        await deleteCollector(collectorId);
+        toast({ title: "Recolector Eliminado", description: "El recolector y sus datos asociados han sido eliminados." });
     });
   };
 
-  const onAddSubmit = (values: z.infer<typeof JuntadorSchema>) => {
-    if (juntadores.some(c => c.name.trim().toLowerCase() === values.name.trim().toLowerCase())) {
+  const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
+    if (collectors.some(c => c.name.trim().toLowerCase() === values.name.trim().toLowerCase())) {
       form.setError('name', {
         type: 'manual',
-        message: 'Ya existe un juntador con este nombre.',
+        message: 'Ya existe un recolector con este nombre.',
       });
       return;
     }
     
     startTransition(async () => {
-        await addJuntador({
+        await addCollector({
           name: values.name.trim(),
-          avatar: `${juntadores.length + 1}`,
+          avatar: `${Math.floor(Math.random() * 1000)}`,
           totalHarvested: 0,
           hoursWorked: 0,
           productivity: 0,
           joinDate: new Date().toISOString(),
         });
-        toast({ title: "Juntador Agregado", description: `Se ha agregado a ${values.name.trim()} al sistema.` });
+        toast({ title: "Recolector Agregado", description: `Se ha agregado a ${values.name.trim()} al sistema.` });
         setIsAddDialogOpen(false);
         form.reset({ name: '' });
     });
@@ -183,20 +184,20 @@ export default function CollectorsPage() {
                     )}
                 </TableRow>
                 ))}
-                {!loading && juntadores.map((juntador) => (
-                <TableRow key={juntador.id}>
+                {!loading && collectors.map((collector) => (
+                <TableRow key={collector.id}>
                     <TableCell>
                     <div className="flex items-center gap-3">
                         <Avatar>
-                        <AvatarImage src={`https://picsum.photos/seed/${juntador.avatar}/40/40`} alt={juntador.name} data-ai-hint="person portrait" />
-                        <AvatarFallback>{juntador.name.charAt(0)}</AvatarFallback>
+                        <AvatarImage src={`https://picsum.photos/seed/${collector.avatar}/40/40`} alt={collector.name} data-ai-hint="person portrait" />
+                        <AvatarFallback>{collector.name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{juntador.name}</span>
+                        <span className="font-medium">{collector.name}</span>
                     </div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">{juntador.totalHarvested.toLocaleString('es-ES')} kg</TableCell>
-                    <TableCell className="hidden lg:table-cell">{juntador.productivity.toFixed(2)}</TableCell>
-                    <TableCell className="hidden sm:table-cell">{new Date(juntador.joinDate).toLocaleDateString('es-ES')}</TableCell>
+                    <TableCell className="hidden md:table-cell">{collector.totalHarvested.toLocaleString('es-ES')} kg</TableCell>
+                    <TableCell className="hidden lg:table-cell">{collector.productivity.toFixed(2)}</TableCell>
+                    <TableCell className="hidden sm:table-cell">{new Date(collector.joinDate).toLocaleDateString('es-ES')}</TableCell>
                     {canManage && (
                     <TableCell>
                         <Dialog>
@@ -211,7 +212,7 @@ export default function CollectorsPage() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => {e.preventDefault(); setSelectedJuntador(juntador)}}>Ver Historial</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => {e.preventDefault(); setSelectedCollector(collector)}}>Ver Historial</DropdownMenuItem>
                                 </DialogTrigger>
                                 <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
@@ -228,7 +229,7 @@ export default function CollectorsPage() {
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(juntador.id)}>Continuar</AlertDialogAction>
+                                    <AlertDialogAction onClick={() => handleDelete(collector.id)}>Continuar</AlertDialogAction>
                                 </AlertDialogFooter>
                             </AlertDialogContent>
 
@@ -244,12 +245,12 @@ export default function CollectorsPage() {
         </Card>
       </div>
       
-      <Dialog open={!!selectedJuntador} onOpenChange={(isOpen) => !isOpen && setSelectedJuntador(null)}>
+      <Dialog open={!!selectedCollector} onOpenChange={(isOpen) => !isOpen && setSelectedCollector(null)}>
         <DialogContent className="sm:max-w-2xl">
-          {selectedJuntador && (
+          {selectedCollector && (
             <>
               <DialogHeader>
-                  <DialogTitle>Historial de Cosecha: {selectedJuntador.name}</DialogTitle>
+                  <DialogTitle>Historial de Cosecha: {selectedCollector.name}</DialogTitle>
                   <DialogDescription>
                   Revise todas las entradas de cosecha para este recolector.
                   </DialogDescription>
@@ -265,7 +266,7 @@ export default function CollectorsPage() {
                   </TableHeader>
                   <TableBody>
                       {(() => {
-                      const history = getJuntadorHistory(selectedJuntador.id);
+                      const history = getCollectorHistory(selectedCollector.id);
                       if (history.length > 0) {
                           return history.map(h => (
                           <TableRow key={h.id}>
@@ -285,7 +286,7 @@ export default function CollectorsPage() {
                   </Table>
               </div>
               <DialogFooter>
-                  <Button variant="outline" onClick={() => setSelectedJuntador(null)}>Cerrar</Button>
+                  <Button variant="outline" onClick={() => setSelectedCollector(null)}>Cerrar</Button>
               </DialogFooter>
             </>
           )}
@@ -294,3 +295,6 @@ export default function CollectorsPage() {
     </>
   );
 }
+
+
+    

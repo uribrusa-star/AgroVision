@@ -11,7 +11,7 @@ export type User = {
   password?: string; // Added for mock authentication
 };
 
-export type Juntador = {
+export type Collector = {
   id: string;
   name: string;
   avatar: string;
@@ -26,7 +26,7 @@ export type Harvest = {
   date: string;
   batchNumber: string;
   kilograms: number;
-  juntador: {
+  collector: {
     id: string;
     name: string;
   };
@@ -48,7 +48,7 @@ export type EngineerLogStats = {
   totalProduction: number;
   totalInputs: number;
   averagePrice: number;
-  juntadorCount: number;
+  collectorCount: number;
 };
 
 export type AgronomistLogType = 
@@ -86,12 +86,12 @@ export type PhenologyLog = {
     images?: ImageWithHint[];
 }
 
-export type JuntadorPaymentLog = {
+export type CollectorPaymentLog = {
   id: string;
   date: string;
   harvestId: string;
-  juntadorId: string;
-  juntadorName: string;
+  collectorId: string;
+  collectorName: string;
   kilograms: number;
   hours: number;
   ratePerKg: number;
@@ -171,27 +171,27 @@ export type AppData = {
   users: User[];
   setCurrentUser: (user: User | null, rememberMe?: boolean) => void;
   harvests: Harvest[];
-  juntadores: Juntador[];
+  collectors: Collector[];
   agronomistLogs: AgronomistLog[];
   phenologyLogs: PhenologyLog[];
   batches: Batch[];
-  juntadorPaymentLogs: JuntadorPaymentLog[];
+  collectorPaymentLogs: CollectorPaymentLog[];
   establishmentData: EstablishmentData | null;
   producerLogs: ProducerLog[];
   transactions: Transaction[];
   addHarvest: (harvest: Omit<Harvest, 'id'>, hoursWorked: number) => Promise<string | undefined>;
-  deleteJuntador: (juntadorId: string) => Promise<void>;
+  deleteCollector: (collectorId: string) => Promise<void>;
   addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => Promise<void>;
   editAgronomistLog: (log: AgronomistLog) => Promise<void>;
   deleteAgronomistLog: (logId: string) => Promise<void>;
   addPhenologyLog: (log: Omit<PhenologyLog, 'id'>) => Promise<void>;
   editPhenologyLog: (log: PhenologyLog) => Promise<void>;
   deletePhenologyLog: (logId: string) => Promise<void>;
-  addJuntador: (juntador: Omit<Juntador, 'id'>) => Promise<void>;
+  addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
   deleteBatch: (batchId: string) => Promise<void>;
-  addJuntadorPaymentLog: (log: Omit<JuntadorPaymentLog, 'id'>) => Promise<void>;
-  deleteJuntadorPaymentLog: (logId: string) => Promise<void>;
+  addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
+  deleteCollectorPaymentLog: (logId: string) => Promise<void>;
   updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
   addProducerLog: (log: Omit<ProducerLog, 'id'>) => Promise<void>;
   deleteProducerLog: (logId: string) => Promise<void>;
@@ -200,3 +200,6 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
+
+
+    

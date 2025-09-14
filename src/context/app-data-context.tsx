@@ -3,7 +3,7 @@
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import type { AppData, User, Harvest, Juntador, AgronomistLog, PhenologyLog, Batch, JuntadorPaymentLog, EstablishmentData, ProducerLog, Transaction } from '@/lib/types';
+import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction } from '@/lib/types';
 import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -15,27 +15,27 @@ export const AppDataContext = React.createContext<AppData>({
   users: [],
   setCurrentUser: () => {},
   harvests: [],
-  juntadores: [],
+  collectors: [],
   agronomistLogs: [],
   phenologyLogs: [],
   batches: [],
-  juntadorPaymentLogs: [],
+  collectorPaymentLogs: [],
   establishmentData: null,
   producerLogs: [],
   transactions: [],
   addHarvest: async () => { throw new Error('Not implemented') },
-  deleteJuntador: async () => { throw new Error('Not implemented') },
+  deleteCollector: async () => { throw new Error('Not implemented') },
   addAgronomistLog: async () => { throw new Error('Not implemented') },
   editAgronomistLog: async () => { throw new Error('Not implemented') },
   deleteAgronomistLog: async () => { throw new Error('Not implemented') },
   addPhenologyLog: async () => { throw new Error('Not implemented') },
   editPhenologyLog: async () => { throw new Error('Not implemented') },
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
-  addJuntador: async () => { throw new Error('Not implemented') },
+  addCollector: async () => { throw new Error('Not implemented') },
   addBatch: async () => { throw new Error('Not implemented') },
   deleteBatch: async () => { throw new Error('Not implemented') },
-  addJuntadorPaymentLog: async () => { throw new Error('Not implemented') },
-  deleteJuntadorPaymentLog: async () => { throw new Error('Not implemented') },
+  addCollectorPaymentLog: async () => { throw new Error('Not implemented') },
+  deleteCollectorPaymentLog: async () => { throw new Error('Not implemented') },
   updateEstablishmentData: async () => { throw new Error('Not implemented') },
   addProducerLog: async () => { throw new Error('Not implemented') },
   deleteProducerLog: async () => { throw new Error('Not implemented') },
@@ -91,11 +91,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser');
     const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
-    const [juntadores, setJuntadores] = useState<Juntador[]>([]);
+    const [collectors, setCollectors] = useState<Collector[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
     const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
-    const [juntadorPaymentLogs, setJuntadorPaymentLogs] = useState<JuntadorPaymentLog[]>([]);
+    const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
     const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
     const [producerLogs, setProducerLogs] = useState<ProducerLog[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -138,12 +138,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setEstablishmentData(estData);
         
         const [
-          juntadoresSnapshot,
+          collectorsSnapshot,
           harvestsSnapshot,
           agronomistLogsSnapshot,
           phenologyLogsSnapshot,
           batchesSnapshot,
-          juntadorPaymentsSnapshot,
+          collectorPaymentsSnapshot,
           producerLogsSnapshot,
           transactionsSnapshot,
         ] = await Promise.all([
@@ -152,17 +152,17 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'batches'), orderBy('preloadedDate', 'desc'))),
-          getDocs(query(collection(db, 'juntadorPaymentLogs'), orderBy('date', 'desc'))),
+          getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'producerLogs'), orderBy('date', 'desc'))),
           getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
         ]);
         
-        setJuntadores(juntadoresSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Juntador[]);
+        setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
         setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
         setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
         setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
         setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
-        setJuntadorPaymentLogs(juntadorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as JuntadorPaymentLog[]);
+        setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
         setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
         setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
 
@@ -184,9 +184,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, [fetchData]);
 
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
-        const juntadorDoc = juntadores.find(c => c.id === harvest.juntador.id);
-        if (!juntadorDoc) {
-            toast({ title: "Error", description: "Juntador no encontrado.", variant: "destructive"});
+        const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
+        if (!collectorDoc) {
+            toast({ title: "Error", description: "Recolector no encontrado.", variant: "destructive"});
             return undefined;
         }
 
@@ -195,22 +195,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         // Optimistic UI Update
         setHarvests(prev => [newHarvestWithTempId, ...prev]);
-        const updatedJuntador = {
-            ...juntadorDoc,
-            totalHarvested: juntadorDoc.totalHarvested + harvest.kilograms,
-            hoursWorked: juntadorDoc.hoursWorked + hoursWorked,
-            productivity: (juntadorDoc.totalHarvested + harvest.kilograms) / (juntadorDoc.hoursWorked + hoursWorked),
+        const updatedCollector = {
+            ...collectorDoc,
+            totalHarvested: collectorDoc.totalHarvested + harvest.kilograms,
+            hoursWorked: collectorDoc.hoursWorked + hoursWorked,
+            productivity: (collectorDoc.totalHarvested + harvest.kilograms) / (collectorDoc.hoursWorked + hoursWorked),
         };
-        setJuntadores(prev => prev.map(c => c.id === harvest.juntador.id ? updatedJuntador : c));
+        setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? updatedCollector : c));
 
         try {
             const batch = writeBatch(db);
             const newHarvestRef = doc(collection(db, 'harvests'));
             batch.set(newHarvestRef, harvest);
 
-            const juntadorRef = doc(db, 'collectors', harvest.juntador.id);
-            const { id, ...juntadorUpdateData } = updatedJuntador;
-            batch.update(juntadorRef, juntadorUpdateData);
+            const collectorRef = doc(db, 'collectors', harvest.collector.id);
+            const { id, ...collectorUpdateData } = updatedCollector;
+            batch.update(collectorRef, collectorUpdateData);
             
             await batch.commit();
 
@@ -222,47 +222,47 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             toast({ title: "Error de Sincronización", description: "No se pudo guardar la cosecha en la nube.", variant: "destructive"});
             // Rollback optimistic update on failure
             setHarvests(prev => prev.filter(h => h.id !== tempId));
-            setJuntadores(prev => prev.map(c => c.id === harvest.juntador.id ? juntadorDoc : c));
+            setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? collectorDoc : c));
             return undefined;
         }
     };
 
-    const deleteJuntador = async (juntadorId: string) => {
-        const originalState = { juntadores: [...juntadores], harvests: [...harvests], juntadorPaymentLogs: [...juntadorPaymentLogs] };
+    const deleteCollector = async (collectorId: string) => {
+        const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
         
         // Optimistic Update
-        setJuntadores(prev => prev.filter(c => c.id !== juntadorId));
-        setHarvests(prev => prev.filter(h => h.juntador.id !== juntadorId));
-        setJuntadorPaymentLogs(prev => prev.filter(p => p.juntadorId !== juntadorId));
+        setCollectors(prev => prev.filter(c => c.id !== collectorId));
+        setHarvests(prev => prev.filter(h => h.collector.id !== collectorId));
+        setCollectorPaymentLogs(prev => prev.filter(p => p.collectorId !== collectorId));
 
         try {
             const batchOp = writeBatch(db);
-            batchOp.delete(doc(db, 'collectors', juntadorId));
-            const harvestsQuery = query(collection(db, 'harvests'), where('juntador.id', '==', juntadorId));
-            const paymentsQuery = query(collection(db, 'juntadorPaymentLogs'), where('juntadorId', '==', juntadorId));
+            batchOp.delete(doc(db, 'collectors', collectorId));
+            const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', collectorId));
+            const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', collectorId));
             const [harvestsSnapshot, paymentsSnapshot] = await Promise.all([getDocs(harvestsQuery), getDocs(paymentsQuery)]);
             harvestsSnapshot.forEach(doc => batchOp.delete(doc.ref));
             paymentsSnapshot.forEach(doc => batchOp.delete(doc.ref));
             await batchOp.commit();
         } catch(error) {
-            console.error("Failed to delete juntador:", error);
-            setJuntadores(originalState.juntadores);
+            console.error("Failed to delete collector:", error);
+            setCollectors(originalState.collectors);
             setHarvests(originalState.harvests);
-            setJuntadorPaymentLogs(originalState.juntadorPaymentLogs);
+            setCollectorPaymentLogs(originalState.collectorPaymentLogs);
             toast({ title: "Error", description: "No se pudo eliminar al recolector.", variant: "destructive"});
         }
     };
 
-    const addJuntador = async (juntador: Omit<Juntador, 'id'>) => {
-        const tempId = `juntador_${Date.now()}`;
-        setJuntadores(prev => [...prev, { id: tempId, ...juntador }]);
+    const addCollector = async (collector: Omit<Collector, 'id'>) => {
+        const tempId = `collector_${Date.now()}`;
+        setCollectors(prev => [...prev, { id: tempId, ...collector }]);
         
         try {
-            const ref = await addDoc(collection(db, 'collectors'), juntador);
-            setJuntadores(prev => prev.map(c => c.id === tempId ? { ...c, id: ref.id } : c));
+            const ref = await addDoc(collection(db, 'collectors'), collector);
+            setCollectors(prev => prev.map(c => c.id === tempId ? { ...c, id: ref.id } : c));
         } catch (error) {
-            console.error("Failed to add juntador:", error);
-            setJuntadores(prev => prev.filter(c => c.id !== tempId));
+            console.error("Failed to add collector:", error);
+            setCollectors(prev => prev.filter(c => c.id !== tempId));
             toast({ title: "Error", description: "No se pudo agregar al recolector.", variant: "destructive"});
         }
     };
@@ -376,52 +376,52 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const addJuntadorPaymentLog = async (log: Omit<JuntadorPaymentLog, 'id'>) => {
+    const addCollectorPaymentLog = async (log: Omit<CollectorPaymentLog, 'id'>) => {
         const tempId = `paymentlog_${Date.now()}`;
-        setJuntadorPaymentLogs(prev => [{ id: tempId, ...log }, ...prev]);
+        setCollectorPaymentLogs(prev => [{ id: tempId, ...log }, ...prev]);
         
         try {
-            const ref = await addDoc(collection(db, 'juntadorPaymentLogs'), log);
-            setJuntadorPaymentLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
+            const ref = await addDoc(collection(db, 'collectorPaymentLogs'), log);
+            setCollectorPaymentLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
         } catch (error) {
             console.error("Failed to add payment log:", error);
-            setJuntadorPaymentLogs(prev => prev.filter(l => l.id !== tempId));
+            setCollectorPaymentLogs(prev => prev.filter(l => l.id !== tempId));
             toast({ title: "Error", description: "No se pudo guardar el pago.", variant: "destructive"});
         }
     };
 
-    const deleteJuntadorPaymentLog = async (logId: string) => {
-        const originalState = { juntadores: [...juntadores], harvests: [...harvests], juntadorPaymentLogs: [...juntadorPaymentLogs] };
-        const logToDelete = juntadorPaymentLogs.find(l => l.id === logId);
+    const deleteCollectorPaymentLog = async (logId: string) => {
+        const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
+        const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
         if (!logToDelete) {
             return;
         }
-        const juntadorDoc = juntadores.find(c => c.id === logToDelete.juntadorId);
+        const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
 
         // Optimistic update
-        setJuntadorPaymentLogs(prev => prev.filter(l => l.id !== logId));
+        setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
         setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
-        if (juntadorDoc) {
-            const newTotalHarvested = juntadorDoc.totalHarvested - logToDelete.kilograms;
-            const newHoursWorked = juntadorDoc.hoursWorked - logToDelete.hours;
-            const updatedJuntador = {
-                ...juntadorDoc,
+        if (collectorDoc) {
+            const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
+            const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
+            const updatedCollector = {
+                ...collectorDoc,
                 totalHarvested: newTotalHarvested,
                 hoursWorked: newHoursWorked,
                 productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
             };
-            setJuntadores(prev => prev.map(c => c.id === logToDelete.juntadorId ? updatedJuntador : c));
+            setCollectors(prev => prev.map(c => c.id === logToDelete.collectorId ? updatedCollector : c));
         }
     
         try {
             const batchOp = writeBatch(db);
-            batchOp.delete(doc(db, 'juntadorPaymentLogs', logId));
+            batchOp.delete(doc(db, 'collectorPaymentLogs', logId));
             batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
-            if (juntadorDoc) {
-                const juntadorRef = doc(db, 'collectors', logToDelete.juntadorId);
-                const newTotalHarvested = juntadorDoc.totalHarvested - logToDelete.kilograms;
-                const newHoursWorked = juntadorDoc.hoursWorked - logToDelete.hours;
-                batchOp.update(juntadorRef, {
+            if (collectorDoc) {
+                const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
+                const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
+                const newHoursWorked = collectorDoc.hoursWorked - logToDelete.hours;
+                batchOp.update(collectorRef, {
                     totalHarvested: newTotalHarvested,
                     hoursWorked: newHoursWorked,
                     productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
@@ -430,9 +430,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await batchOp.commit();
         } catch(error) {
             console.error("Failed to delete payment log:", error);
-            setJuntadores(originalState.juntadores);
+            setCollectors(originalState.collectors);
             setHarvests(originalState.harvests);
-            setJuntadorPaymentLogs(originalState.juntadorPaymentLogs);
+            setCollectorPaymentLogs(originalState.collectorPaymentLogs);
             toast({ title: "Error", description: "No se pudo eliminar el registro de pago.", variant: "destructive"});
         }
     };
@@ -540,27 +540,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         users,
         setCurrentUser,
         harvests,
-        juntadores,
+        collectors,
         agronomistLogs,
         phenologyLogs,
         batches,
-        juntadorPaymentLogs,
+        collectorPaymentLogs,
         establishmentData,
         producerLogs,
         transactions,
         addHarvest,
-        deleteJuntador,
+        deleteCollector,
         addAgronomistLog,
         editAgronomistLog,
         deleteAgronomistLog,
         addPhenologyLog,
         editPhenologyLog,
         deletePhenologyLog,
-        addJuntador,
+        addCollector,
         addBatch,
         deleteBatch,
-        addJuntadorPaymentLog,
-        deleteJuntadorPaymentLog,
+        addCollectorPaymentLog,
+        deleteCollectorPaymentLog,
         updateEstablishmentData,
         addProducerLog,
         deleteProducerLog,
@@ -576,3 +576,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+
+    
