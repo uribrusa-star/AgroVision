@@ -248,7 +248,7 @@ export function HarvestSummary() {
         const aiInput = {
             productionData: JSON.stringify({ totalProduction, yieldPerHectare: totalProduction / farmArea }),
             costData: JSON.stringify({ totalCost, costByCategory }),
-            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 5).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
+            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 20).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
         };
         const aiResult = await summarizeHarvestData(aiInput);
 
