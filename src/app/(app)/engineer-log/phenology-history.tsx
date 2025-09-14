@@ -141,7 +141,6 @@ export function PhenologyHistory() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Fecha</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Lote</TableHead>
                     <TableHead>Conteos</TableHead>
@@ -153,21 +152,20 @@ export function PhenologyHistory() {
                 <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 7: 6}>
+                    <TableCell colSpan={canManage ? 6: 5}>
                       <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!loading && phenologyLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 7: 6} className="text-center">No hay registros de fenología.</TableCell>
+                    <TableCell colSpan={canManage ? 6: 5} className="text-center">No hay registros de fenología.</TableCell>
                   </TableRow>
                 )}
                 {!loading && [...phenologyLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const stateInfo = getStateInfo(log.developmentState);
                     return (
                         <TableRow key={log.id}>
-                            <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                             <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                                 <Badge variant={stateInfo.variant as any} className="gap-1">
                                     <stateInfo.icon className="h-3 w-3" />

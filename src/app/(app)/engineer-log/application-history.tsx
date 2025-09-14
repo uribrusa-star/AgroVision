@@ -139,7 +139,6 @@ export function ApplicationHistory() {
             <Table>
                 <TableHeader>
                 <TableRow>
-                    <TableHead>Fecha</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead>Lote</TableHead>
                     <TableHead>Detalle</TableHead>
@@ -150,21 +149,20 @@ export function ApplicationHistory() {
                 <TableBody>
                 {loading && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 6: 5}>
+                    <TableCell colSpan={canManage ? 5: 4}>
                       <Skeleton className="h-12 w-full" />
                     </TableCell>
                   </TableRow>
                 )}
                 {!loading && agronomistLogs.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={canManage ? 6: 5} className="text-center">No hay registros de actividades.</TableCell>
+                    <TableCell colSpan={canManage ? 5: 4} className="text-center">No hay registros de actividades.</TableCell>
                   </TableRow>
                 )}
                 {!loading && [...agronomistLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log) => {
                     const typeInfo = getTypeInfo(log.type);
                     return (
                     <TableRow key={log.id}>
-                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">{new Date(log.date).toLocaleDateString('es-ES')}</TableCell>
                         <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
                           <Badge variant={typeInfo.variant as any} className="gap-1">
                             <typeInfo.icon className="h-3 w-3" />
