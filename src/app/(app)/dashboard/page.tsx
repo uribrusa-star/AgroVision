@@ -13,6 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 import { CostDistributionChart } from './cost-distribution-chart';
+import { ProductionPaymentHistory } from '../production-payment-history';
+import { PackagingHistory } from '../data-entry/packaging-history';
 
 
 export default function DashboardPage() {
@@ -198,6 +200,10 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
         </div>
+      </div>
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <ProductionPaymentHistory />
+        <PackagingHistory />
       </div>
     </>
   );
