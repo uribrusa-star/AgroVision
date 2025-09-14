@@ -251,6 +251,7 @@ export function HarvestSummary() {
 
         const aiInput = {
             productionData: JSON.stringify({
+              "Superficie Cultivada (ha)": farmArea,
               "Producción Total (kg)": totalProduction.toLocaleString('es-ES'),
               "Rendimiento (kg/ha)": (totalProduction / farmArea).toLocaleString('es-ES', {maximumFractionDigits: 0})
             }),
