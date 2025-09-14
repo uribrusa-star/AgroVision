@@ -12,25 +12,29 @@ const costChartConfig = {
   costs: {
     label: "Costos",
   },
-  'Mano de Obra': {
-    label: "Mano de Obra",
+  'Cosecha': {
+    label: "Cosecha",
     color: "hsl(var(--chart-1))",
+  },
+  'Embalaje': {
+    label: "Embalaje",
+    color: "hsl(var(--chart-2))",
   },
   'Insumos': {
     label: "Insumos",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-3))",
   },
   'Riego': {
     label: "Riego",
-    color: "hsl(var(--chart-3))",
+    color: "hsl(var(--chart-4))",
   },
    'Mantenimiento': {
     label: "Mantenimiento",
-    color: "hsl(var(--chart-4))",
+    color: "hsl(var(--chart-5))",
   },
   'Servicios': {
     label: "Servicios",
-    color: "hsl(var(--chart-5))",
+    color: "hsl(var(--chart-1))",
   },
   'Otro': {
       label: "Otro",
@@ -41,16 +45,16 @@ const costChartConfig = {
 function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boolean}) {
   const { loading, transactions, collectorPaymentLogs, packagingLogs } = useContext(AppDataContext);
 
-  const totalLaborCost = useMemo(() => {
-    const harvestLabor = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
-    const packagingLabor = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
-    return harvestLabor + packagingLabor;
-  }, [collectorPaymentLogs, packagingLogs]);
+  const totalHarvestLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
+  const totalPackagingLaborCost = useMemo(() => packagingLogs.reduce((acc, p) => acc + p.payment, 0), [packagingLogs]);
 
   const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
 
   const costByCategory = useMemo(() => {
-    const costs: {[key: string]: number} = { 'Mano de Obra': totalLaborCost };
+    const costs: {[key: string]: number} = { 
+      'Cosecha': totalHarvestLaborCost,
+      'Embalaje': totalPackagingLaborCost,
+    };
     
     otherExpenses.forEach(transaction => {
         const { category, amount } = transaction;
@@ -61,7 +65,7 @@ function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boole
     });
 
     return costs;
-  }, [otherExpenses, totalLaborCost]);
+  }, [otherExpenses, totalHarvestLaborCost, totalPackagingLaborCost]);
 
   const costDistributionData = useMemo(() => 
       Object.entries(costByCategory).map(([category, value]) => ({

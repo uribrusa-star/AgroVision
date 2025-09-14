@@ -21,7 +21,6 @@ export default function ProducerLogPage() {
   const { loading, collectorPaymentLogs, packagingLogs, transactions } = React.useContext(AppDataContext);
   const totalHarvestLaborCost = collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0);
   const totalPackagingLaborCost = packagingLogs.reduce((acc, p) => acc + p.payment, 0);
-  const totalLaborCost = totalHarvestLaborCost + totalPackagingLaborCost;
   
   return (
     <>
@@ -36,12 +35,22 @@ export default function ProducerLogPage() {
           <TransactionHistory />
            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Costo Total de Mano de Obra</CardTitle>
+                <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Cosecha)</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                <p className="text-xs text-muted-foreground">Incluye cosecha y embalaje</p>
+                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalHarvestLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+                <p className="text-xs text-muted-foreground">Solo pagos a recolectores</p>
+              </CardContent>
+            </Card>
+             <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Embalaje)</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalPackagingLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+                <p className="text-xs text-muted-foreground">Solo pagos a embaladores</p>
               </CardContent>
             </Card>
              <CostDistributionChart />

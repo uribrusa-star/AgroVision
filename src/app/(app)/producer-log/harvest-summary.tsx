@@ -46,7 +46,10 @@ export function HarvestSummary() {
   const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
 
   const costByCategory = useMemo(() => {
-    const costs: {[key: string]: number} = { 'Mano de Obra': totalHarvestLaborCost + totalPackagingLaborCost };
+    const costs: {[key: string]: number} = { 
+      'Cosecha': totalHarvestLaborCost,
+      'Embalaje': totalPackagingLaborCost,
+    };
     
     otherExpenses.forEach(transaction => {
         const { category, amount } = transaction;
@@ -169,7 +172,6 @@ export function HarvestSummary() {
             doc.text(title, 15, yPos);
             yPos += 8;
             
-            // Reset font immediately after title
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             doc.setTextColor(80);
@@ -201,7 +203,6 @@ export function HarvestSummary() {
             doc.text("Análisis Gráfico", 15, yPos);
             yPos += 10;
 
-            // Reset font immediately after title
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
             doc.setTextColor(80);
