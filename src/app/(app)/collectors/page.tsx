@@ -225,7 +225,6 @@ export default function CollectorsPage() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DropdownMenuItem onSelect={() => { setSelectedCollector(collector); setIsHistoryOpen(true); }}>Ver Historial</DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
                                 <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                 </AlertDialogTrigger>
