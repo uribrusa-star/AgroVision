@@ -2,7 +2,7 @@
 'use client';
 
 import Image from 'next/image';
-import { MoreHorizontal } from 'lucide-react';
+import { AlertCircle, MoreHorizontal } from 'lucide-react';
 import React, { useEffect, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,16 +23,16 @@ import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Collector } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const CollectorSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
 });
 
 export default function CollectorsPage() {
-  const { loading, collectors, harvests, addCollector, editCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
+  const { loading, collectors, harvests, addCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
 
@@ -42,47 +42,21 @@ export default function CollectorsPage() {
   });
 
   useEffect(() => {
-    if (isEditDialogOpen && selectedCollector) {
-      form.reset({ name: selectedCollector.name });
-    } else if (isAddDialogOpen) {
+    if (isAddDialogOpen) {
       form.reset({ name: '' });
     }
-  }, [selectedCollector, isEditDialogOpen, isAddDialogOpen, form]);
+  }, [isAddDialogOpen, form]);
 
 
   const getCollectorHistory = (collectorId: string) => {
     return harvests.filter(h => h.collector.id === collectorId);
   };
-
-  const handleEdit = (collector: Collector) => {
-    setSelectedCollector(collector);
-    setIsEditDialogOpen(true);
-  };
   
   const handleDelete = (collectorId: string) => {
-     startTransition(() => {
-        deleteCollector(collectorId);
+     startTransition(async () => {
+        await deleteCollector(collectorId);
         toast({ title: "Recolector Eliminado", description: "El recolector y sus datos asociados han sido eliminados." });
     });
-  };
-
-  const onEditSubmit = (values: z.infer<typeof CollectorSchema>) => {
-    if (collectors.some(c => c.name.trim().toLowerCase() === values.name.trim().toLowerCase() && c.id !== selectedCollector?.id)) {
-      form.setError('name', {
-        type: 'manual',
-        message: 'Ya existe un recolector con este nombre.',
-      });
-      return;
-    }
-
-    if (selectedCollector) {
-       startTransition(() => {
-        editCollector({ ...selectedCollector, name: values.name.trim() });
-        toast({ title: "Recolector Actualizado", description: "Los datos del recolector se han guardado." });
-        setIsEditDialogOpen(false);
-        setSelectedCollector(null);
-      });
-    }
   };
 
   const onAddSubmit = (values: z.infer<typeof CollectorSchema>) => {
@@ -94,8 +68,8 @@ export default function CollectorsPage() {
       return;
     }
     
-    startTransition(() => {
-        addCollector({
+    startTransition(async () => {
+        await addCollector({
           name: values.name.trim(),
           avatar: `${collectors.length + 1}`,
           totalHarvested: 0,
@@ -145,6 +119,13 @@ export default function CollectorsPage() {
                                     </FormItem>
                                 )}
                             />
+                            <Alert variant="destructive" className="mt-4">
+                              <AlertCircle className="h-4 w-4" />
+                              <AlertTitle>Atención</AlertTitle>
+                              <AlertDescription>
+                                Una vez que se agrega un recolector, su nombre no se puede modificar.
+                              </AlertDescription>
+                            </Alert>
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button type="button" variant="secondary">Cancelar</Button>
@@ -229,54 +210,14 @@ export default function CollectorsPage() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DialogTrigger asChild>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Ver Historial</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={(e) => {e.preventDefault(); setSelectedCollector(collector)}}>Ver Historial</DropdownMenuItem>
                                 </DialogTrigger>
-                                <DropdownMenuItem onSelect={() => handleEdit(collector)}>Editar</DropdownMenuItem>
                                 <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                 </AlertDialogTrigger>
                             </DropdownMenuContent>
                             </DropdownMenu>
 
-                            <DialogContent className="sm:max-w-2xl">
-                            <DialogHeader>
-                                <DialogTitle>Historial de Cosecha: {collector.name}</DialogTitle>
-                                <DialogDescription>
-                                Revise todas las entradas de cosecha para este recolector.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="max-h-[60vh] overflow-auto">
-                                <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                    <TableHead>Fecha</TableHead>
-                                    <TableHead>Lote</TableHead>
-                                    <TableHead className="text-right">Kilogramos</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {(() => {
-                                    const history = getCollectorHistory(collector.id);
-                                    if (history.length > 0) {
-                                        return history.map(h => (
-                                        <TableRow key={h.id}>
-                                            <TableCell>{new Date(h.date).toLocaleDateString('es-ES')}</TableCell>
-                                            <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
-                                            <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
-                                        </TableRow>
-                                        ));
-                                    }
-                                    return (
-                                        <TableRow>
-                                        <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
-                                        </TableRow>
-                                    );
-                                    })()}
-                                </TableBody>
-                                </Table>
-                            </div>
-                            </DialogContent>
-                            
                             <AlertDialogContent>
                                 <AlertDialogHeader>
                                     <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
@@ -302,37 +243,51 @@ export default function CollectorsPage() {
         </Card>
       </div>
       
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Recolector</DialogTitle>
-            <DialogDescription>
-              Actualice los detalles del recolector. Haga clic en guardar cuando haya terminado.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+      <Dialog open={!!selectedCollector} onOpenChange={(isOpen) => !isOpen && setSelectedCollector(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          {selectedCollector && (
+            <>
+              <DialogHeader>
+                  <DialogTitle>Historial de Cosecha: {selectedCollector.name}</DialogTitle>
+                  <DialogDescription>
+                  Revise todas las entradas de cosecha para este recolector.
+                  </DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[60vh] overflow-auto">
+                  <Table>
+                  <TableHeader>
+                      <TableRow>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead>Lote</TableHead>
+                      <TableHead className="text-right">Kilogramos</TableHead>
+                      </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                      {(() => {
+                      const history = getCollectorHistory(selectedCollector.id);
+                      if (history.length > 0) {
+                          return history.map(h => (
+                          <TableRow key={h.id}>
+                              <TableCell>{new Date(h.date).toLocaleDateString('es-ES')}</TableCell>
+                              <TableCell><Badge variant="outline">{h.batchNumber}</Badge></TableCell>
+                              <TableCell className="text-right font-medium">{h.kilograms} kg</TableCell>
+                          </TableRow>
+                          ));
+                      }
+                      return (
+                          <TableRow>
+                          <TableCell colSpan={3} className="text-center">No se encontró historial de cosecha.</TableCell>
+                          </TableRow>
+                      );
+                      })()}
+                  </TableBody>
+                  </Table>
+              </div>
               <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancelar</Button>
-                </DialogClose>
-                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Cambios'}</Button>
+                  <Button variant="outline" onClick={() => setSelectedCollector(null)}>Cerrar</Button>
               </DialogFooter>
-            </form>
-          </Form>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </>
