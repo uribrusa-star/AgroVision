@@ -62,7 +62,7 @@ export function HarvestSummary() {
   const totalIncome = useMemo(() => transactions.filter(t => t.type === 'Ingreso').reduce((acc, t) => acc + t.amount, 0), [transactions]);
   
   // Use establishment data for calculations, with fallbacks
-  const farmArea = establishmentData?.area.strawberry || 5; // Default to 5ha
+  const farmArea = establishmentData?.area.strawberry || 1; // Default to 1ha to avoid division by zero
   
 
   const handleGeneratePdf = () => {
@@ -245,10 +245,20 @@ export function HarvestSummary() {
         doc.text(establishmentData.producer, pageWidth / 2, pageHeight / 2 + 30, { align: 'center' });
 
         // --- Get AI Content ---
+        const formattedCostByCategory = Object.fromEntries(
+            Object.entries(costByCategory).map(([key, value]) => [key, `$${value.toLocaleString('es-AR')}`])
+        );
+
         const aiInput = {
-            productionData: JSON.stringify({ totalProduction, yieldPerHectare: totalProduction / farmArea }),
-            costData: JSON.stringify({ totalCost, costByCategory }),
-            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 20).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
+            productionData: JSON.stringify({
+              "Producción Total (kg)": totalProduction.toLocaleString('es-ES'),
+              "Rendimiento (kg/ha)": (totalProduction / farmArea).toLocaleString('es-ES', {maximumFractionDigits: 0})
+            }),
+            costData: JSON.stringify({
+              "Costo Total (ARS)": `$${totalCost.toLocaleString('es-AR')}`,
+              "Costos por Categoría (ARS)": formattedCostByCategory
+            }),
+            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 15).map(l => ({type: l.type, product: l.product, notes: l.notes}))),
         };
         const aiResult = await summarizeHarvestData(aiInput);
 
