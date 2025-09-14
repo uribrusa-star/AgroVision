@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useContext } from 'react';
@@ -18,7 +17,6 @@ import { CulturalPracticesLogForm } from './cultural-practices-log-form';
 import { EnvironmentalLogForm } from './environmental-log-form';
 import { IrrigationLogForm } from './irrigation-log-form';
 import { AgronomistReport } from './agronomist-report';
-import { ActivityOmissionLogForm } from './activity-omission-log-form';
 import { NotesHistory } from '../producer-log/notes-history';
 
 
@@ -80,30 +78,26 @@ export default function EngineerLogPage() {
         </Card>
       </div>
 
-       <div className="mb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-             {canManageApplications ? <EnvironmentalLogForm /> : null}
-             {canManageApplications ? <IrrigationLogForm /> : null}
-             {canManageApplications ? <HealthLogForm /> : null}
-             {canManageApplications ? <CulturalPracticesLogForm /> : null}
-             {canManageApplications ? <ActivityOmissionLogForm /> : null}
-             {canManageApplications ? <PhenologyLogForm /> : null}
-            <div className="lg:col-span-2">
-              <AgronomistReport />
-            </div>
-            <div className="lg:col-span-2">
-              <ApplicationHistory />
-            </div>
-             <div className="lg:col-span-2">
-              <PhenologyHistory />
-            </div>
-            <div className="lg:col-span-2">
-                <NotesHistory />
-            </div>
-          </div>
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+        {/* Columna Izquierda */}
+        <div className="space-y-8">
+            {canManageApplications ? <HealthLogForm /> : null}
+            {canManageApplications ? <PhenologyLogForm /> : null}
+            <ApplicationHistory />
+            <PhenologyHistory />
         </div>
+
+        {/* Columna Derecha */}
+        <div className="space-y-8">
+            {canManageApplications ? <IrrigationLogForm /> : null}
+            {canManageApplications ? <CulturalPracticesLogForm /> : null}
+            {canManageApplications ? <EnvironmentalLogForm /> : null}
+            <NotesHistory />
+            <AgronomistReport />
+        </div>
+      </div>
       
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mb-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-8">
         <div id="batch-yield-chart" className="lg:col-span-1">
            <BatchYieldChart />
         </div>
