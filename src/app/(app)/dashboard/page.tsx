@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs } = React.useContext(AppDataContext);
 
   const calculateDashboardStats = (harvests: Harvest[], paymentLogs: CollectorPaymentLog[], packagingLogs: PackagingLog[]) => {
-    if (harvests.length === 0) {
+    if (!harvests || harvests.length === 0) {
       return {
         totalHarvest: 0,
         averageYield: 0,
@@ -70,7 +70,7 @@ export default function DashboardPage() {
   
 
   const dashboardStats = calculateDashboardStats(harvests, collectorPaymentLogs, packagingLogs);
-  const sortedHarvests = [...harvests].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedHarvests = [...(harvests || [])].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <>
@@ -189,7 +189,7 @@ export default function DashboardPage() {
                             <TableCell colSpan={2}><Skeleton className="h-8 w-full" /></TableCell>
                            </TableRow>
                         ))}
-                        {!loading && [...collectors].sort((a,b) => b.productivity - a.productivity).map((collector) => (
+                        {!loading && [...(collectors || [])].sort((a,b) => b.productivity - a.productivity).map((collector) => (
                             <TableRow key={collector.id}>
                             <TableCell className="font-medium">{collector.name}</TableCell>
                             <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
