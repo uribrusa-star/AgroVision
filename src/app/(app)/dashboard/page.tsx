@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 import { ProductionPaymentHistory } from '@/app/(app)/production-payment-history';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
+import { PackagingHistory } from '../data-entry/packaging-history';
 
 
 export default function DashboardPage() {
@@ -163,6 +164,9 @@ export default function DashboardPage() {
         </div>
         <div className="lg:col-span-2">
           <ProductionPaymentHistory />
+        </div>
+        <div className="lg:col-span-2">
+          <PackagingHistory />
         </div>
         <div className="lg:col-span-2">
             <Card>
