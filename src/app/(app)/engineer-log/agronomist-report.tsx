@@ -148,26 +148,28 @@ export function AgronomistReport() {
                     2: { cellWidth: 'auto' }
                 },
                 didDrawCell: (data) => {
-                    const imgColIndex = head[0].length - 1; 
-                    if (data.column.index === imgColIndex && data.row.section === 'body' && body[data.row.index]) {
-                      const cellValue = body[data.row.index][imgColIndex];
-                      if (cellValue && cellValue !== 'No') {
-                          data.cell.text = []; // Clear cell text effectively
-                          const imgUrl = cellValue;
-                          try {
-                              const imgX = data.cell.x + 2;
-                              const imgY = data.cell.y + 2;
-                              const imgWidth = 10;
-                              const imgHeight = 10;
-                              doc.addImage(imgUrl, 'JPEG', imgX, imgY, imgWidth, imgHeight, '', 'FAST');
-                              doc.link(imgX, imgY, imgWidth, imgHeight, { url: imgUrl });
-                          } catch (e) {
-                              console.error("Error adding image to PDF table", e);
-                              doc.setTextColor(42, 157, 244);
-                              doc.textWithLink('Link', data.cell.x + 2, data.cell.y + 8, { url: imgUrl });
-                              doc.setTextColor(80);
-                          }
-                      }
+                    if (data.row.section === 'body' && body[data.row.index]) {
+                        const imgColIndex = head[0].length - 1; 
+                        if (data.column.index === imgColIndex) {
+                            const cellValue = body[data.row.index][imgColIndex];
+                            if (cellValue && cellValue !== 'No') {
+                                data.cell.text = []; // Clear cell text effectively
+                                const imgUrl = cellValue;
+                                try {
+                                    const imgX = data.cell.x + 2;
+                                    const imgY = data.cell.y + 2;
+                                    const imgWidth = 10;
+                                    const imgHeight = 10;
+                                    doc.addImage(imgUrl, 'JPEG', imgX, imgY, imgWidth, imgHeight, '', 'FAST');
+                                    doc.link(imgX, imgY, imgWidth, imgHeight, { url: imgUrl });
+                                } catch (e) {
+                                    console.error("Error adding image to PDF table", e);
+                                    doc.setTextColor(42, 157, 244);
+                                    doc.textWithLink('Link', data.cell.x + 2, data.cell.y + 8, { url: imgUrl });
+                                    doc.setTextColor(80);
+                                }
+                            }
+                        }
                     }
                 },
                 rowPageBreak: 'auto',
