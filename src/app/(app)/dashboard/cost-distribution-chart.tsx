@@ -45,10 +45,10 @@ const costChartConfig = {
 function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boolean}) {
   const { loading, transactions, collectorPaymentLogs, packagingLogs } = useContext(AppDataContext);
 
-  const totalHarvestLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
-  const totalPackagingLaborCost = useMemo(() => packagingLogs.reduce((acc, p) => acc + p.payment, 0), [packagingLogs]);
+  const totalHarvestLaborCost = useMemo(() => (collectorPaymentLogs || []).reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
+  const totalPackagingLaborCost = useMemo(() => (packagingLogs || []).reduce((acc, p) => acc + p.payment, 0), [packagingLogs]);
 
-  const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
+  const otherExpenses = useMemo(() => (transactions || []).filter(t => t.type === 'Gasto'), [transactions]);
 
   const costByCategory = useMemo(() => {
     const costs: {[key: string]: number} = { 

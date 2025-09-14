@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { initializeFirestore, persistentLocalCache, memoryLocalCache, enableMultiTabIndexedDbPersistence, getFirestore, Firestore } from 'firebase/firestore';
+import { initializeFirestore, persistentLocalCache, memoryLocalCache, getFirestore, Firestore, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
 
 const firebaseConfig = {
   "projectId": "studio-1014760813-be189",
@@ -27,19 +27,27 @@ const getFirestoreInstance = () => {
         // Client-side execution
         try {
             db = initializeFirestore(app, {
-                localCache: persistentLocalCache(/*{ tabManager: 'MEMORY' }*/), // Use default tab manager
+                // Use persistent cache with tab synchronization.
+                // This allows multiple tabs to share the same offline cache.
+                localCache: persistentLocalCache({
+                    tabManager: 'firestore-multitab'
+                }),
+                cacheSizeBytes: CACHE_SIZE_UNLIMITED
             });
-            enableMultiTabIndexedDbPersistence(db).catch((err) => {
-                if (err.code === 'failed-precondition') {
-                    console.warn('Firestore persistence failed to enable in this tab. This is likely because another tab is already open. Offline capabilities may be limited.');
-                } else if (err.code === 'unimplemented') {
-                    console.warn('This browser does not support the necessary features for multi-tab persistence.');
-                }
-            });
-        } catch (e) {
-            console.error("Could not initialize Firestore with persistence", e);
-            // Fallback to memory cache if persistence fails
-            db = initializeFirestore(app, { localCache: memoryLocalCache() });
+        } catch (e: any) {
+            if (e.code === 'failed-precondition') {
+                 console.warn('Firestore persistence failed to enable in this tab. This is likely because another tab is already open. Offline capabilities may be limited.');
+                 // Fallback to memory cache if persistence fails
+                 db = getFirestore(app);
+            } else if (e.code === 'unimplemented') {
+                 console.warn('This browser does not support the necessary features for multi-tab persistence.');
+                 // Fallback to memory cache
+                 db = getFirestore(app);
+            } else {
+                console.error("Could not initialize Firestore with persistence", e);
+                // Fallback to memory cache for other errors
+                db = getFirestore(app);
+            }
         }
     } else {
         // Server-side execution
