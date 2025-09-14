@@ -445,16 +445,16 @@ export function ApplicationHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter className="sm:justify-between">
+                    <DialogFooter className="grid grid-cols-1 sm:flex sm:flex-row sm:justify-between w-full gap-2 pt-2">
                         {canManage ? (
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" disabled={isPending}>
+                                    <Button variant="destructive" className="w-full sm:w-auto" disabled={isPending}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         {isPending ? 'Eliminando...' : 'Eliminar'}
                                     </Button>
                                 </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} className="w-full sm:w-auto" variant="outline">Cerrar</Button>
                     </DialogFooter>
                     <AlertDialogContent>
                         <AlertDialogHeader>

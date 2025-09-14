@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useContext, useEffect, useTransition } from 'react';
@@ -83,13 +84,14 @@ export function PhenologyHistory() {
 
   const handleDelete = (logId: string) => {
     startTransition(() => {
-        deletePhenologyLog(logId);
-        toast({
-          title: "Registro Eliminado",
-          description: "La entrada del registro de fenología ha sido eliminada exitosamente.",
+        deletePhenologyLog(logId).then(() => {
+          toast({
+            title: "Registro Eliminado",
+            description: "La entrada del registro de fenología ha sido eliminada exitosamente.",
+          });
+          setIsDetailOpen(false);
+          setSelectedLog(null);
         });
-        setIsDetailOpen(false);
-        setSelectedLog(null);
     });
   };
 
@@ -467,11 +469,11 @@ export function PhenologyHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                    <DialogFooter className="sm:justify-between">
+                    <DialogFooter className="grid grid-cols-1 sm:flex sm:flex-row sm:justify-between w-full gap-2 pt-2">
                        {canManage ? (
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" disabled={isPending}>
+                                    <Button variant="destructive" className="w-full sm:w-auto" disabled={isPending}>
                                         <Trash2 className="mr-2 h-4 w-4" />
                                         {isPending ? 'Eliminando...' : 'Eliminar'}
                                     </Button>
@@ -490,7 +492,7 @@ export function PhenologyHistory() {
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)}>Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="outline" className="w-full sm:w-auto">Cerrar</Button>
                     </DialogFooter>
                  </AlertDialog>
               );
