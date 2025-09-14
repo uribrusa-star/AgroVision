@@ -138,23 +138,33 @@ export function AgronomistReport() {
                 startY: yPos,
                 theme: 'grid',
                 headStyles: { fillColor: [38, 70, 83], textColor: 255, font: 'helvetica', fontStyle: 'bold' },
-                bodyStyles: { textColor: 80, font: 'helvetica', fontSize: 8 },
+                bodyStyles: { textColor: 80, font: 'helvetica', fontSize: 8, minCellHeight: 15 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 columnStyles: {
                     2: { cellWidth: 'auto' }
                 },
                 didDrawCell: (data) => {
-                    // Check if we are drawing the image column
-                    if (data.column.index === head[0].length - 1 && data.row.section === 'body' && body[data.row.index][data.column.index] !== 'No') {
-                      const imgData = body[data.row.index][data.column.index];
-                      // Clear the cell content
-                      data.cell.text = '';
-                      // Draw image
-                      try {
-                        doc.addImage(imgData, 'JPEG', data.cell.x + 2, data.cell.y + 2, 10, 10);
-                      } catch (e) {
-                          console.error("Error adding image to PDF table", e);
-                          doc.text("Error", data.cell.x + 2, data.cell.y + 8);
+                    const imgColIndex = head[0].length - 1;
+                    if (data.column.index === imgColIndex && data.row.section === 'body') {
+                      const cellValue = body[data.row.index][imgColIndex];
+                      if (cellValue && cellValue !== 'No') {
+                          // Clear cell text
+                          data.cell.text = '';
+                          const imgUrl = cellValue;
+                          try {
+                              const imgX = data.cell.x + 2;
+                              const imgY = data.cell.y + 2;
+                              const imgWidth = 10;
+                              const imgHeight = 10;
+                              doc.addImage(imgUrl, 'JPEG', imgX, imgY, imgWidth, imgHeight);
+                              doc.link(imgX, imgY, imgWidth, imgHeight, { url: imgUrl });
+                          } catch (e) {
+                              console.error("Error adding image to PDF table", e);
+                              // If image fails, add a clickable link text instead
+                              doc.setTextColor(42, 157, 244); // blue color for link
+                              doc.textWithLink('Link', data.cell.x + 2, data.cell.y + 8, { url: imgUrl });
+                              doc.setTextColor(80); // reset color
+                          }
                       }
                     }
                 },
