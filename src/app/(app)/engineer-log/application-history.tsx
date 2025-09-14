@@ -449,26 +449,26 @@ export function ApplicationHistory() {
                     <DialogFooter className="flex w-full justify-between pt-2">
                         {canManage ? (
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" size="sm" disabled={isPending}>
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        {isPending ? 'Eliminando...' : 'Eliminar'}
+                                    <Button variant="destructive" size="icon" disabled={isPending}>
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Eliminar</span>
                                     </Button>
                                 </AlertDialogTrigger>
                         ) : <div />}
                         <Button onClick={() => setIsDetailOpen(false)} className="ml-auto" variant="outline">Cerrar</Button>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Esta acción no se puede deshacer. Esto eliminará permanentemente este registro de actividad.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
                     </DialogFooter>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Esto eliminará permanentemente este registro de actividad.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
                  </AlertDialog>
               );
            })()}

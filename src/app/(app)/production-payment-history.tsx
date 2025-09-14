@@ -144,9 +144,9 @@ function ProductionPaymentHistoryComponent() {
                   {canManage ? (
                       <AlertDialog>
                           <AlertDialogTrigger asChild>
-                              <Button variant="destructive" size="sm" disabled={isPending}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  {isPending ? 'Eliminando...' : 'Eliminar'}
+                              <Button variant="destructive" size="icon" disabled={isPending}>
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Eliminar</span>
                               </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -163,7 +163,7 @@ function ProductionPaymentHistoryComponent() {
                           </AlertDialogContent>
                       </AlertDialog>
                   ) : <div />}
-                  <Button onClick={() => setSelectedLog(null)} variant="outline">Cerrar</Button>
+                  <Button onClick={() => setSelectedLog(null)} variant="outline" className="ml-auto">Cerrar</Button>
               </DialogFooter>
             </>
           )}
