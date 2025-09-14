@@ -16,7 +16,7 @@ import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { PhenologyLog, ImageWithHint } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -443,15 +443,29 @@ export function PhenologyHistory() {
                                           <CarouselContent>
                                             {selectedLog.images.map((image, index) => (
                                               <CarouselItem key={index}>
-                                                <div className="relative w-full aspect-video rounded-md overflow-hidden border">
-                                                  <Image
-                                                    src={image.url}
-                                                    alt={`${selectedLog.notes} - Imagen ${index + 1}`}
-                                                    fill
-                                                    className="object-cover"
-                                                    data-ai-hint={image.hint}
-                                                  />
-                                                </div>
+                                                <Dialog>
+                                                  <DialogTrigger asChild>
+                                                    <div className="relative w-full aspect-video rounded-md overflow-hidden border cursor-pointer">
+                                                      <Image
+                                                        src={image.url}
+                                                        alt={`${selectedLog.notes} - Imagen ${index + 1}`}
+                                                        fill
+                                                        className="object-cover"
+                                                        data-ai-hint={image.hint}
+                                                      />
+                                                    </div>
+                                                  </DialogTrigger>
+                                                  <DialogContent className="max-w-4xl h-[90vh] flex items-center justify-center p-2">
+                                                    <Image
+                                                      src={image.url}
+                                                      alt={`${selectedLog.notes} - Imagen ${index + 1}`}
+                                                      width={1920}
+                                                      height={1080}
+                                                      className="object-contain max-h-full max-w-full"
+                                                      data-ai-hint={image.hint}
+                                                    />
+                                                  </DialogContent>
+                                                </Dialog>
                                               </CarouselItem>
                                             ))}
                                           </CarouselContent>
@@ -490,7 +504,7 @@ export function PhenologyHistory() {
                                 </AlertDialogContent>
                             </AlertDialog>
                         ) : <div />}
-                        <Button onClick={() => setIsDetailOpen(false)} variant="secondary">Cerrar</Button>
+                        <Button onClick={() => setIsDetailOpen(false)} variant="outline">Cerrar</Button>
                     </DialogFooter>
                  </AlertDialog>
               );
@@ -500,6 +514,3 @@ export function PhenologyHistory() {
     </>
   )
 }
-
-
-    

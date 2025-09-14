@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context';
 import type { ProducerLog } from '@/lib/types';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Calendar, AlertCircle, NotebookText, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -26,7 +26,7 @@ export function NotesHistory() {
   const canManage = currentUser.role === 'Productor';
 
   const sortedLogs = useMemo(() => 
-    [...producerLogs].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), 
+    [...(producerLogs || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()), 
     [producerLogs]
   );
 
@@ -39,13 +39,12 @@ export function NotesHistory() {
   
   const handleDelete = (logId: string) => {
     startTransition(() => {
-        deleteProducerLog(logId).then(() => {
-          toast({
-              title: "Observación Eliminada",
-              description: "El registro ha sido eliminado exitosamente.",
-          });
-          setSelectedLog(null);
+        deleteProducerLog(logId);
+        toast({
+            title: "Observación Eliminada",
+            description: "El registro ha sido eliminado exitosamente.",
         });
+        setSelectedLog(null);
     });
   }
 
@@ -131,15 +130,29 @@ export function NotesHistory() {
                                             <CarouselContent>
                                                 {selectedLog.images.map((image, index) => (
                                                 <CarouselItem key={index}>
-                                                    <div className="relative w-full aspect-video rounded-md overflow-hidden border">
-                                                    <Image
-                                                        src={image.url}
-                                                        alt={`${selectedLog.notes} - Imagen ${index + 1}`}
-                                                        fill
-                                                        className="object-cover"
-                                                        data-ai-hint={image.hint}
-                                                    />
-                                                    </div>
+                                                   <Dialog>
+                                                      <DialogTrigger asChild>
+                                                        <div className="relative w-full aspect-video rounded-md overflow-hidden border cursor-pointer">
+                                                          <Image
+                                                            src={image.url}
+                                                            alt={`${selectedLog.notes} - Imagen ${index + 1}`}
+                                                            fill
+                                                            className="object-cover"
+                                                            data-ai-hint={image.hint}
+                                                          />
+                                                        </div>
+                                                      </DialogTrigger>
+                                                      <DialogContent className="max-w-4xl h-[90vh] flex items-center justify-center p-2">
+                                                        <Image
+                                                          src={image.url}
+                                                          alt={`${selectedLog.notes} - Imagen ${index + 1}`}
+                                                          width={1920}
+                                                          height={1080}
+                                                          className="object-contain max-h-full max-w-full"
+                                                          data-ai-hint={image.hint}
+                                                        />
+                                                      </DialogContent>
+                                                    </Dialog>
                                                 </CarouselItem>
                                                 ))}
                                             </CarouselContent>
@@ -155,16 +168,16 @@ export function NotesHistory() {
                             </CardContent>
                         </Card>
                     </div>
-                     <DialogFooter className="flex-row justify-between w-full pt-2">
+                     <DialogFooter className="flex flex-row justify-between w-full pt-2">
                         {canManage ? (
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" disabled={isPending}>
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Eliminar</span>
-                                </Button>
+                           <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="icon" disabled={isPending}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Eliminar</span>
+                              </Button>
                             </AlertDialogTrigger>
                         ) : <div />}
-                        <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
+                        <Button onClick={() => setSelectedLog(null)} variant="outline">Cerrar</Button>
                     </DialogFooter>
                     <AlertDialogContent>
                         <AlertDialogHeader>
