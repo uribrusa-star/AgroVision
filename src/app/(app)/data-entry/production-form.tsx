@@ -28,7 +28,7 @@ const ProductionSchema = z.object({
   }),
   batchId: z.string().min(1, "El ID del lote es requerido."),
   kilosPerBatch: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
-  farmerId: z.string().min(1, "El recolector es requerido."),
+  juntadorId: z.string().min(1, "El juntador es requerido."),
   ratePerKg: z.coerce.number().min(0.01, "La tarifa por kg es requerida."),
   hoursWorked: z.coerce.number().min(0.5, "Las horas trabajadas son requeridas."),
 });
@@ -37,7 +37,7 @@ type ProductionFormValues = z.infer<typeof ProductionSchema>;
 
 export function ProductionForm() {
   const { toast } = useToast();
-  const { collectors, batches, addHarvest, addCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
+  const { juntadores, batches, addHarvest, addJuntadorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
   const [isPending, startTransition] = useTransition();
   const [validationAlert, setValidationAlert] = useState<{ open: boolean; reason: string; data: ProductionFormValues | null }>({ open: false, reason: '', data: null });
   
@@ -49,7 +49,7 @@ export function ProductionForm() {
       date: new Date(),
       batchId: '',
       kilosPerBatch: 0,
-      farmerId: '',
+      juntadorId: '',
       ratePerKg: 0.45,
       hoursWorked: 8,
     },
@@ -60,9 +60,9 @@ export function ProductionForm() {
   }, [batches]);
 
   const saveHarvestData = (values: ProductionFormValues) => {
-    const farmer = collectors.find(c => c.id === values.farmerId);
-    if (!farmer) {
-      toast({ title: 'Error', description: 'Recolector no encontrado.', variant: 'destructive'});
+    const juntador = juntadores.find(c => c.id === values.juntadorId);
+    if (!juntador) {
+      toast({ title: 'Error', description: 'Juntador no encontrado.', variant: 'destructive'});
       return;
     }
     
@@ -71,20 +71,20 @@ export function ProductionForm() {
           date: values.date.toISOString(),
           batchNumber: values.batchId,
           kilograms: values.kilosPerBatch,
-          collector: {
-            id: values.farmerId,
-            name: farmer.name,
+          juntador: {
+            id: values.juntadorId,
+            name: juntador.name,
           }
       }, values.hoursWorked).then(newHarvestId => {
           if(!newHarvestId) return;
           
           const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
 
-          addCollectorPaymentLog({
+          addJuntadorPaymentLog({
               harvestId: newHarvestId, 
               date: values.date.toISOString(),
-              collectorId: values.farmerId,
-              collectorName: farmer.name,
+              juntadorId: values.juntadorId,
+              juntadorName: juntador.name,
               kilograms: values.kilosPerBatch,
               hours: values.hoursWorked,
               ratePerKg: values.ratePerKg,
@@ -100,7 +100,7 @@ export function ProductionForm() {
               ...form.getValues(),
               batchId: '',
               kilosPerBatch: 0,
-              farmerId: '',
+              juntadorId: '',
           });
       }).catch(error => {
         // Error is handled inside the context, but we can add a fallback toast here if needed
@@ -110,10 +110,10 @@ export function ProductionForm() {
   
   const onSubmit = (values: ProductionFormValues) => {
     startTransition(async () => {
-      const farmer = collectors.find(c => c.id === values.farmerId);
-      if(!farmer) return;
+      const juntador = juntadores.find(c => c.id === values.juntadorId);
+      if(!juntador) return;
 
-      const historicalDataForFarmer = harvests.filter(h => h.collector.id === values.farmerId);
+      const historicalDataForFarmer = harvests.filter(h => h.juntador.id === values.juntadorId);
       const totalKilos = historicalDataForFarmer.reduce((sum, h) => sum + h.kilograms, 0);
       const averageKilos = historicalDataForFarmer.length > 0 ? totalKilos / historicalDataForFarmer.length : values.kilosPerBatch;
       
@@ -122,7 +122,7 @@ export function ProductionForm() {
               kilosPerBatch: values.kilosPerBatch,
               batchId: values.batchId,
               timestamp: values.date.toISOString(),
-              farmerId: values.farmerId,
+              farmerId: values.juntadorId,
               averageKilosPerBatch: averageKilos,
               historicalData: JSON.stringify(historicalDataForFarmer),
           });
@@ -152,7 +152,7 @@ export function ProductionForm() {
       <Card>
         <CardHeader>
           <CardTitle>Registrar Carga de Producción</CardTitle>
-          <CardDescription>Ingrese los detalles de la cosecha y calcule el pago del recolector.</CardDescription>
+          <CardDescription>Ingrese los detalles de la cosecha y calcule el pago del juntador.</CardDescription>
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -272,18 +272,18 @@ export function ProductionForm() {
 
               <FormField
                 control={form.control}
-                name="farmerId"
+                name="juntadorId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Recolector</FormLabel>
+                    <FormLabel>Juntador</FormLabel>
                     <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage || isPending}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Seleccione un recolector" />
+                          <SelectValue placeholder="Seleccione un juntador" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {collectors.map(c => (
+                        {juntadores.map(c => (
                           <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                         ))}
                       </SelectContent>

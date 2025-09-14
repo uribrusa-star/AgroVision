@@ -17,7 +17,7 @@ import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 
 
 export default function DashboardPage() {
-  const { loading, harvests, collectors } = React.useContext(AppDataContext);
+  const { loading, harvests, juntadores } = React.useContext(AppDataContext);
 
   const calculateDashboardStats = (harvests: Harvest[]) => {
     if (harvests.length === 0) {
@@ -66,7 +66,7 @@ export default function DashboardPage() {
 
   const dashboardStats = {
     ...calculateDashboardStats(harvests),
-    activeCollectors: collectors.length,
+    activeCollectors: juntadores.length,
   };
 
   return (
@@ -95,7 +95,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recolectores Activos</CardTitle>
+            <CardTitle className="text-sm font-medium">Juntadores Activos</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -129,7 +129,7 @@ export default function DashboardPage() {
                 <TableHeader>
                     <TableRow>
                     <TableHead>Lote</TableHead>
-                    <TableHead>Recolector</TableHead>
+                    <TableHead>Juntador</TableHead>
                     <TableHead className="text-right">Kilogramos</TableHead>
                     <TableHead>Fecha</TableHead>
                     </TableRow>
@@ -150,7 +150,7 @@ export default function DashboardPage() {
                         <TableCell>
                         <Badge variant="outline">{harvest.batchNumber}</Badge>
                         </TableCell>
-                        <TableCell>{harvest.collector.name}</TableCell>
+                        <TableCell>{harvest.juntador.name}</TableCell>
                         <TableCell className="text-right font-medium">{harvest.kilograms.toLocaleString('es-ES')} kg</TableCell>
                         <TableCell className="text-right text-muted-foreground">{new Date(harvest.date).toLocaleDateString('es-ES')}</TableCell>
                     </TableRow>
@@ -167,8 +167,8 @@ export default function DashboardPage() {
         <div className="lg:col-span-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Visión General de Productividad de Recolectores</CardTitle>
-                    <CardDescription>Resumen del rendimiento de cada recolector.</CardDescription>
+                    <CardTitle>Visión General de Productividad de Juntadores</CardTitle>
+                    <CardDescription>Resumen del rendimiento de cada juntador.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <Table>
@@ -186,12 +186,12 @@ export default function DashboardPage() {
                             <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
                            </TableRow>
                         )}
-                        {!loading && collectors.map((collector) => (
-                            <TableRow key={collector.id}>
-                            <TableCell className="font-medium">{collector.name}</TableCell>
-                            <TableCell className="text-right">{collector.totalHarvested.toLocaleString('es-ES')}</TableCell>
-                            <TableCell className="text-right">{collector.hoursWorked.toLocaleString('es-ES')}</TableCell>
-                            <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
+                        {!loading && juntadores.map((juntador) => (
+                            <TableRow key={juntador.id}>
+                            <TableCell className="font-medium">{juntador.name}</TableCell>
+                            <TableCell className="text-right">{juntador.totalHarvested.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right">{juntador.hoursWorked.toLocaleString('es-ES')}</TableCell>
+                            <TableCell className="text-right font-bold">{juntador.productivity.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                         </TableBody>

@@ -22,7 +22,7 @@ import { NotesHistory } from '../producer-log/notes-history';
 
 
 export default function EngineerLogPage() {
-  const { loading, collectors, harvests, currentUser } = useContext(AppDataContext);
+  const { loading, juntadores, harvests, currentUser } = useContext(AppDataContext);
   
   const totalProduction = harvests.reduce((acc, h) => acc + h.kilograms, 0);
   
@@ -67,11 +67,11 @@ export default function EngineerLogPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Recolectores</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Juntadores</CardTitle>
             <HardHat className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : collectors.length}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-12" /> : juntadores.length}</div>
             <p className="text-xs text-muted-foreground">Activos esta temporada</p>
           </CardContent>
         </Card>

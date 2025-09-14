@@ -51,7 +51,7 @@ const allNavItems = [
   { href: '/producer-log', label: 'Bitácora del Productor', icon: NotebookPen, roles: ['Productor'] },
   { href: '/data-entry', label: 'Entrada de Datos', icon: StrawberryIcon, roles: ['Productor', 'Encargado'] },
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
-  { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
+  { href: '/juntadores', label: 'Juntadores', icon: HardHat, roles: ['Productor', 'Encargado'] },
 ];
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
