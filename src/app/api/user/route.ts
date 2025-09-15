@@ -1,7 +1,15 @@
 
 import { NextResponse } from 'next/server';
+import { getIronSession } from 'iron-session';
+import { cookies } from 'next/headers';
+import { sessionOptions } from '@/lib/session';
 
-// This endpoint is no longer used as user is hardcoded in the context.
 export async function GET() {
-  return NextResponse.json({ user: null });
+  const session = await getIronSession(cookies(), sessionOptions);
+
+  if (!session.user) {
+    return NextResponse.json({ user: null });
+  }
+
+  return NextResponse.json({ user: session.user });
 }

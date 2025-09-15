@@ -4,7 +4,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import React, { useTransition, useContext, useEffect, useState } from 'react';
+import React, { useTransition, useContext, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AgroVisionLogo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -60,7 +60,7 @@ export default function LoginPage() {
         });
         router.refresh();
       } else {
-        form.setError("root", { message: result.error || "Correo electrónico o contraseña incorrectos."});
+        form.setError("root", { message: "Correo electrónico o contraseña incorrectos."});
       }
     });
   };
@@ -148,5 +148,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
