@@ -14,10 +14,11 @@ import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CostDistributionChart } from '../dashboard/cost-distribution-chart';
 import { IncomeChart } from './income-chart';
+import { MonthlyHarvestChart } from '../monthly-harvest-chart';
 
 
 export default function ProducerLogPage() {
-  const { loading, collectorPaymentLogs, packagingLogs, culturalPracticeLogs, transactions } = React.useContext(AppDataContext);
+  const { loading, collectorPaymentLogs, packagingLogs, culturalPracticeLogs, transactions, harvests } = React.useContext(AppDataContext);
   const totalHarvestLaborCost = (collectorPaymentLogs || []).reduce((acc, p) => acc + p.payment, 0);
   const totalPackagingLaborCost = (packagingLogs || []).reduce((acc, p) => acc + p.payment, 0);
   const totalCulturalPracticeCost = (culturalPracticeLogs || []).reduce((acc, p) => acc + p.payment, 0);
@@ -29,9 +30,10 @@ export default function ProducerLogPage() {
         description="Registre las finanzas y las observaciones diarias del establecimiento."
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Columna Izquierda: Finanzas */}
+        {/* Columna Izquierda: Finanzas y Gráficos */}
         <div className="space-y-8">
           <TransactionForm />
+          <MonthlyHarvestChart harvests={harvests} />
           <IncomeChart transactions={transactions} />
           <CostDistributionChart />
           <TransactionHistory />
