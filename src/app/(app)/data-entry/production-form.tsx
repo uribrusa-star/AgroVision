@@ -159,7 +159,7 @@ export function ProductionForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                     control={form.control}
                     name="date"
@@ -172,7 +172,7 @@ export function ProductionForm() {
                               <Button
                                 variant={"outline"}
                                 className={cn(
-                                  "pl-3 text-left font-normal",
+                                  "w-full justify-start pl-3 text-left font-normal",
                                   !field.value && "text-muted-foreground"
                                 )}
                                 disabled={!canManage || isPending}
