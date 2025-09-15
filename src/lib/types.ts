@@ -96,6 +96,20 @@ export type PhenologyLog = {
     images?: ImageWithHint[];
 }
 
+export type SupplyType = 'Fertilizante' | 'Fungicida' | 'Insecticida';
+
+export type Supply = {
+  id: string;
+  name: string;
+  type: SupplyType;
+  photoUrl?: string;
+  info: {
+    activeIngredient: string;
+    dose: string;
+    notes?: string;
+  };
+};
+
 export type CollectorPaymentLog = {
   id: string;
   date: string;
@@ -213,6 +227,7 @@ export type AppData = {
   culturalPracticeLogs: CulturalPracticeLog[];
   agronomistLogs: AgronomistLog[];
   phenologyLogs: PhenologyLog[];
+  supplies: Supply[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
   establishmentData: EstablishmentData | null;
@@ -227,6 +242,9 @@ export type AppData = {
   addPhenologyLog: (log: Omit<PhenologyLog, 'id'>) => void;
   editPhenologyLog: (log: PhenologyLog) => void;
   deletePhenologyLog: (logId: string) => Promise<void>;
+  addSupply: (supply: Omit<Supply, 'id'>) => void;
+  editSupply: (supply: Supply) => void;
+  deleteSupply: (supplyId: string) => void;
   addCollector: (collector: Omit<Collector, 'id'>) => void;
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
   deletePacker: (packerId: string) => void;
@@ -246,5 +264,3 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
-
-    

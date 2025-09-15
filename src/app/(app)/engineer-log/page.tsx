@@ -18,6 +18,7 @@ import { IrrigationLogForm } from './irrigation-log-form';
 import { AgronomistReport } from './agronomist-report';
 import { NotesHistory } from '../producer-log/notes-history';
 import { ActivityOmissionLogForm } from './activity-omission-log-form';
+import { Supplies } from './supplies';
 
 
 export default function EngineerLogPage() {
@@ -92,6 +93,7 @@ export default function EngineerLogPage() {
             {canManageApplications ? <IrrigationLogForm /> : null}
             {canManageApplications ? <EnvironmentalLogForm /> : null}
             {canManageApplications ? <ActivityOmissionLogForm /> : null}
+            {canManageApplications ? <Supplies /> : null}
             <NotesHistory />
             <AgronomistReport />
         </div>

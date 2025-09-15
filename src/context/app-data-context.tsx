@@ -3,7 +3,7 @@
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog } from '@/lib/types';
+import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog, Supply } from '@/lib/types';
 import { initialEstablishmentData, users as availableUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -21,6 +21,7 @@ export const AppDataContext = React.createContext<AppData>({
   culturalPracticeLogs: [],
   agronomistLogs: [],
   phenologyLogs: [],
+  supplies: [],
   batches: [],
   collectorPaymentLogs: [],
   establishmentData: null,
@@ -35,6 +36,9 @@ export const AppDataContext = React.createContext<AppData>({
   addPhenologyLog: () => { throw new Error('Not implemented') },
   editPhenologyLog: () => { throw new Error('Not implemented') },
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
+  addSupply: () => { throw new Error('Not implemented') },
+  editSupply: () => { throw new Error('Not implemented') },
+  deleteSupply: () => { throw new Error('Not implemented') },
   addCollector: () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
   deletePacker: () => { throw new Error('Not implemented') },
@@ -67,6 +71,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [culturalPracticeLogs, setCulturalPracticeLogs] = useState<CulturalPracticeLog[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
     const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
+    const [supplies, setSupplies] = useState<Supply[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
     const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
     const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
@@ -77,7 +82,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
       setIsClient(true);
-      // Try to fetch user from session API on initial load
       const fetchUser = async () => {
           try {
               const res = await fetch('/api/user');
@@ -122,6 +126,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               harvestsSnapshot,
               agronomistLogsSnapshot,
               phenologyLogsSnapshot,
+              suppliesSnapshot,
               batchesSnapshot,
               collectorPaymentsSnapshot,
               packagingLogsSnapshot,
@@ -135,6 +140,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
+              getDocs(collection(db, 'supplies')),
               getDocs(collection(db, 'batches')),
               getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'packagingLogs'), orderBy('date', 'desc'))),
@@ -154,6 +160,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
             setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
             setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
+            setSupplies(suppliesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Supply[]);
             setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
             setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
             setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
@@ -499,6 +506,43 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
+    const addSupply = (supply: Omit<Supply, 'id'>) => {
+        const tempId = `supply_${Date.now()}`;
+        setSupplies(prev => [{ id: tempId, ...supply }, ...prev]);
+
+        addDoc(collection(db, 'supplies'), supply).then(ref => {
+            setSupplies(prev => prev.map(s => s.id === tempId ? { ...s, id: ref.id } : s));
+        }).catch(error => {
+            console.error("Failed to add supply:", error);
+            setSupplies(prev => prev.filter(s => s.id !== tempId));
+            toast({ title: "Error", description: "No se pudo agregar el insumo.", variant: "destructive"});
+        });
+    };
+
+    const editSupply = (updatedSupply: Supply) => {
+        const originalSupplies = supplies;
+        setSupplies(prev => prev.map(s => s.id === updatedSupply.id ? updatedSupply : s));
+
+        const supplyRef = doc(db, 'supplies', updatedSupply.id);
+        const { id, ...data } = updatedSupply;
+        setDoc(supplyRef, data, { merge: true }).catch(error => {
+            console.error("Failed to edit supply:", error);
+            setSupplies(originalSupplies);
+            toast({ title: "Error", description: "No se pudo editar el insumo.", variant: "destructive"});
+        });
+    };
+
+    const deleteSupply = (supplyId: string) => {
+        const originalSupplies = supplies;
+        setSupplies(prev => prev.filter(s => s.id !== supplyId));
+
+        deleteDoc(doc(db, 'supplies', supplyId)).catch(error => {
+            console.error("Failed to delete supply:", error);
+            setSupplies(originalSupplies);
+            toast({ title: "Error", description: "No se pudo eliminar el insumo.", variant: "destructive"});
+        });
+    };
+
     const addBatch = (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string; preloadedDate: string; status: string }) => {
         const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
         setBatches(prev => [newBatch, ...prev]);
@@ -671,15 +715,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const handleSetCurrentUser = (user: User | null, rememberMe: boolean = false) => {
         setCurrentUser(user);
-        if(typeof window !== 'undefined') {
-            const storage = rememberMe ? localStorage : sessionStorage;
-            // Clear both to be safe
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('currentUser');
-            if(user) {
-                storage.setItem('currentUser', JSON.stringify(user));
-            }
-        }
     }
 
 
@@ -695,6 +730,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         culturalPracticeLogs,
         agronomistLogs,
         phenologyLogs,
+        supplies,
         batches,
         collectorPaymentLogs,
         establishmentData,
@@ -709,6 +745,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         addPhenologyLog,
         editPhenologyLog,
         deletePhenologyLog,
+        addSupply,
+        editSupply,
+        deleteSupply,
         addCollector,
         addPacker,
         deletePacker,
@@ -735,6 +774,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
-    
-    
