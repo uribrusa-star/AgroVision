@@ -81,7 +81,7 @@ export function AgronomistReport() {
         
         const addPageHeader = (docInstance: jsPDF) => {
             if (logoPngDataUri) {
-              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 20, 20);
+              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 15, 15);
             }
             docInstance.setFont('helvetica', 'bold');
             docInstance.setFontSize(16);
@@ -188,7 +188,7 @@ export function AgronomistReport() {
         
         // --- COVER PAGE ---
         if (logoPngDataUri) {
-          doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 15, pageHeight / 3 - 10, 30, 30);
+          doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 12.5, pageHeight / 3 - 10, 25, 25);
         }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(24);
