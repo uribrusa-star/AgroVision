@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -35,6 +36,8 @@ export const AppDataContext = React.createContext<AppData>({
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
   addCollector: async () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
+  editPacker: async () => { throw new Error('Not implemented') },
+  deletePacker: async () => { throw new Error('Not implemented') },
   addPackagingLog: async () => { throw new Error('Not implemented') },
   addBatch: async () => { throw new Error('Not implemented') },
   deleteBatch: async () => { throw new Error('Not implemented') },
@@ -72,15 +75,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, []);
 
     const fetchAllData = useCallback(async () => {
+      if (!currentUser) {
+        setLoading(false);
+        return;
+      };
+
       setLoading(true);
       try {
-        // Fetch user session first
-        const userRes = await fetch('/api/user');
-        const userData = await userRes.json();
-        
-        if (userData.user) {
-            setCurrentUser(userData.user);
-
             const usersCollectionRef = collection(db, 'users');
             const usersSnapshot = await getDocs(usersCollectionRef);
 
@@ -138,9 +139,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
             setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
             setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
-        } else {
-            setCurrentUser(null);
-        }
+        
       } catch (error) {
         console.error("Error fetching data from Firestore:", error);
         toast({
@@ -151,13 +150,35 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setLoading(false);
       }
-    }, [toast, isClient]);
+    }, [toast, currentUser]);
+
+    const fetchUser = useCallback(async () => {
+        if (!isClient) return;
+        try {
+            const res = await fetch('/api/user');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.user) {
+                    setCurrentUser(data.user);
+                } else {
+                    setCurrentUser(null);
+                }
+            } else {
+                setCurrentUser(null);
+            }
+        } catch (error) {
+            console.error("Failed to fetch user session", error);
+            setCurrentUser(null);
+        }
+    }, [isClient]);
+
+     useEffect(() => {
+        fetchUser();
+    }, [fetchUser]);
     
     useEffect(() => {
-        if(isClient) {
-            fetchAllData();
-        }
-    }, [isClient, fetchAllData]);
+       fetchAllData();
+    }, [fetchAllData]);
     
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
@@ -268,6 +289,55 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             console.error("Failed to add packer:", error);
             setPackers(prev => prev.filter(p => p.id !== tempId));
             toast({ title: "Error", description: "No se pudo agregar al embalador.", variant: "destructive"});
+        }
+    };
+
+     const editPacker = async (updatedPacker: Packer) => {
+        const originalPackers = [...packers];
+        setPackers(prev => prev.map(p => p.id === updatedPacker.id ? updatedPacker : p));
+
+        try {
+            const batch = writeBatch(db);
+            const packerRef = doc(db, 'packers', updatedPacker.id);
+            const { id, ...packerData } = updatedPacker;
+            batch.update(packerRef, packerData);
+
+            // Update packer name in related logs
+            const packagingLogsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', updatedPacker.id));
+            const logsSnapshot = await getDocs(packagingLogsQuery);
+            logsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { packerName: updatedPacker.name });
+            });
+
+            await batch.commit();
+            await fetchAllData(); 
+        } catch (error) {
+            console.error("Failed to edit packer:", error);
+            setPackers(originalPackers);
+            toast({ title: "Error", description: "No se pudo actualizar el embalador.", variant: "destructive"});
+        }
+    };
+
+    const deletePacker = async (packerId: string) => {
+        const originalState = { packers: [...packers], packagingLogs: [...packagingLogs] };
+
+        setPackers(prev => prev.filter(p => p.id !== packerId));
+        setPackagingLogs(prev => prev.filter(log => log.packerId !== packerId));
+
+        try {
+            const batchOp = writeBatch(db);
+            batchOp.delete(doc(db, 'packers', packerId));
+
+            const logsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', packerId));
+            const logsSnapshot = await getDocs(logsQuery);
+            logsSnapshot.forEach(doc => batchOp.delete(doc.ref));
+            
+            await batchOp.commit();
+        } catch(error) {
+            console.error("Failed to delete packer:", error);
+            setPackers(originalState.packers);
+            setPackagingLogs(originalState.packagingLogs);
+            toast({ title: "Error", description: "No se pudo eliminar al embalador.", variant: "destructive"});
         }
     };
 
@@ -559,7 +629,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const userToUpdate = users.find(u => u.id === userId);
         if (!userToUpdate) throw new Error("User not found");
         
-        const originalPassword = userToUpdate.password;
         const originalUsers = [...users];
 
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
@@ -571,13 +640,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const userRef = doc(db, 'users', userId);
             await setDoc(userRef, { password: newPassword }, { merge: true });
         } catch (error) {
-            // Rollback on error
             setUsers(originalUsers);
              if (currentUser?.id === userId) {
                 const originalUser = originalUsers.find(u => u.id === userId);
                 setCurrentUser(originalUser || null);
             }
-            throw error; // Re-throw to be caught in the component
+            throw error;
         }
     };
 
@@ -608,6 +676,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         deletePhenologyLog,
         addCollector,
         addPacker,
+        editPacker,
+        deletePacker,
         addPackagingLog,
         addBatch,
         deleteBatch,

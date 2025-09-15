@@ -191,7 +191,7 @@ export type AppData = {
   loading: boolean;
   currentUser: User | null;
   users: User[];
-  setCurrentUser: (user: User | null, rememberMe?: boolean) => void;
+  setCurrentUser: (user: User | null) => void;
   harvests: Harvest[];
   collectors: Collector[];
   packers: Packer[];
@@ -214,6 +214,8 @@ export type AppData = {
   deletePhenologyLog: (logId: string) => Promise<void>;
   addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
+  editPacker: (packer: Packer) => Promise<void>;
+  deletePacker: (packerId: string) => Promise<void>;
   addPackagingLog: (log: Omit<PackagingLog, 'id'>) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
   deleteBatch: (batchId: string) => Promise<void>;
