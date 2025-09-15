@@ -1,28 +1,9 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getIronSession } from 'iron-session';
-import { sessionOptions } from '@/lib/session';
-
-const protectedRoutes = ['/dashboard', '/establishment', '/map', '/producer-log', '/data-entry', '/engineer-log', '/collectors', '/packers', '/users', '/predictions'];
 
 export async function middleware(request: NextRequest) {
-  const session = await getIronSession(request.cookies, sessionOptions);
-  const { user } = session;
-  const { pathname } = request.nextUrl;
-
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-
-  if (!user && isProtectedRoute) {
-    // Redirect to login page if not authenticated and trying to access a protected route
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-  
-  if(user && pathname === '/') {
-    // Redirect to dashboard if authenticated and trying to access login page
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
+  // No-op middleware, allows all requests to pass through.
   return NextResponse.next();
 }
 

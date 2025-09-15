@@ -1,10 +1,9 @@
 
-
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
 import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog } from '@/lib/types';
-import { initialEstablishmentData } from '@/lib/data';
+import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, addDoc, getDoc, orderBy } from 'firebase/firestore';
@@ -70,6 +69,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
       setIsClient(true);
+      // Set the default user immediately on the client
+      const productorUser = availableUsers.find(u => u.role === 'Productor');
+      if (productorUser) {
+        setCurrentUser(productorUser);
+      }
     }, []);
 
     const fetchAllData = useCallback(async () => {
@@ -135,20 +139,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     }, [toast, isClient, currentUser]);
-
-    useEffect(() => {
-        if (isClient && !currentUser) {
-            fetch('/api/user')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.user) {
-                        setCurrentUser(data.user);
-                    } else {
-                        setLoading(false);
-                    }
-                });
-        }
-    }, [isClient, currentUser]);
     
     useEffect(() => {
         if(currentUser) {
@@ -157,6 +147,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, [currentUser, fetchAllData]);
 
     const handleSetCurrentUser = (user: User | null, rememberMe?: boolean) => {
+        // This function is no longer responsible for login logic, but we keep it for potential future use.
         setCurrentUser(user);
     }
     
@@ -557,28 +548,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateUserPassword = async (userId: string, newPassword: string) => {
-        const userToUpdate = users.find(u => u.id === userId);
-        if (!userToUpdate) throw new Error("User not found");
-        
-        const originalPassword = userToUpdate.password;
-        
-        // Optimistic update
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
-        if (currentUser?.id === userId) {
-            setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
-        }
-
-        try {
-            const userRef = doc(db, 'users', userId);
-            await setDoc(userRef, { password: newPassword }, { merge: true });
-        } catch (error) {
-            // Rollback on error
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: originalPassword } : u));
-             if (currentUser?.id === userId) {
-                setCurrentUser(prev => prev ? { ...prev, password: originalPassword } : null);
-            }
-            throw error; // Re-throw to be caught in the component
-        }
+        // This function is no longer needed with login removed, but we keep it to avoid breaking types.
+        toast({ title: "Función no disponible", description: "El cambio de contraseña no está habilitado."});
     };
 
     const value: AppData = {
