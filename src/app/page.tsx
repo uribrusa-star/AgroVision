@@ -58,7 +58,7 @@ export default function LoginPage() {
             title: `¡Bienvenido de nuevo, ${result.user.name}!`,
             description: "Ha iniciado sesión correctamente.",
         });
-        router.refresh();
+        router.push('/dashboard');
       } else {
         form.setError("root", { message: "Correo electrónico o contraseña incorrectos."});
       }
