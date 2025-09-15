@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { BarChart as BarChartIcon, CalendarDays, DollarSign, Weight } from "lucide-react";
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { Harvest, CollectorPaymentLog, PackagingLog } from '@/lib/types';
+import type { Harvest, CollectorPaymentLog, PackagingLog, CulturalPracticeLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
@@ -18,9 +18,9 @@ import { PackagingHistory } from '../data-entry/packaging-history';
 
 
 export default function DashboardPage() {
-  const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs } = React.useContext(AppDataContext);
+  const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs, culturalPracticeLogs } = React.useContext(AppDataContext);
 
-  const calculateDashboardStats = (harvests: Harvest[], paymentLogs: CollectorPaymentLog[], packagingLogs: PackagingLog[]) => {
+  const calculateDashboardStats = (harvests: Harvest[], paymentLogs: CollectorPaymentLog[], packagingLogs: PackagingLog[], culturalPracticeLogs: CulturalPracticeLog[]) => {
     if (!harvests || harvests.length === 0) {
       return {
         totalHarvest: 0,
@@ -33,7 +33,8 @@ export default function DashboardPage() {
     const totalHarvest = harvests.reduce((acc, h) => acc + h.kilograms, 0);
     const totalHarvestLaborCost = (paymentLogs || []).reduce((acc, p) => acc + p.payment, 0);
     const totalPackagingLaborCost = (packagingLogs || []).reduce((acc, p) => acc + p.payment, 0);
-    const totalLaborCost = totalHarvestLaborCost + totalPackagingLaborCost;
+    const totalCulturalPracticeCost = (culturalPracticeLogs || []).reduce((acc, p) => acc + p.payment, 0);
+    const totalLaborCost = totalHarvestLaborCost + totalPackagingLaborCost + totalCulturalPracticeCost;
     
     const harvestsByBatch = harvests.reduce((acc, h) => {
         if (!acc[h.batchNumber]) {
@@ -69,7 +70,7 @@ export default function DashboardPage() {
   };
   
 
-  const dashboardStats = calculateDashboardStats(harvests, collectorPaymentLogs, packagingLogs);
+  const dashboardStats = calculateDashboardStats(harvests, collectorPaymentLogs, packagingLogs, culturalPracticeLogs);
   const sortedHarvests = [...(harvests || [])].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
@@ -93,7 +94,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${dashboardStats.totalLaborCost.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`}</div>
-            <p className="text-xs text-muted-foreground">Cosecha + Embalaje</p>
+            <p className="text-xs text-muted-foreground">Cosecha + Embalaje + Labores</p>
           </CardContent>
         </Card>
         <Card>

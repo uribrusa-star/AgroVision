@@ -26,7 +26,7 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 export function HarvestSummary() {
   const [isPending, startTransition] = useTransition();
-  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs, packagingLogs } = useContext(AppDataContext);
+  const { harvests, transactions, agronomistLogs, currentUser, establishmentData, collectorPaymentLogs, packagingLogs, culturalPracticeLogs } = useContext(AppDataContext);
   const { toast } = useToast();
 
   if (!currentUser) return null; // Guard clause
@@ -41,6 +41,7 @@ export function HarvestSummary() {
   
   const totalHarvestLaborCost = useMemo(() => collectorPaymentLogs.reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
   const totalPackagingLaborCost = useMemo(() => packagingLogs.reduce((acc, p) => acc + p.payment, 0), [packagingLogs]);
+  const totalCulturalPracticeCost = useMemo(() => culturalPracticeLogs.reduce((acc, p) => acc + p.payment, 0), [culturalPracticeLogs]);
   
   const otherExpenses = useMemo(() => transactions.filter(t => t.type === 'Gasto'), [transactions]);
 
@@ -48,6 +49,7 @@ export function HarvestSummary() {
     const costs: {[key: string]: number} = { 
       'Cosecha': totalHarvestLaborCost,
       'Embalaje': totalPackagingLaborCost,
+      'Mano de Obra': totalCulturalPracticeCost,
     };
     
     otherExpenses.forEach(transaction => {
@@ -59,7 +61,7 @@ export function HarvestSummary() {
     });
 
     return costs;
-  }, [otherExpenses, totalHarvestLaborCost, totalPackagingLaborCost]);
+  }, [otherExpenses, totalHarvestLaborCost, totalPackagingLaborCost, totalCulturalPracticeCost]);
   
   const totalCost = useMemo(() => Object.values(costByCategory).reduce((acc, amount) => acc + amount, 0), [costByCategory]);
   const totalIncome = useMemo(() => transactions.filter(t => t.type === 'Ingreso').reduce((acc, t) => acc + t.amount, 0), [transactions]);

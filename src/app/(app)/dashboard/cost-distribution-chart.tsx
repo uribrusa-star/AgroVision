@@ -20,6 +20,10 @@ const costChartConfig = {
     label: "Embalaje",
     color: "hsl(var(--chart-2))",
   },
+   'Mano de Obra': {
+    label: "Mano de Obra",
+    color: "hsl(var(--chart-5))",
+  },
   'Insumos': {
     label: "Insumos",
     color: "hsl(var(--chart-3))",
@@ -43,10 +47,11 @@ const costChartConfig = {
 } as const;
 
 function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boolean}) {
-  const { loading, transactions, collectorPaymentLogs, packagingLogs } = useContext(AppDataContext);
+  const { loading, transactions, collectorPaymentLogs, packagingLogs, culturalPracticeLogs } = useContext(AppDataContext);
 
   const totalHarvestLaborCost = useMemo(() => (collectorPaymentLogs || []).reduce((acc, p) => acc + p.payment, 0), [collectorPaymentLogs]);
   const totalPackagingLaborCost = useMemo(() => (packagingLogs || []).reduce((acc, p) => acc + p.payment, 0), [packagingLogs]);
+  const totalCulturalPracticeCost = useMemo(() => (culturalPracticeLogs || []).reduce((acc, p) => acc + p.payment, 0), [culturalPracticeLogs]);
 
   const otherExpenses = useMemo(() => (transactions || []).filter(t => t.type === 'Gasto'), [transactions]);
 
@@ -54,6 +59,7 @@ function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boole
     const costs: {[key: string]: number} = { 
       'Cosecha': totalHarvestLaborCost,
       'Embalaje': totalPackagingLaborCost,
+      'Mano de Obra': totalCulturalPracticeCost,
     };
     
     otherExpenses.forEach(transaction => {
@@ -65,7 +71,7 @@ function CostDistributionChartComponent({ isForPdf = false }: { isForPdf?: boole
     });
 
     return costs;
-  }, [otherExpenses, totalHarvestLaborCost, totalPackagingLaborCost]);
+  }, [otherExpenses, totalHarvestLaborCost, totalPackagingLaborCost, totalCulturalPracticeCost]);
 
   const costDistributionData = useMemo(() => 
       Object.entries(costByCategory).map(([category, value]) => ({
