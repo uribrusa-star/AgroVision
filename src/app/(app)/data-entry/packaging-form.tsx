@@ -5,6 +5,9 @@ import { useContext, useState, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,8 +16,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { PackagingHistory } from './packaging-history';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
 
 const PackagingSchema = z.object({
+  date: z.date({
+    required_error: "La fecha es requerida.",
+  }),
   packerId: z.string().min(1, "El embalador es requerido."),
   kilogramsPackaged: z.coerce.number().min(1, "Los kilos deben ser un número positivo."),
   hoursWorked: z.coerce.number().min(0.5, "Las horas trabajadas son requeridas."),
@@ -33,6 +42,7 @@ export function PackagingForm() {
   const form = useForm<PackagingFormValues>({
     resolver: zodResolver(PackagingSchema),
     defaultValues: {
+      date: new Date(),
       packerId: '',
       kilogramsPackaged: 0,
       hoursWorked: 8,
@@ -50,7 +60,7 @@ export function PackagingForm() {
     startTransition(() => {
       const payment = values.hoursWorked * values.costPerHour;
       addPackagingLog({
-          date: new Date().toISOString(),
+          date: values.date.toISOString(),
           packerId: values.packerId,
           packerName: packer.name,
           kilogramsPackaged: values.kilogramsPackaged,
@@ -65,9 +75,10 @@ export function PackagingForm() {
       });
 
       form.reset({
-          ...form.getValues(),
-          packerId: '',
-          kilogramsPackaged: 0,
+        ...form.getValues(),
+        packerId: '',
+        kilogramsPackaged: 0,
+        date: new Date(),
       });
     });
   }
@@ -82,28 +93,72 @@ export function PackagingForm() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(savePackagingData)}>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="packerId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Embalador</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage || isPending}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Seleccione un embalador" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {packers.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Fecha del Trabajo</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={!canManage || isPending}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: es })
+                                ) : (
+                                  <span>Seleccione una fecha</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("2020-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="packerId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Embalador</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} name={field.name} disabled={!canManage || isPending}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccione un embalador" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {packers.map(p => (
+                              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
                   control={form.control}
