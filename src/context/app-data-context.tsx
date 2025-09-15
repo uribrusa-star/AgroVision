@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -68,8 +67,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
 
-    useEffect(() => {
-      setIsClient(true);
+     useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    const fetchUser = useCallback(async () => {
+        try {
+            const res = await fetch('/api/user');
+            const data = await res.json();
+            if (data.user) {
+                setCurrentUser(data.user);
+            }
+        } catch (error) {
+            console.error("Failed to fetch user", error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const fetchAllData = useCallback(async () => {
@@ -147,30 +160,18 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     }, [toast, isClient, currentUser]);
-
-    useEffect(() => {
-        if (isClient && !currentUser) {
-            fetch('/api/user')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.user) {
-                        setCurrentUser(data.user);
-                    } else {
-                        setLoading(false);
-                    }
-                });
-        }
-    }, [isClient, currentUser]);
     
+    useEffect(() => {
+        if(isClient && !currentUser) {
+            fetchUser();
+        }
+    }, [isClient, currentUser, fetchUser]);
+
     useEffect(() => {
         if(currentUser) {
           fetchAllData();
         }
     }, [currentUser, fetchAllData]);
-
-    const handleSetCurrentUser = (user: User | null, rememberMe?: boolean) => {
-        setCurrentUser(user);
-    }
     
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
@@ -598,7 +599,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         loading,
         currentUser,
         users,
-        setCurrentUser: handleSetCurrentUser,
+        setCurrentUser,
         harvests,
         collectors,
         packers,
@@ -641,3 +642,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+    

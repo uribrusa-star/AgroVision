@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { sessionOptions } from '@/lib/session';
 
 const protectedRoutes = ['/dashboard', '/establishment', '/map', '/producer-log', '/data-entry', '/engineer-log', '/collectors', '/packers', '/users', '/predictions'];
+const publicRoutes = ['/'];
 
 export async function middleware(request: NextRequest) {
   const session = await getIronSession(request.cookies, sessionOptions);
@@ -19,8 +20,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
-  if (user && (pathname === '/' || pathname === '/login')) {
-    // Redirect to dashboard if authenticated and trying to access login page
+  if (user && publicRoutes.includes(pathname)) {
+    // Redirect to dashboard if authenticated and trying to access a public-only page like login
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
@@ -40,3 +41,5 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico|logo.png|manifest.json|icons/).*)',
   ],
 };
+
+    

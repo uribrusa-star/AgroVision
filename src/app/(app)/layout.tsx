@@ -1,15 +1,14 @@
 
-
 'use client';
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound, Package, BookUser } from 'lucide-react';
 import React, { useEffect, useState, useTransition } from 'react';
-import { z } from 'zod';
+import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Image from 'next/image';
+import { z } from 'zod';
 
 import {
   SidebarProvider,
@@ -24,10 +23,8 @@ import {
 } from '@/components/ui/sidebar';
 import { StrawberryIcon, NotebookPen } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,9 +32,20 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { AppDataContext } from '@/context/app-data-context.tsx';
-import { useToast } from '@/hooks/use-toast';
+} from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogClose,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { useToast } from "@/hooks/use-toast"
+
 
 const allNavItems = [
   { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
@@ -51,94 +59,6 @@ const allNavItems = [
   { href: '/packers', label: 'Embaladores', icon: Package, roles: ['Productor', 'Encargado'] },
   { href: '/users', label: 'Usuarios', icon: BookUser, roles: ['Productor'] },
 ];
-
-function AppLayoutContent({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const { currentUser, isClient, loading } = React.useContext(AppDataContext);
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isClient && !loading && !currentUser) {
-      router.replace('/');
-    }
-  }, [isClient, loading, currentUser, router]);
-
-  if (!isClient || loading || !currentUser) {
-    return (
-        <div className="flex items-center justify-center h-screen">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Cargando aplicación...</p>
-          </div>
-        </div>
-    );
-  }
-  
-  const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
-
-  return (
-      <SidebarProvider>
-        <div className="flex min-h-screen">
-          <Sidebar collapsible='offcanvas'>
-            <SidebarHeader className="p-4">
-              <div className="flex items-center gap-2">
-                <Link href="/dashboard" className="flex items-center gap-2">
-                  <Image src="/logo.png" alt="AgroVision Logo" width={32} height={32} />
-                  <span className="text-xl font-bold text-sidebar-foreground">AgroVision</span>
-                </Link>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarMenu>
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === item.href}
-                      tooltip={item.label}
-                    >
-                      <Link href={item.href}>
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter className="p-4">
-                <UserMenu />
-            </SidebarFooter>
-          </Sidebar>
-          <div className="flex-1 flex flex-col">
-            <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
-                <SidebarTrigger>
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Toggle Menu</span>
-                </SidebarTrigger>
-                <div className="flex items-center gap-2">
-                  <Image src="/logo.png" alt="AgroVision Logo" width={24} height={24} />
-                  <span className="text-lg font-bold">AgroVision</span>
-                </div>
-            </header>
-            <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
-                {children}
-            </main>
-          </div>
-        </div>
-      </SidebarProvider>
-  );
-}
-
-
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <AppLayoutContent>
-      {children}
-    </AppLayoutContent>
-  );
-}
-
 
 const PasswordSchema = z.object({
   newPassword: z.string().min(6, "La contraseña debe tener al menos 6 caracteres."),
@@ -269,3 +189,85 @@ function UserMenu() {
       </Dialog>
   )
 }
+
+function AppLayoutContent({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const { currentUser, isClient, loading } = React.useContext(AppDataContext);
+
+  if (!isClient || loading || !currentUser) {
+    return (
+        <div className="flex items-center justify-center h-screen">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-muted-foreground">Cargando aplicación...</p>
+          </div>
+        </div>
+    );
+  }
+  
+  const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
+
+  return (
+      <SidebarProvider>
+        <div className="flex min-h-screen">
+          <Sidebar collapsible='offcanvas'>
+            <SidebarHeader className="p-4">
+              <div className="flex items-center gap-2">
+                <Link href="/dashboard" className="flex items-center gap-2">
+                  <Image src="/logo.png" alt="AgroVision Logo" width={32} height={32} />
+                  <span className="text-xl font-bold text-sidebar-foreground">AgroVision</span>
+                </Link>
+              </div>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
+                {navItems.map((item) => (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === item.href}
+                      tooltip={item.label}
+                    >
+                      <Link href={item.href}>
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter className="p-4">
+                <UserMenu />
+            </SidebarFooter>
+          </Sidebar>
+          <div className="flex-1 flex flex-col">
+            <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
+                <SidebarTrigger>
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Toggle Menu</span>
+                </SidebarTrigger>
+                <div className="flex items-center gap-2">
+                  <Image src="/logo.png" alt="AgroVision Logo" width={24} height={24} />
+                  <span className="text-lg font-bold">AgroVision</span>
+                </div>
+            </header>
+            <main className="flex-1 p-4 md:p-6 lg:p-8 bg-background">
+                {children}
+            </main>
+          </div>
+        </div>
+      </SidebarProvider>
+  );
+}
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AppLayoutContent>
+      {children}
+    </AppLayoutContent>
+  );
+}
+
+    
