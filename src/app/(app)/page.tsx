@@ -7,25 +7,27 @@ import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Loader2 } from 'lucide-react';
 
 export default function RedirectPage() {
-  const { loading, currentUser } = useContext(AppDataContext);
+  const { loading, currentUser, isClient } = useContext(AppDataContext);
   const router = useRouter();
 
   useEffect(() => {
     // This effect now only handles the case where a user somehow lands here
     // without being authenticated, sending them back to the login page.
-    // The redirect *to* the dashboard after login is handled by the login page itself.
-    if (!loading && !currentUser) {
+    if (isClient && !loading && !currentUser) {
         router.replace('/');
     }
-  }, [loading, currentUser, router]);
+  }, [isClient, loading, currentUser, router]);
 
-  // If the user is authenticated, we want to show the dashboard by default
-  // when navigating to the root of the app section.
+  // If the user is authenticated and lands on the base authenticated route,
+  // redirect them to the dashboard. This should only happen if they navigate
+  // to the app's root (e.g. /app) directly.
   useEffect(() => {
-    if (!loading && currentUser) {
-      router.replace('/dashboard');
+    if (isClient && currentUser) {
+      if (window.location.pathname.endsWith('/app') || window.location.pathname.endsWith('/app/')) {
+        router.replace('/dashboard');
+      }
     }
-  }, [loading, currentUser, router]);
+  }, [isClient, currentUser, router]);
 
 
   return (
