@@ -6,13 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { PackagingLog } from '@/lib/types';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, Info, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Calendar, HardHat, Info, Trash2 } from 'lucide-react';
+import type { PackagingLog } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-
 
 function PackagingHistoryComponent() {
   const { loading, packagingLogs, deletePackagingLog, currentUser } = useContext(AppDataContext);
@@ -23,18 +22,18 @@ function PackagingHistoryComponent() {
   const canManage = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
 
   const sortedLogs = useMemo(() =>
-    [...packagingLogs].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    [...(packagingLogs || [])].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
     [packagingLogs]
   );
   
   const handleDelete = (logId: string) => {
     startTransition(async () => {
-      await deletePackagingLog(logId);
-      toast({
-          title: "Registro Eliminado",
-          description: "El registro de embalaje ha sido eliminado exitosamente.",
-      });
-      setSelectedLog(null);
+        await deletePackagingLog(logId);
+        toast({
+            title: "Registro Eliminado",
+            description: "El registro de embalaje ha sido eliminado.",
+        });
+        setSelectedLog(null);
     });
   }
 
@@ -84,11 +83,11 @@ function PackagingHistoryComponent() {
           </div>
         </CardContent>
       </Card>
-
-      <Dialog open={!!selectedLog} onOpenChange={(isOpen) => !isOpen && setSelectedLog(null)}>
-        <DialogContent className="sm:max-w-2xl">
+      
+       <Dialog open={!!selectedLog} onOpenChange={(isOpen) => !isOpen && setSelectedLog(null)}>
+        <DialogContent className="sm:max-w-xl">
           {selectedLog && (
-            <AlertDialog>
+            <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Info className="h-5 w-5" />
@@ -133,28 +132,30 @@ function PackagingHistoryComponent() {
 
                <DialogFooter className="flex-row justify-between w-full pt-2">
                   {canManage ? (
-                      <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" disabled={isPending}>
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Eliminar</span>
-                          </Button>
-                      </AlertDialogTrigger>
+                      <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="icon" disabled={isPending}>
+                                  <Trash2 className="h-4 w-4" />
+                                  <span className="sr-only">Eliminar</span>
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                                  <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                      Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de embalaje y reajustará las estadísticas del embalador.
+                                  </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                      </AlertDialog>
                   ) : <div />}
                   <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
-                   <AlertDialogContent>
-                      <AlertDialogHeader>
-                          <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                              Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de embalaje y el pago asociado, y reajustará las estadísticas del embalador.
-                          </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
-                      </AlertDialogFooter>
-                  </AlertDialogContent>
               </DialogFooter>
-            </AlertDialog>
+            </>
           )}
         </DialogContent>
       </Dialog>

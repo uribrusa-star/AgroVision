@@ -172,3 +172,5 @@ function CulturalPracticesHistoryComponent() {
 }
 
 export const CulturalPracticesHistory = React.memo(CulturalPracticesHistoryComponent);
+
+    

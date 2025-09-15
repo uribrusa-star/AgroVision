@@ -37,7 +37,7 @@ export const AppDataContext = React.createContext<AppData>({
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
   addCollector: () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
-  deletePacker: async () => { throw new Error('Not implemented') },
+  deletePacker: () => { throw new Error('Not implemented') },
   addPackagingLog: () => { throw new Error('Not implemented') },
   deletePackagingLog: async () => { throw new Error('Not implemented') },
   addCulturalPracticeLog: () => { throw new Error('Not implemented') },
@@ -115,15 +115,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
     const [isClient, setIsClient] = useState(false);
 
-     useEffect(() => {
-        setIsClient(true);
+    useEffect(() => {
+      setIsClient(true);
     }, []);
 
     const fetchAllData = useCallback(async () => {
+      if (!isClient) return;
       setLoading(true);
       try {
-            const usersCollectionRef = collection(db, 'users');
-            const usersSnapshot = await getDocs(usersCollectionRef);
+        const usersCollectionRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersCollectionRef);
 
             if (usersSnapshot.empty) {
               const batch = writeBatch(db);
@@ -193,11 +194,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setLoading(false);
       }
-    }, [toast]);
+    }, [toast, isClient]);
     
     useEffect(() => {
        fetchAllData();
-    }, [fetchAllData, currentUser]);
+    }, [fetchAllData]);
     
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
@@ -316,27 +317,27 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    const deletePacker = async (packerId: string) => {
-        const originalState = { packers: [...packers], packagingLogs: [...packagingLogs] };
-
+    const deletePacker = (packerId: string) => {
+        const originalState = { packers, packagingLogs };
+        
         setPackers(prev => prev.filter(p => p.id !== packerId));
-        setPackagingLogs(prev => prev.filter(log => log.packerId !== packerId));
+        setPackagingLogs(prev => prev.filter(p => p.packerId !== packerId));
 
-        try {
+        const runDelete = async () => {
             const batchOp = writeBatch(db);
             batchOp.delete(doc(db, 'packers', packerId));
-
             const logsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', packerId));
             const logsSnapshot = await getDocs(logsQuery);
             logsSnapshot.forEach(doc => batchOp.delete(doc.ref));
-            
             await batchOp.commit();
-        } catch(error) {
+        }
+
+        runDelete().catch(error => {
             console.error("Failed to delete packer:", error);
             setPackers(originalState.packers);
             setPackagingLogs(originalState.packagingLogs);
             toast({ title: "Error", description: "No se pudo eliminar al embalador.", variant: "destructive"});
-        }
+        });
     };
     
     const addPackagingLog = (log: Omit<PackagingLog, 'id'>) => {
@@ -690,7 +691,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const value: AppData = {
+    const value = {
         loading,
         currentUser,
         users,
@@ -743,3 +744,4 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
+    

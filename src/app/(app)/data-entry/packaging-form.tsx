@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
+
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,7 +95,7 @@ export function PackagingForm() {
           <form onSubmit={form.handleSubmit(savePackagingData)}>
             <CardContent className="space-y-4">
                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
+                 <FormField
                     control={form.control}
                     name="date"
                     render={({ field }) => (
@@ -215,3 +216,5 @@ export function PackagingForm() {
     </div>
   );
 }
+
+    

@@ -8,7 +8,7 @@ import React from "react";
 import { AppDataContext } from "@/context/app-data-context";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { PackagingForm } from "./packaging-form";
-import { CulturalPracticesLogForm } from "../engineer-log/cultural-practices-log-form";
+import { CulturalPracticesLogForm } from "./cultural-practices-log-form";
 import { CulturalPracticesHistory } from "./cultural-practices-history";
 
 export default function DataEntryPage() {
@@ -42,3 +42,5 @@ export default function DataEntryPage() {
     </>
   );
 }
+
+    

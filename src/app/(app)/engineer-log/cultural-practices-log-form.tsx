@@ -237,3 +237,5 @@ export function CulturalPracticesLogForm() {
     </Card>
   );
 }
+
+    

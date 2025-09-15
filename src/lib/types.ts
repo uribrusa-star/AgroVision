@@ -229,7 +229,7 @@ export type AppData = {
   deletePhenologyLog: (logId: string) => Promise<void>;
   addCollector: (collector: Omit<Collector, 'id'>) => void;
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
-  deletePacker: (packerId: string) => Promise<void>;
+  deletePacker: (packerId: string) => void;
   addPackagingLog: (log: Omit<PackagingLog, 'id'>) => void;
   deletePackagingLog: (logId: string) => Promise<void>;
   addCulturalPracticeLog: (log: Omit<CulturalPracticeLog, 'id'>) => void;
@@ -247,3 +247,4 @@ export type AppData = {
   isClient: boolean;
 };
 
+    
