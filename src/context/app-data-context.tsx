@@ -38,6 +38,7 @@ export const AppDataContext = React.createContext<AppData>({
   addPacker: async () => { throw new Error('Not implemented') },
   deletePacker: async () => { throw new Error('Not implemented') },
   addPackagingLog: async () => { throw new Error('Not implemented') },
+  deletePackagingLog: async () => { throw new Error('Not implemented') },
   addBatch: async () => { throw new Error('Not implemented') },
   deleteBatch: async () => { throw new Error('Not implemented') },
   addCollectorPaymentLog: async () => { throw new Error('Not implemented') },
@@ -342,6 +343,49 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const deletePackagingLog = async (logId: string) => {
+        const originalState = { packers: [...packers], packagingLogs: [...packagingLogs] };
+        const logToDelete = packagingLogs.find(l => l.id === logId);
+        if (!logToDelete) return;
+
+        const packerDoc = packers.find(p => p.id === logToDelete.packerId);
+        
+        setPackagingLogs(prev => prev.filter(l => l.id !== logId));
+        if (packerDoc) {
+            const newTotalPackaged = packerDoc.totalPackaged - logToDelete.kilogramsPackaged;
+            const newHoursWorked = packerDoc.hoursWorked - logToDelete.hoursWorked;
+            const updatedPacker = {
+                ...packerDoc,
+                totalPackaged: newTotalPackaged,
+                hoursWorked: newHoursWorked,
+                packagingRate: newHoursWorked > 0 ? newTotalPackaged / newHoursWorked : 0,
+            };
+            setPackers(prev => prev.map(p => p.id === logToDelete.packerId ? updatedPacker : p));
+        }
+
+        try {
+            const batchOp = writeBatch(db);
+            batchOp.delete(doc(db, 'packagingLogs', logId));
+
+            if (packerDoc) {
+                const packerRef = doc(db, 'packers', logToDelete.packerId);
+                const newTotalPackaged = packerDoc.totalPackaged - logToDelete.kilogramsPackaged;
+                const newHoursWorked = packerDoc.hoursWorked - logToDelete.hoursWorked;
+                batchOp.update(packerRef, {
+                    totalPackaged: newTotalPackaged,
+                    hoursWorked: newHoursWorked,
+                    packagingRate: newHoursWorked > 0 ? newTotalPackaged / newHoursWorked : 0,
+                });
+            }
+            await batchOp.commit();
+        } catch (error) {
+            console.error("Failed to delete packaging log:", error);
+            setPackers(originalState.packers);
+            setPackagingLogs(originalState.packagingLogs);
+            toast({ title: "Error", description: "No se pudo eliminar el registro de embalaje.", variant: "destructive" });
+        }
+    };
+
     const addAgronomistLog = async (log: Omit<AgronomistLog, 'id'>) => {
         const tempId = `agrolog_${Date.now()}`;
         setAgronomistLogs(prev => [{ id: tempId, ...log }, ...prev]);
@@ -633,6 +677,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         addPacker,
         deletePacker,
         addPackagingLog,
+        deletePackagingLog,
         addBatch,
         deleteBatch,
         addCollectorPaymentLog,

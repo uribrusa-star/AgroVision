@@ -216,6 +216,7 @@ export type AppData = {
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
   deletePacker: (packerId: string) => Promise<void>;
   addPackagingLog: (log: Omit<PackagingLog, 'id'>) => Promise<void>;
+  deletePackagingLog: (logId: string) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
   deleteBatch: (batchId: string) => Promise<void>;
   addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => Promise<void>;
