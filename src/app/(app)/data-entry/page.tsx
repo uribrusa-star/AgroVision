@@ -22,12 +22,12 @@ export default function DataEntryPage() {
         description="Registre datos de producción, embalaje, pagos y gestione los lotes."
       />
       <div className="w-full max-w-7xl mx-auto space-y-8">
+        <div>
+           <ProductionForm />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <ProductionForm />
-          <div className="space-y-8">
             {canManageBatches ? <BatchLogForm /> : <Card><CardHeader><CardTitle>Acceso Denegado</CardTitle><CardContent><p>No tiene permisos para pre-cargar lotes.</p></CardContent></CardHeader></Card>}
             <BatchHistory />
-          </div>
         </div>
         <div>
           <PackagingForm />
