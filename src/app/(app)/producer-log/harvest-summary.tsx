@@ -120,7 +120,7 @@ export function HarvestSummary() {
         
         const addPageHeader = (docInstance: jsPDF) => {
             if (logoPngDataUri) {
-              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
+              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 15, 15);
             }
             docInstance.setFont('helvetica', 'bold');
             docInstance.setFontSize(16);
@@ -232,7 +232,7 @@ export function HarvestSummary() {
         
         // --- COVER PAGE ---
         if (logoPngDataUri) {
-          doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 20, pageHeight / 3 - 10, 40, 40);
+          doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 15, pageHeight / 3 - 10, 30, 30);
         }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(24);
