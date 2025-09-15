@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { summarizeAgronomistReport } from '@/ai/flows/summarize-agronomist-report';
 import { useToast } from '@/hooks/use-toast';
 import type { AgronomistLog, PhenologyLog } from '@/lib/types';
@@ -62,7 +62,7 @@ export function AgronomistReport() {
         let logoPngDataUri = '';
 
         if (logoRef.current) {
-            const canvas = await html2canvas(logoRef.current, {backgroundColor: null, scale: 3});
+            const canvas = await html2canvas(logoRef.current, {backgroundColor: null});
             logoPngDataUri = canvas.toDataURL('image/png');
         }
         
@@ -81,7 +81,7 @@ export function AgronomistReport() {
         
         const addPageHeader = (docInstance: jsPDF) => {
             if (logoPngDataUri) {
-              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 15, 15);
+              docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 20, 20);
             }
             docInstance.setFont('helvetica', 'bold');
             docInstance.setFontSize(16);
