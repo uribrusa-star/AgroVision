@@ -13,7 +13,6 @@ import { MonthlyHarvestChart } from '../monthly-harvest-chart';
 import { PhenologyLogForm } from './phenology-log-form';
 import { PhenologyHistory } from './phenology-history';
 import { HealthLogForm } from './health-log-form';
-import { CulturalPracticesLogForm } from './cultural-practices-log-form';
 import { EnvironmentalLogForm } from './environmental-log-form';
 import { IrrigationLogForm } from './irrigation-log-form';
 import { AgronomistReport } from './agronomist-report';
@@ -91,7 +90,6 @@ export default function EngineerLogPage() {
         {/* Columna Derecha */}
         <div className="space-y-8">
             {canManageApplications ? <IrrigationLogForm /> : null}
-            {canManageApplications ? <CulturalPracticesLogForm /> : null}
             {canManageApplications ? <EnvironmentalLogForm /> : null}
             {canManageApplications ? <ActivityOmissionLogForm /> : null}
             <NotesHistory />

@@ -3,7 +3,7 @@
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog } from '@/lib/types';
+import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog } from '@/lib/types';
 import { initialEstablishmentData, users as availableUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -18,6 +18,7 @@ export const AppDataContext = React.createContext<AppData>({
   collectors: [],
   packers: [],
   packagingLogs: [],
+  culturalPracticeLogs: [],
   agronomistLogs: [],
   phenologyLogs: [],
   batches: [],
@@ -39,6 +40,8 @@ export const AppDataContext = React.createContext<AppData>({
   deletePacker: async () => { throw new Error('Not implemented') },
   addPackagingLog: () => { throw new Error('Not implemented') },
   deletePackagingLog: async () => { throw new Error('Not implemented') },
+  addCulturalPracticeLog: () => { throw new Error('Not implemented') },
+  deleteCulturalPracticeLog: async () => { throw new Error('Not implemented') },
   addBatch: () => { throw new Error('Not implemented') },
   deleteBatch: () => { throw new Error('Not implemented') },
   addCollectorPaymentLog: () => { throw new Error('Not implemented') },
@@ -101,6 +104,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [collectors, setCollectors] = useState<Collector[]>([]);
     const [packers, setPackers] = useState<Packer[]>([]);
     const [packagingLogs, setPackagingLogs] = useState<PackagingLog[]>([]);
+    const [culturalPracticeLogs, setCulturalPracticeLogs] = useState<CulturalPracticeLog[]>([]);
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
     const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
@@ -143,6 +147,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               batchesSnapshot,
               collectorPaymentsSnapshot,
               packagingLogsSnapshot,
+              culturalPracticeLogsSnapshot,
               producerLogsSnapshot,
               transactionsSnapshot,
             ] = await Promise.all([
@@ -155,6 +160,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               getDocs(collection(db, 'batches')),
               getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'packagingLogs'), orderBy('date', 'desc'))),
+              getDocs(query(collection(db, 'culturalPracticeLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'producerLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
             ]);
@@ -173,6 +179,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
             setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
             setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
+            setCulturalPracticeLogs(culturalPracticeLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CulturalPracticeLog[]);
             setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
             setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
         
@@ -336,9 +343,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const tempId = `packaginglog_${Date.now()}`;
         setPackagingLogs(prev => [{ id: tempId, ...log }, ...prev]);
         
-        addDoc(collection(db, 'packagingLogs'), log).then(ref => {
+        addDoc(collection(db, 'packagingLogs'), log).then(async (ref) => {
             setPackagingLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-            fetchAllData(); // Refresh all data to update packer stats
+            
+            const packer = packers.find(p => p.id === log.packerId);
+            if (packer) {
+                const packerRef = doc(db, 'packers', packer.id);
+                const newTotalPackaged = packer.totalPackaged + log.kilogramsPackaged;
+                const newHoursWorked = packer.hoursWorked + log.hoursWorked;
+                const updatedPackerData = {
+                    totalPackaged: newTotalPackaged,
+                    hoursWorked: newHoursWorked,
+                    packagingRate: newHoursWorked > 0 ? newTotalPackaged / newHoursWorked : 0,
+                };
+                await setDoc(packerRef, updatedPackerData, { merge: true });
+                fetchAllData(); // Refresh all data to update packer stats
+            }
         }).catch(error => {
             console.error("Failed to add packaging log:", error);
             setPackagingLogs(prev => prev.filter(l => l.id !== tempId));
@@ -390,6 +410,32 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setPackers(originalPackers);
             setPackagingLogs(originalLogs);
             toast({ title: "Error", description: "No se pudo eliminar el registro de embalaje.", variant: "destructive"});
+        }
+    };
+    
+    const addCulturalPracticeLog = (log: Omit<CulturalPracticeLog, 'id'>) => {
+        const tempId = `culturallog_${Date.now()}`;
+        setCulturalPracticeLogs(prev => [{ id: tempId, ...log }, ...prev]);
+        
+        addDoc(collection(db, 'culturalPracticeLogs'), log).then(ref => {
+            setCulturalPracticeLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
+        }).catch(error => {
+            console.error("Failed to add cultural practice log:", error);
+            setCulturalPracticeLogs(prev => prev.filter(l => l.id !== tempId));
+            toast({ title: "Error", description: "No se pudo guardar el registro de la labor.", variant: "destructive"});
+        });
+    };
+
+    const deleteCulturalPracticeLog = async (logId: string) => {
+        const originalLogs = culturalPracticeLogs;
+        setCulturalPracticeLogs(prev => prev.filter(l => l.id !== logId));
+        
+        try {
+            await deleteDoc(doc(db, 'culturalPracticeLogs', logId));
+        } catch (error) {
+            console.error("Failed to delete cultural practice log:", error);
+            setCulturalPracticeLogs(originalLogs);
+            toast({ title: "Error", description: "No se pudo eliminar el registro de la labor.", variant: "destructive"});
         }
     };
 
@@ -653,6 +699,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         collectors,
         packers,
         packagingLogs,
+        culturalPracticeLogs,
         agronomistLogs,
         phenologyLogs,
         batches,
@@ -674,6 +721,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         deletePacker,
         addPackagingLog,
         deletePackagingLog,
+        addCulturalPracticeLog,
+        deleteCulturalPracticeLog,
         addBatch,
         deleteBatch,
         addCollectorPaymentLog,
@@ -693,3 +742,4 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+

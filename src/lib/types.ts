@@ -119,6 +119,20 @@ export type PackagingLog = {
   payment: number;
 };
 
+export type CulturalPracticeLog = {
+    id: string;
+    date: string;
+    practiceType: string;
+    personnelId: string;
+    personnelName: string;
+    personnelType: 'Recolector' | 'Embalador';
+    hoursWorked: number;
+    costPerHour: number;
+    payment: number;
+    notes: string;
+    batchId?: string;
+};
+
 
 export type EstablishmentData = {
   id: string;
@@ -196,6 +210,7 @@ export type AppData = {
   collectors: Collector[];
   packers: Packer[];
   packagingLogs: PackagingLog[];
+  culturalPracticeLogs: CulturalPracticeLog[];
   agronomistLogs: AgronomistLog[];
   phenologyLogs: PhenologyLog[];
   batches: Batch[];
@@ -216,6 +231,9 @@ export type AppData = {
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
   deletePacker: (packerId: string) => Promise<void>;
   addPackagingLog: (log: Omit<PackagingLog, 'id'>) => void;
+  deletePackagingLog: (logId: string) => Promise<void>;
+  addCulturalPracticeLog: (log: Omit<CulturalPracticeLog, 'id'>) => void;
+  deleteCulturalPracticeLog: (logId: string) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => void;
   deleteBatch: (batchId: string) => void;
   addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => void;
@@ -228,3 +246,4 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
+
