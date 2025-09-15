@@ -557,7 +557,28 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateUserPassword = async (userId: string, newPassword: string) => {
-        console.warn("La actualización de contraseña es una demostración y no se persiste en la base de datos en este entorno.");
+        const userToUpdate = users.find(u => u.id === userId);
+        if (!userToUpdate) throw new Error("User not found");
+        
+        const originalPassword = userToUpdate.password;
+        
+        // Optimistic update
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
+        if (currentUser?.id === userId) {
+            setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
+        }
+
+        try {
+            const userRef = doc(db, 'users', userId);
+            await setDoc(userRef, { password: newPassword }, { merge: true });
+        } catch (error) {
+            // Rollback on error
+            setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: originalPassword } : u));
+             if (currentUser?.id === userId) {
+                setCurrentUser(prev => prev ? { ...prev, password: originalPassword } : null);
+            }
+            throw error; // Re-throw to be caught in the component
+        }
     };
 
     const value: AppData = {
@@ -607,5 +628,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
-    

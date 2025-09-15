@@ -7,5 +7,3 @@ export async function POST() {
   session.destroy();
   return NextResponse.json({ ok: true });
 }
-
-    

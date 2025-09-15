@@ -28,7 +28,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPageContent() {
-  const { currentUser, setCurrentUser, isClient, loading, users } = useContext(AppDataContext);
+  const { currentUser, setCurrentUser, isClient, loading } = useContext(AppDataContext);
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -72,7 +72,7 @@ export default function LoginPageContent() {
     });
   };
 
-  if (currentUser) {
+  if (!isClient || currentUser) {
     return null; // or a loading spinner
   }
 
@@ -164,5 +164,3 @@ export default function LoginPageContent() {
     </div>
   );
 }
-
-    

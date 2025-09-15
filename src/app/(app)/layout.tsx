@@ -150,7 +150,7 @@ const PasswordSchema = z.object({
 
 
 function UserMenu() {
-  const { currentUser, setCurrentUser, users } = React.useContext(AppDataContext);
+  const { currentUser, setCurrentUser, updateUserPassword } = React.useContext(AppDataContext);
   const router = useRouter();
   const { toast } = useToast();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -170,18 +170,22 @@ function UserMenu() {
   }
 
   const onPasswordSubmit = (values: z.infer<typeof PasswordSchema>) => {
+    if(!currentUser) return;
     startTransition(async () => {
-        // This is a client-side mock. In a real app, this would be an API call.
-        const userToUpdate = users.find(u => u.id === currentUser.id);
-        if (userToUpdate) {
-            // In a real app, you'd send this to an API endpoint
-            console.log(`Password for ${currentUser.email} would be updated to ${values.newPassword}`);
-             toast({
-                title: "Función no implementada",
-                description: "La actualización de contraseña es una demostración.",
+        try {
+            await updateUserPassword(currentUser.id, values.newPassword);
+            toast({
+                title: "Contraseña Actualizada",
+                description: "Su contraseña ha sido cambiada exitosamente.",
             });
             setIsPasswordDialogOpen(false);
             form.reset();
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar la contraseña.",
+                variant: "destructive",
+            });
         }
     });
   }
@@ -265,5 +269,3 @@ function UserMenu() {
       </Dialog>
   )
 }
-
-    
