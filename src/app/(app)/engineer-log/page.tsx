@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { BarChart, HardHat, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
 import { MonthlyHarvestChart } from '../monthly-harvest-chart';
@@ -18,6 +18,7 @@ import { EnvironmentalLogForm } from './environmental-log-form';
 import { IrrigationLogForm } from './irrigation-log-form';
 import { AgronomistReport } from './agronomist-report';
 import { NotesHistory } from '../producer-log/notes-history';
+import { ActivityOmissionLogForm } from './activity-omission-log-form';
 
 
 export default function EngineerLogPage() {
@@ -92,6 +93,7 @@ export default function EngineerLogPage() {
             {canManageApplications ? <IrrigationLogForm /> : null}
             {canManageApplications ? <CulturalPracticesLogForm /> : null}
             {canManageApplications ? <EnvironmentalLogForm /> : null}
+            {canManageApplications ? <ActivityOmissionLogForm /> : null}
             <NotesHistory />
             <AgronomistReport />
         </div>
