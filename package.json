@@ -47,6 +47,7 @@
     "firebase": "^10.12.3",
     "genkit": "^1.14.1",
     "html2canvas": "^1.4.1",
+    "iron-session": "^8.0.2",
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.475.0",
@@ -74,3 +75,5 @@
     "typescript": "^5"
   }
 }
+
+    

@@ -28,7 +28,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPageContent() {
-  const { users, currentUser, setCurrentUser, isClient, loading } = useContext(AppDataContext);
+  const { currentUser, setCurrentUser, isClient, loading, users } = useContext(AppDataContext);
   const { toast } = useToast();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -43,31 +43,35 @@ export default function LoginPageContent() {
   });
 
   useEffect(() => {
-    // Only redirect if not loading and a user is already logged in
     if (isClient && !loading && currentUser) {
       router.replace('/dashboard');
     }
   }, [isClient, loading, currentUser, router]);
 
 
-  const onSubmit = (values: LoginFormValues) => {
-    startTransition(() => {
-        const user = users.find(u => u.email === values.email && u.password === values.password);
+  const onSubmit = async (values: LoginFormValues) => {
+    startTransition(async () => {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      });
 
-        if (user) {
-            setCurrentUser(user, values.rememberMe);
-            toast({
-                title: `Bienvenido, ${user.name}!`,
-                description: "Ha iniciado sesión correctamente.",
-            });
-            // The useEffect above will handle the redirection.
-        } else {
-            form.setError("root", { message: "Correo electrónico o contraseña incorrectos."});
-        }
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+            title: `¡Bienvenido de nuevo!`,
+            description: "Ha iniciado sesión correctamente.",
+        });
+        setCurrentUser(result.user, values.rememberMe);
+        router.push('/dashboard');
+      } else {
+        form.setError("root", { message: result.error || "Correo electrónico o contraseña incorrectos."});
+      }
     });
   };
 
-  // If already logged in, don't render the form, let useEffect redirect.
   if (currentUser) {
     return null; // or a loading spinner
   }
@@ -160,3 +164,5 @@ export default function LoginPageContent() {
     </div>
   );
 }
+
+    

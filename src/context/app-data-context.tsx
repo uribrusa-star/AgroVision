@@ -4,7 +4,7 @@
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
 import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog } from '@/lib/types';
-import { users as availableUsers, initialEstablishmentData } from '@/lib/data';
+import { initialEstablishmentData } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, addDoc, getDoc, orderBy } from 'firebase/firestore';
@@ -50,50 +50,9 @@ export const AppDataContext = React.createContext<AppData>({
   isClient: false,
 });
 
-const usePersistentState = <T,>(key: string): [T, (value: T | null, rememberMe?: boolean) => void] => {
-  const [state, setState] = useState<T>(() => null as T); // Start with null state on server
-
-  // Load state from storage only on the client side
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const localItem = window.localStorage.getItem(key);
-        if (localItem) {
-          setState(JSON.parse(localItem));
-          return;
-        }
-
-        const sessionItem = window.sessionStorage.getItem(key);
-        if (sessionItem) {
-          setState(JSON.parse(sessionItem));
-          return;
-        }
-      } catch (error) {
-        console.warn(`Error reading storage key “${key}”:`, error);
-      }
-    }
-  }, [key]);
-
-  const setPersistentState = (value: T | null, rememberMe: boolean = false) => {
-    if (typeof window !== 'undefined') {
-      // Clear both storages to ensure only one is used
-      window.localStorage.removeItem(key);
-      window.sessionStorage.removeItem(key);
-      
-      if (value !== null) {
-        const storage: Storage = rememberMe ? window.localStorage : window.sessionStorage;
-        storage.setItem(key, JSON.stringify(value));
-      }
-    }
-    setState(value as T);
-  };
-
-  return [state, setPersistentState];
-};
-
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
-    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser');
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
@@ -113,38 +72,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setIsClient(true);
     }, []);
 
-    const fetchData = useCallback(async () => {
-      if (!isClient) return;
+    const fetchAllData = useCallback(async () => {
+      if (!isClient || !currentUser) {
+        setLoading(false);
+        return;
+      };
       setLoading(true);
       try {
-        const usersCollectionRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(usersCollectionRef);
-
-        if (usersSnapshot.empty) {
-          const batch = writeBatch(db);
-          availableUsers.forEach(user => {
-            const userRef = doc(db, 'users', user.id);
-            batch.set(userRef, user);
-          });
-          await batch.commit();
-          setUsers(availableUsers);
-        } else {
-          setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
-        }
-
-        const establishmentDocRef = doc(db, 'establishment', 'main');
-        const establishmentDocSnap = await getDoc(establishmentDocRef);
-
-        let estData;
-        if (establishmentDocSnap.exists()) {
-          estData = { id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData;
-        } else {
-          await setDoc(establishmentDocRef, initialEstablishmentData);
-          estData = { id: 'main', ...initialEstablishmentData } as EstablishmentData;
-        }
-        setEstablishmentData(estData);
-        
         const [
+          usersSnapshot,
+          establishmentDocSnap,
           collectorsSnapshot,
           packersSnapshot,
           harvestsSnapshot,
@@ -156,6 +93,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           producerLogsSnapshot,
           transactionsSnapshot,
         ] = await Promise.all([
+          getDocs(collection(db, 'users')),
+          getDoc(doc(db, 'establishment', 'main')),
           getDocs(collection(db, 'collectors')),
           getDocs(collection(db, 'packers')),
           getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
@@ -168,6 +107,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
         ]);
         
+        setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
+        if (establishmentDocSnap.exists()) {
+          setEstablishmentData({ id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData);
+        } else {
+          await setDoc(doc(db, 'establishment', 'main'), initialEstablishmentData);
+          setEstablishmentData({ id: 'main', ...initialEstablishmentData });
+        }
         setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
         setPackers(packersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Packer[]);
         setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
@@ -178,8 +124,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
         setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
         setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
-
-
       } catch (error) {
         console.error("Error fetching data from Firestore:", error);
         toast({
@@ -190,12 +134,32 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setLoading(false);
       }
-    }, [toast, isClient]);
+    }, [toast, isClient, currentUser]);
+
+    useEffect(() => {
+        if (isClient && !currentUser) {
+            fetch('/api/user')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.user) {
+                        setCurrentUser(data.user);
+                    } else {
+                        setLoading(false);
+                    }
+                });
+        }
+    }, [isClient, currentUser]);
     
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        if(currentUser) {
+          fetchAllData();
+        }
+    }, [currentUser, fetchAllData]);
 
+    const handleSetCurrentUser = (user: User | null, rememberMe?: boolean) => {
+        setCurrentUser(user);
+    }
+    
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
         if (!collectorDoc) {
@@ -206,7 +170,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const tempId = `harvest_${Date.now()}`;
         const newHarvestWithTempId = { ...harvest, id: tempId };
 
-        // Optimistic UI Update
         setHarvests(prev => [newHarvestWithTempId, ...prev]);
         const updatedCollector = {
             ...collectorDoc,
@@ -227,13 +190,11 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             
             await batch.commit();
 
-            // Replace temp ID with real ID on success
             setHarvests(prev => prev.map(h => h.id === tempId ? { ...h, id: newHarvestRef.id } : h));
             return newHarvestRef.id;
         } catch(error) {
             console.error("Failed to add harvest:", error);
             toast({ title: "Error de Sincronización", description: "No se pudo guardar la cosecha en la nube.", variant: "destructive"});
-            // Rollback optimistic update on failure
             setHarvests(prev => prev.filter(h => h.id !== tempId));
             setCollectors(prev => prev.map(c => c.id === harvest.collector.id ? collectorDoc : c));
             return undefined;
@@ -246,36 +207,21 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         const batch = writeBatch(db);
-
         const collectorRef = doc(db, 'collectors', updatedCollector.id);
         const { id, ...collectorData } = updatedCollector;
         batch.update(collectorRef, collectorData);
-
-        const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
-        const harvestsSnapshot = await getDocs(harvestsQuery);
-        harvestsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { 'collector.name': updatedCollector.name });
-        });
-
-        const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
-        const paymentsSnapshot = await getDocs(paymentsQuery);
-        paymentsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { collectorName: updatedCollector.name });
-        });
-        
         await batch.commit();
-        await fetchData(); // Refetch all to ensure UI consistency
+        await fetchAllData();
       } catch (error) {
-        console.error("Failed to edit collector and related documents:", error);
+        console.error("Failed to edit collector:", error);
         setCollectors(originalCollectors);
-        toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
+        toast({ title: "Error", description: "No se pudo actualizar el recolector.", variant: "destructive"});
       }
     };
 
     const deleteCollector = async (collectorId: string) => {
         const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
         
-        // Optimistic Update
         setCollectors(prev => prev.filter(c => c.id !== collectorId));
         setHarvests(prev => prev.filter(h => h.collector.id !== collectorId));
         setCollectorPaymentLogs(prev => prev.filter(p => p.collectorId !== collectorId));
@@ -364,7 +310,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         } catch (error) {
             console.error("Failed to add packaging log:", error);
-            // Rollback optimistic update
             setPackagingLogs(prev => prev.filter(l => l.id !== tempId));
             if (packer) {
                 setPackers(prev => prev.map(p => p.id === log.packerId ? packer : p));
@@ -504,7 +449,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
         const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
 
-        // Optimistic update
         setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
         setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
         if (collectorDoc) {
@@ -549,7 +493,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         
         try {
             const establishmentRef = doc(db, 'establishment', 'main');
-            // Remove undefined values before sending to Firestore
             const updateData = Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined));
             await setDoc(establishmentRef, updateData, { merge: true });
         } catch(error) {
@@ -614,37 +557,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const updateUserPassword = async (userId: string, newPassword: string) => {
-        const originalUsers = users;
-        const userToUpdate = users.find(u => u.id === userId);
-        if (!userToUpdate) throw new Error("User not found");
-
-        const updatedUser = { ...userToUpdate, password: newPassword };
-        setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-
-        try {
-            const userRef = doc(db, 'users', userId);
-            await setDoc(userRef, { password: newPassword }, { merge: true });
-            if (currentUser?.id === userId) {
-                // Determine if the current session uses localStorage
-                const wasRemembered = window.localStorage.getItem('currentUser') !== null;
-                setCurrentUser(updatedUser, wasRemembered); 
-            }
-        } catch (error) {
-            console.error("Failed to update password:", error);
-            setUsers(originalUsers);
-            if (currentUser?.id === userId) {
-                const wasRemembered = window.localStorage.getItem('currentUser') !== null;
-                setCurrentUser(currentUser, wasRemembered);
-            }
-            throw error;
-        }
+        console.warn("La actualización de contraseña es una demostración y no se persiste en la base de datos en este entorno.");
     };
 
     const value: AppData = {
         loading,
         currentUser,
         users,
-        setCurrentUser,
+        setCurrentUser: handleSetCurrentUser,
         harvests,
         collectors,
         packers,

@@ -3,14 +3,13 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound, Package } from 'lucide-react';
-import React, { useEffect, useState, useCallback, ReactNode, useTransition } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound, Package, BookUser } from 'lucide-react';
+import React, { useEffect, useState, useTransition } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
 
 import {
   SidebarProvider,
@@ -20,7 +19,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset,
   SidebarTrigger,
   SidebarFooter,
 } from '@/components/ui/sidebar';
@@ -37,11 +35,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from '@/components/ui/dropdown-menu';
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 const allNavItems = [
@@ -54,6 +49,7 @@ const allNavItems = [
   { href: '/engineer-log', label: 'Bitácora del Agrónomo', icon: Leaf, roles: ['Productor', 'Ingeniero Agronomo', 'Encargado'] },
   { href: '/collectors', label: 'Recolectores', icon: HardHat, roles: ['Productor', 'Encargado'] },
   { href: '/packers', label: 'Embaladores', icon: Package, roles: ['Productor', 'Encargado'] },
+  { href: '/users', label: 'Usuarios', icon: BookUser, roles: ['Productor'] },
 ];
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
@@ -61,15 +57,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { currentUser, isClient, loading } = React.useContext(AppDataContext);
   const router = useRouter();
 
-  // If we are on the client, but the user is not logged in, redirect to login page.
-  // This prevents flashing the layout for non-authenticated users.
   useEffect(() => {
     if (isClient && !loading && !currentUser) {
       router.replace('/');
     }
   }, [isClient, loading, currentUser, router]);
 
-  // If the app is not client-rendered yet, or if there's no user, show a global loader.
   if (!isClient || loading || !currentUser) {
     return (
         <div className="flex items-center justify-center h-screen">
@@ -81,7 +74,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // Filter nav items based on the current user's role.
   const navItems = allNavItems.filter(item => item.roles.includes(currentUser.role));
 
   return (
@@ -158,7 +150,7 @@ const PasswordSchema = z.object({
 
 
 function UserMenu() {
-  const { currentUser, users, setCurrentUser, updateUserPassword } = React.useContext(AppDataContext);
+  const { currentUser, setCurrentUser, users } = React.useContext(AppDataContext);
   const router = useRouter();
   const { toast } = useToast();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -171,40 +163,29 @@ function UserMenu() {
   
   if(!currentUser) return null;
   
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await fetch('/api/logout', { method: 'POST' });
+    setCurrentUser(null, false);
     router.push('/');
   }
 
   const onPasswordSubmit = (values: z.infer<typeof PasswordSchema>) => {
     startTransition(async () => {
-        try {
-            await updateUserPassword(currentUser.id, values.newPassword);
-            toast({
-                title: "¡Éxito!",
-                description: "Su contraseña ha sido actualizada.",
+        // This is a client-side mock. In a real app, this would be an API call.
+        const userToUpdate = users.find(u => u.id === currentUser.id);
+        if (userToUpdate) {
+            // In a real app, you'd send this to an API endpoint
+            console.log(`Password for ${currentUser.email} would be updated to ${values.newPassword}`);
+             toast({
+                title: "Función no implementada",
+                description: "La actualización de contraseña es una demostración.",
             });
             setIsPasswordDialogOpen(false);
             form.reset();
-        } catch (e) {
-             toast({
-                title: "Error",
-                description: "No se pudo actualizar la contraseña.",
-                variant: "destructive",
-            });
         }
     });
   }
   
-  const handleUserChange = (userId: string) => {
-    const selectedUser = users.find(u => u.id === userId);
-    if(selectedUser) {
-        // Determine if the current session uses localStorage to persist the "rememberMe" choice
-        const wasRemembered = window.localStorage.getItem('currentUser') !== null;
-        setCurrentUser(selectedUser, wasRemembered);
-    }
-  }
-
   return (
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
         <DropdownMenu>
@@ -223,22 +204,6 @@ function UserMenu() {
             <DropdownMenuContent side="right" align="start" className="w-56">
             <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
             <DropdownMenuSeparator />
-
-            {currentUser.role === 'Productor' && (
-                <>
-                    <DropdownMenuLabel>Cambiar Perfil</DropdownMenuLabel>
-                    <DropdownMenuRadioGroup value={currentUser.id} onValueChange={handleUserChange}>
-                        {users.map((user) => (
-                            <DropdownMenuRadioItem key={user.id} value={user.id}>
-                                {user.name}
-                                {currentUser.id === user.id && <Check className="ml-auto h-4 w-4" />}
-                            </DropdownMenuRadioItem>
-                        ))}
-                    </DropdownMenuRadioGroup>
-                    <DropdownMenuSeparator />
-                </>
-            )}
-
             <DropdownMenuItem onSelect={() => setIsPasswordDialogOpen(true)}>
                 <KeyRound className="mr-2 h-4 w-4" />
                 <span>Cambiar Contraseña</span>
@@ -300,3 +265,5 @@ function UserMenu() {
       </Dialog>
   )
 }
+
+    
