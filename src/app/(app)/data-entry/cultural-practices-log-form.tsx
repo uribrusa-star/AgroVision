@@ -5,6 +5,10 @@ import React, { useTransition, useContext, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { Calendar as CalendarIcon } from 'lucide-react';
+
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,8 +16,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
 
 const LogSchema = z.object({
+  date: z.date({
+    required_error: "La fecha es requerida.",
+  }),
   practiceType: z.string().min(1, "El tipo de labor es requerido."),
   personId: z.string().min(1, "Debe seleccionar a una persona."),
   hoursWorked: z.coerce.number().min(0.5, "Las horas deben ser un número positivo."),
@@ -41,6 +51,7 @@ export function CulturalPracticesLogForm() {
   const form = useForm<LogFormValues>({
     resolver: zodResolver(LogSchema),
     defaultValues: {
+      date: new Date(),
       practiceType: '',
       personId: '',
       hoursWorked: 8,
@@ -59,7 +70,7 @@ export function CulturalPracticesLogForm() {
       const payment = data.hoursWorked * data.costPerHour;
 
       addCulturalPracticeLog({
-        date: new Date().toISOString(),
+        date: data.date.toISOString(),
         practiceType: data.practiceType,
         personnelId: person.id,
         personnelName: person.name,
@@ -76,6 +87,7 @@ export function CulturalPracticesLogForm() {
       });
 
       form.reset({
+        date: new Date(),
         practiceType: '',
         personId: '',
         hoursWorked: 8,
@@ -93,31 +105,75 @@ export function CulturalPracticesLogForm() {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-             <FormField
-                control={form.control}
-                name="practiceType"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Tipo de Labor</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Seleccione una labor" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            <SelectItem value="Deshoje">Deshoje / Limpieza</SelectItem>
-                            <SelectItem value="Reposición de plantas">Reposición de plantas</SelectItem>
-                            <SelectItem value="Mantenimiento de mulching">Mantenimiento de mulching</SelectItem>
-                            <SelectItem value="Mantenimiento de túnel">Mantenimiento de túnel</SelectItem>
-                            <SelectItem value="Polinización">Polinización</SelectItem>
-                            <SelectItem value="Otra">Otra</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="date"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col">
+                        <FormLabel>Fecha de la Actividad</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant={"outline"}
+                                className={cn(
+                                  "w-full justify-start pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                                disabled={!canManage || isPending}
+                              >
+                                {field.value ? (
+                                  format(field.value, "PPP", { locale: es })
+                                ) : (
+                                  <span>Seleccione una fecha</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) =>
+                                date > new Date() || date < new Date("2020-01-01")
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                 <FormField
+                    control={form.control}
+                    name="practiceType"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Tipo de Labor</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccione una labor" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Deshoje">Deshoje / Limpieza</SelectItem>
+                                <SelectItem value="Reposición de plantas">Reposición de plantas</SelectItem>
+                                <SelectItem value="Mantenimiento de mulching">Mantenimiento de mulching</SelectItem>
+                                <SelectItem value="Mantenimiento de túnel">Mantenimiento de túnel</SelectItem>
+                                <SelectItem value="Polinización">Polinización</SelectItem>
+                                <SelectItem value="Otra">Otra</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+             </div>
             <FormField
               control={form.control}
               name="personId"
@@ -179,5 +235,3 @@ export function CulturalPracticesLogForm() {
     </Card>
   );
 }
-
-    
