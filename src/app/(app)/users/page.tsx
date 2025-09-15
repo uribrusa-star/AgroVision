@@ -101,9 +101,9 @@ export default function UsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead className="hidden md:table-cell">Email</TableHead>
                 <TableHead>Rol</TableHead>
-                <TableHead><span className="sr-only">Acciones</span></TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -115,9 +115,9 @@ export default function UsersPage() {
                             <Skeleton className="h-4 w-24" />
                         </div>
                     </TableCell>
-                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
                 </TableRow>
               ))}
               {!loading && users.map((user) => (
@@ -131,7 +131,7 @@ export default function UsersPage() {
                       {user.name}
                     </div>
                   </TableCell>
-                  <TableCell>{user.email}</TableCell>
+                  <TableCell className="hidden md:table-cell">{user.email}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === 'Productor' ? 'default' : 'secondary'}>
                       {user.role}
@@ -214,3 +214,5 @@ export default function UsersPage() {
     </>
   );
 }
+
+    

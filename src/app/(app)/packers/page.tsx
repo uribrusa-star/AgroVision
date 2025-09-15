@@ -29,10 +29,9 @@ const PackerSchema = z.object({
 });
 
 export default function PackersPage() {
-  const { loading, packers, packagingLogs, addPacker, editPacker, deletePacker, currentUser } = React.useContext(AppDataContext);
+  const { loading, packers, packagingLogs, addPacker, deletePacker, currentUser } = React.useContext(AppDataContext);
   const [selectedPacker, setSelectedPacker] = useState<Packer | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -43,20 +42,13 @@ export default function PackersPage() {
   });
 
   useEffect(() => {
-    if (isEditDialogOpen && selectedPacker) {
-      form.reset({ name: selectedPacker.name });
-    } else if (isAddDialogOpen) {
+    if (isAddDialogOpen) {
       form.reset({ name: '' });
     }
-  }, [selectedPacker, isEditDialogOpen, isAddDialogOpen, form]);
+  }, [isAddDialogOpen, form]);
 
   const getPackerHistory = (packerId: string) => {
     return packagingLogs.filter(log => log.packerId === packerId);
-  };
-
-  const handleEdit = (packer: Packer) => {
-    setSelectedPacker(packer);
-    setIsEditDialogOpen(true);
   };
 
   const handleDelete = (packerId: string) => {
@@ -64,22 +56,6 @@ export default function PackersPage() {
         await deletePacker(packerId);
         toast({ title: "Embalador Eliminado", description: "El embalador y sus datos asociados han sido eliminados." });
     });
-  };
-
-  const onEditSubmit = (values: z.infer<typeof PackerSchema>) => {
-    if (selectedPacker) {
-      const newName = values.name.trim();
-      if (packers.some(p => p.name.toLowerCase() === newName.toLowerCase() && p.id !== selectedPacker.id)) {
-        form.setError('name', { type: 'manual', message: 'Ya existe un embalador con este nombre.' });
-        return;
-      }
-      startTransition(async () => {
-        await editPacker({ ...selectedPacker, name: newName });
-        toast({ title: "Embalador Actualizado", description: "Los datos del embalador se han guardado." });
-        setIsEditDialogOpen(false);
-        setSelectedPacker(null);
-      });
-    }
   };
 
   const onAddSubmit = (values: z.infer<typeof PackerSchema>) => {
@@ -122,7 +98,9 @@ export default function PackersPage() {
                     <DialogHeader>
                         <DialogTitle>Agregar Nuevo Embalador</DialogTitle>
                         <DialogDescription>
-                            Complete los detalles para agregar un nuevo embalador al sistema.
+                            Complete los detalles para agregar un nuevo embalador.
+                            <br/>
+                            <strong className="text-destructive">Importante:</strong> El nombre no podrá ser modificado una vez creado.
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
@@ -214,7 +192,6 @@ export default function PackersPage() {
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                     <DropdownMenuItem onSelect={() => { setSelectedPacker(packer); setIsHistoryOpen(true); }}>Ver Historial</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => handleEdit(packer)}>Editar</DropdownMenuItem>
                                     <AlertDialogTrigger asChild>
                                         <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                     </AlertDialogTrigger>
@@ -294,40 +271,8 @@ export default function PackersPage() {
           )}
         </DialogContent>
       </Dialog>
-
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Embalador</DialogTitle>
-            <DialogDescription>
-              Actualice el nombre del embalador. Este cambio se reflejará en todos los registros históricos.
-            </DialogDescription>
-          </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre</FormLabel>
-                    <FormControl>
-                      <Input {...field} disabled={isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancelar</Button>
-                </DialogClose>
-                <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Cambios'}</Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
+
+    

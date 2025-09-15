@@ -36,7 +36,6 @@ export const AppDataContext = React.createContext<AppData>({
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
   addCollector: async () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
-  editPacker: async () => { throw new Error('Not implemented') },
   deletePacker: async () => { throw new Error('Not implemented') },
   addPackagingLog: async () => { throw new Error('Not implemented') },
   addBatch: async () => { throw new Error('Not implemented') },
@@ -221,24 +220,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const editCollector = async (updatedCollector: Collector) => {
-      const originalCollectors = [...collectors];
-      setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
-
-      try {
-        const batch = writeBatch(db);
-        const collectorRef = doc(db, 'collectors', updatedCollector.id);
-        const { id, ...collectorData } = updatedCollector;
-        batch.update(collectorRef, collectorData);
-        await batch.commit();
-        await fetchAllData();
-      } catch (error) {
-        console.error("Failed to edit collector:", error);
-        setCollectors(originalCollectors);
-        toast({ title: "Error", description: "No se pudo actualizar el recolector.", variant: "destructive"});
-      }
-    };
-
     const deleteCollector = async (collectorId: string) => {
         const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
         
@@ -289,32 +270,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             console.error("Failed to add packer:", error);
             setPackers(prev => prev.filter(p => p.id !== tempId));
             toast({ title: "Error", description: "No se pudo agregar al embalador.", variant: "destructive"});
-        }
-    };
-
-     const editPacker = async (updatedPacker: Packer) => {
-        const originalPackers = [...packers];
-        setPackers(prev => prev.map(p => p.id === updatedPacker.id ? updatedPacker : p));
-
-        try {
-            const batch = writeBatch(db);
-            const packerRef = doc(db, 'packers', updatedPacker.id);
-            const { id, ...packerData } = updatedPacker;
-            batch.update(packerRef, packerData);
-
-            // Update packer name in related logs
-            const packagingLogsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', updatedPacker.id));
-            const logsSnapshot = await getDocs(packagingLogsQuery);
-            logsSnapshot.forEach(doc => {
-                batch.update(doc.ref, { packerName: updatedPacker.name });
-            });
-
-            await batch.commit();
-            await fetchAllData(); 
-        } catch (error) {
-            console.error("Failed to edit packer:", error);
-            setPackers(originalPackers);
-            toast({ title: "Error", description: "No se pudo actualizar el embalador.", variant: "destructive"});
         }
     };
 
@@ -666,7 +621,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         producerLogs,
         transactions,
         addHarvest,
-        editCollector,
+        editCollector: async () => {}, // This function is intentionally left empty
         deleteCollector,
         addAgronomistLog,
         editAgronomistLog,
@@ -676,7 +631,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         deletePhenologyLog,
         addCollector,
         addPacker,
-        editPacker,
         deletePacker,
         addPackagingLog,
         addBatch,
@@ -698,3 +652,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+    

@@ -214,7 +214,6 @@ export type AppData = {
   deletePhenologyLog: (logId: string) => Promise<void>;
   addCollector: (collector: Omit<Collector, 'id'>) => Promise<void>;
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
-  editPacker: (packer: Packer) => Promise<void>;
   deletePacker: (packerId: string) => Promise<void>;
   addPackagingLog: (log: Omit<PackagingLog, 'id'>) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => Promise<void>;
@@ -229,3 +228,5 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
+
+    
