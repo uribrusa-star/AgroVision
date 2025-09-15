@@ -1,8 +1,8 @@
 
-
 'use client';
 
 import React, { useContext, useTransition, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { AppDataContext } from '@/context/app-data-context';
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
 import { useToast } from '@/hooks/use-toast';
-import { AgroVisionLogo } from '@/components/icons';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 import { CostDistributionChart } from '../dashboard/cost-distribution-chart';
@@ -342,7 +341,7 @@ export function HarvestSummary() {
             {/* Hidden elements for rendering and capturing */}
             <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: 'auto', height: 'auto' }} aria-hidden="true">
               <div ref={logoRef} style={{width: '64px', height: '64px'}}>
-                 <AgroVisionLogo className="w-16 h-16"/>
+                 <Image src="/logo.png" alt="AgroVision Logo" width={64} height={64} />
               </div>
               <div ref={costChartRef} className='p-4 bg-card w-[450px]'>
                  <CostDistributionChart isForPdf={true} />

@@ -5,8 +5,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import React, { useTransition, useContext, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { AgroVisionLogo } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -27,7 +27,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
-  const { isClient, currentUser } = useContext(AppDataContext);
+  const { isClient, currentUser, loading } = useContext(AppDataContext);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -51,9 +51,8 @@ export default function LoginPage() {
         body: JSON.stringify(values),
       });
 
-      const result = await response.json();
-
       if (response.ok) {
+        const result = await response.json();
         toast({
             title: `¡Bienvenido de nuevo, ${result.user.name}!`,
             description: "Ha iniciado sesión correctamente.",
@@ -65,12 +64,12 @@ export default function LoginPage() {
     });
   };
 
-  if (!isClient || currentUser) {
+  if (!isClient || currentUser || loading) {
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
             <div className="flex flex-col items-center gap-4">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground">Verificando sesión...</p>
+                <p className="text-muted-foreground">Cargando aplicación...</p>
             </div>
         </div>
     );
@@ -81,7 +80,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4">
-            <AgroVisionLogo className="w-16 h-16" />
+            <Image src="/logo.png" alt="AgroVision Logo" width={64} height={64} />
           </div>
           <CardTitle className="text-2xl font-headline">Bienvenido a AgroVision</CardTitle>
           <CardDescription>Ingrese sus credenciales para acceder a su panel.</CardDescription>

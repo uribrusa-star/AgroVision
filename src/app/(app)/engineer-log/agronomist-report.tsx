@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useContext, useTransition, useRef } from 'react';
+import Image from 'next/image';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
@@ -11,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { AppDataContext } from '@/context/app-data-context';
 import { summarizeAgronomistReport } from '@/ai/flows/summarize-agronomist-report';
 import { useToast } from '@/hooks/use-toast';
-import { AgroVisionLogo } from '@/components/icons';
 import type { AgronomistLog, PhenologyLog } from '@/lib/types';
 
 
@@ -268,7 +268,7 @@ export function AgronomistReport() {
             {/* Hidden elements for rendering and capturing */}
             <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: 'auto', height: 'auto' }} aria-hidden="true">
               <div ref={logoRef} style={{width: '64px', height: '64px'}}>
-                 <AgroVisionLogo className="w-16 h-16"/>
+                 <Image src="/logo.png" alt="AgroVision Logo" width={64} height={64} />
               </div>
             </div>
         </CardContent>
