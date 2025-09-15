@@ -165,8 +165,8 @@ function UserMenu() {
   
   const handleLogout = async () => {
     await fetch('/api/logout', { method: 'POST' });
-    setCurrentUser(null, false);
-    router.push('/');
+    setCurrentUser(null);
+    router.refresh();
   }
 
   const onPasswordSubmit = (values: z.infer<typeof PasswordSchema>) => {

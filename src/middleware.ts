@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getIronSession } from 'iron-session';
+import { cookies } from 'next/headers';
 import { sessionOptions } from '@/lib/session';
 
 const protectedRoutes = ['/dashboard', '/establishment', '/map', '/producer-log', '/data-entry', '/engineer-log', '/collectors', '/packers', '/users', '/predictions'];
@@ -18,7 +19,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
-  if(user && pathname === '/') {
+  if (user && (pathname === '/' || pathname === '/login')) {
     // Redirect to dashboard if authenticated and trying to access login page
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

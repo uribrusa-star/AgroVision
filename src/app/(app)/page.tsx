@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useTransition, useEffect } from 'react';
@@ -65,7 +66,7 @@ export default function LoginPageContent() {
             description: "Ha iniciado sesión correctamente.",
         });
         setCurrentUser(result.user, values.rememberMe);
-        router.push('/dashboard');
+        router.refresh(); // Refresh the page to trigger middleware and context reload
       } else {
         form.setError("root", { message: result.error || "Correo electrónico o contraseña incorrectos."});
       }

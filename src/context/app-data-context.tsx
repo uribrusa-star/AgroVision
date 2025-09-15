@@ -4,7 +4,7 @@
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
 import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog } from '@/lib/types';
-import { initialEstablishmentData } from '@/lib/data';
+import { initialEstablishmentData, users as availableUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
 import { collection, getDocs, doc, setDoc, deleteDoc, writeBatch, query, where, addDoc, getDoc, orderBy } from 'firebase/firestore';
@@ -79,8 +79,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       };
       setLoading(true);
       try {
+        const usersCollectionRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersCollectionRef);
+
+        if (usersSnapshot.empty) {
+          const batch = writeBatch(db);
+          availableUsers.forEach(user => {
+            const userRef = doc(db, 'users', user.id);
+            batch.set(userRef, user);
+          });
+          await batch.commit();
+          setUsers(availableUsers);
+        } else {
+          setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
+        }
+
         const [
-          usersSnapshot,
           establishmentDocSnap,
           collectorsSnapshot,
           packersSnapshot,
@@ -93,7 +107,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           producerLogsSnapshot,
           transactionsSnapshot,
         ] = await Promise.all([
-          getDocs(collection(db, 'users')),
           getDoc(doc(db, 'establishment', 'main')),
           getDocs(collection(db, 'collectors')),
           getDocs(collection(db, 'packers')),
@@ -107,7 +120,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
         ]);
         
-        setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
         if (establishmentDocSnap.exists()) {
           setEstablishmentData({ id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData);
         } else {
@@ -561,8 +573,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         if (!userToUpdate) throw new Error("User not found");
         
         const originalPassword = userToUpdate.password;
-        
-        // Optimistic update
+        const originalUsers = [...users];
+
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
         if (currentUser?.id === userId) {
             setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
@@ -573,9 +585,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             await setDoc(userRef, { password: newPassword }, { merge: true });
         } catch (error) {
             // Rollback on error
-            setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: originalPassword } : u));
+            setUsers(originalUsers);
              if (currentUser?.id === userId) {
-                setCurrentUser(prev => prev ? { ...prev, password: originalPassword } : null);
+                const originalUser = originalUsers.find(u => u.id === userId);
+                setCurrentUser(originalUser || null);
             }
             throw error; // Re-throw to be caught in the component
         }
