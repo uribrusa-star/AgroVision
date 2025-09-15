@@ -30,22 +30,22 @@ export default function ProducerLogPage() {
         description="Registre las finanzas y las observaciones diarias del establecimiento."
       />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Columna Izquierda: Finanzas y Gráficos */}
+        {/* Columna Izquierda: Entradas y Gráficos Principales */}
         <div className="space-y-8">
           <TransactionForm />
+          <NotesForm />
           <MonthlyHarvestChart harvests={harvests} />
           <IncomeChart transactions={transactions} />
           <CostDistributionChart />
-          <TransactionHistory />
         </div>
         
-        {/* Columna Derecha: Observaciones y Resúmenes */}
+        {/* Columna Derecha: Historiales y Desgloses */}
         <div className="space-y-8">
-          <NotesForm />
+          <TransactionHistory />
           <NotesHistory />
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Cosecha)</CardTitle>
+              <CardTitle className="text-sm font-medium">Costo Mano de Obra (Cosecha)</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -55,7 +55,7 @@ export default function ProducerLogPage() {
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Embalaje)</CardTitle>
+              <CardTitle className="text-sm font-medium">Costo Mano de Obra (Embalaje)</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -65,7 +65,7 @@ export default function ProducerLogPage() {
           </Card>
            <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Costo de Mano de Obra (Labores)</CardTitle>
+              <CardTitle className="text-sm font-medium">Costo Mano de Obra (Labores)</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
