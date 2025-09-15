@@ -27,7 +27,7 @@ const LoginSchema = z.object({
 type LoginFormValues = z.infer<typeof LoginSchema>;
 
 export default function LoginPage() {
-  const { isClient, currentUser, loading } = useContext(AppDataContext);
+  const { isClient, currentUser, loading, setCurrentUser } = useContext(AppDataContext);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -53,11 +53,12 @@ export default function LoginPage() {
 
       if (response.ok) {
         const result = await response.json();
+        setCurrentUser(result.user, values.rememberMe);
         toast({
             title: `¡Bienvenido de nuevo, ${result.user.name}!`,
             description: "Ha iniciado sesión correctamente.",
         });
-        window.location.href = '/dashboard';
+        router.push('/dashboard');
       } else {
         form.setError("root", { message: "Correo electrónico o contraseña incorrectos."});
       }
@@ -147,3 +148,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

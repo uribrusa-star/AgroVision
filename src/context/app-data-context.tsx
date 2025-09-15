@@ -55,50 +55,10 @@ export const AppDataContext = React.createContext<AppData>({
   isClient: false,
 });
 
-const usePersistentState = <T,>(key: string): [T, (value: T | null, rememberMe?: boolean) => void] => {
-  const [state, setState] = useState<T>(() => null as T); // Start with null state on server
-
-  // Load state from storage only on the client side
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const localItem = window.localStorage.getItem(key);
-        if (localItem) {
-          setState(JSON.parse(localItem));
-          return;
-        }
-
-        const sessionItem = window.sessionStorage.getItem(key);
-        if (sessionItem) {
-          setState(JSON.parse(sessionItem));
-          return;
-        }
-      } catch (error) {
-        console.warn(`Error reading storage key “${key}”:`, error);
-      }
-    }
-  }, [key]);
-
-  const setPersistentState = (value: T | null, rememberMe: boolean = false) => {
-    if (typeof window !== 'undefined') {
-      // Clear both storages to ensure only one is used
-      window.localStorage.removeItem(key);
-      window.sessionStorage.removeItem(key);
-      
-      if (value !== null) {
-        const storage: Storage = rememberMe ? window.localStorage : window.sessionStorage;
-        storage.setItem(key, JSON.stringify(value));
-      }
-    }
-    setState(value as T);
-  };
-
-  return [state, setPersistentState];
-};
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
-    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser');
+    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
@@ -117,6 +77,23 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
       setIsClient(true);
+      // Try to fetch user from session API on initial load
+      const fetchUser = async () => {
+          try {
+              const res = await fetch('/api/user');
+              if(res.ok) {
+                  const { user } = await res.json();
+                  if(user) {
+                      setCurrentUser(user);
+                  }
+              }
+          } catch (e) {
+              console.error("Could not fetch user", e);
+          } finally {
+              setLoading(false);
+          }
+      }
+      fetchUser();
     }, []);
 
     const fetchAllData = useCallback(async () => {
@@ -197,8 +174,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     }, [toast, isClient]);
     
     useEffect(() => {
-       fetchAllData();
-    }, [fetchAllData]);
+       if (currentUser) {
+         fetchAllData();
+       }
+    }, [fetchAllData, currentUser]);
     
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
@@ -224,7 +203,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             batch.update(collectorRef, updatedCollectorData);
             
             await batch.commit();
-            await fetchAllData(); // Refetch to ensure UI is consistent
+            await fetchAllData();
             return newHarvestRef.id;
 
         } catch(error) {
@@ -358,7 +337,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     packagingRate: newHoursWorked > 0 ? newTotalPackaged / newHoursWorked : 0,
                 };
                 await setDoc(packerRef, updatedPackerData, { merge: true });
-                fetchAllData(); // Refresh all data to update packer stats
+                fetchAllData();
             }
         }).catch(error => {
             console.error("Failed to add packaging log:", error);
@@ -565,7 +544,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             }
             const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
 
-            // Optimistic update
             setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
             setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
             if (collectorDoc) {
@@ -687,15 +665,29 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         
         setUsers(prev => prev.map(u => u.id === userId ? { ...u, password: newPassword } : u));
         if (currentUser?.id === userId) {
-            setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null, true); // Assuming remember me
+            setCurrentUser(prev => prev ? { ...prev, password: newPassword } : null);
         }
     };
+
+    const handleSetCurrentUser = (user: User | null, rememberMe: boolean = false) => {
+        setCurrentUser(user);
+        if(typeof window !== 'undefined') {
+            const storage = rememberMe ? localStorage : sessionStorage;
+            // Clear both to be safe
+            localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('currentUser');
+            if(user) {
+                storage.setItem('currentUser', JSON.stringify(user));
+            }
+        }
+    }
+
 
     const value = {
         loading,
         currentUser,
         users,
-        setCurrentUser,
+        setCurrentUser: handleSetCurrentUser,
         harvests,
         collectors,
         packers,
@@ -744,4 +736,5 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
+    
     

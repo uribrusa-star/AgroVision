@@ -196,15 +196,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // If on client, not loading, and there's no user, redirect to login.
     if (isClient && !loading && !currentUser) {
         router.replace('/');
     }
   }, [isClient, loading, currentUser, router]);
 
-  // While the initial user check is happening, or if no user, render a loader or nothing.
-  // This prevents flashing the UI before auth status is confirmed.
-  if (!currentUser) {
+  if (loading || !currentUser) {
     return (
         <div className="flex items-center justify-center h-screen">
           <div className="flex flex-col items-center gap-4">
@@ -279,3 +276,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </AppLayoutContent>
   );
 }
+
+    
