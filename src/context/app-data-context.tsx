@@ -71,84 +71,76 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setIsClient(true);
     }, []);
 
-    const fetchUser = useCallback(async () => {
-        try {
-            const res = await fetch('/api/user');
-            const data = await res.json();
-            if (data.user) {
-                setCurrentUser(data.user);
-            }
-        } catch (error) {
-            console.error("Failed to fetch user", error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     const fetchAllData = useCallback(async () => {
-      if (!isClient || !currentUser) {
-        setLoading(false);
-        return;
-      };
       setLoading(true);
       try {
-        const usersCollectionRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(usersCollectionRef);
-
-        if (usersSnapshot.empty) {
-          const batch = writeBatch(db);
-          availableUsers.forEach(user => {
-            const userRef = doc(db, 'users', user.id);
-            batch.set(userRef, user);
-          });
-          await batch.commit();
-          setUsers(availableUsers);
-        } else {
-          setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
-        }
-
-        const [
-          establishmentDocSnap,
-          collectorsSnapshot,
-          packersSnapshot,
-          harvestsSnapshot,
-          agronomistLogsSnapshot,
-          phenologyLogsSnapshot,
-          batchesSnapshot,
-          collectorPaymentsSnapshot,
-          packagingLogsSnapshot,
-          producerLogsSnapshot,
-          transactionsSnapshot,
-        ] = await Promise.all([
-          getDoc(doc(db, 'establishment', 'main')),
-          getDocs(collection(db, 'collectors')),
-          getDocs(collection(db, 'packers')),
-          getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
-          getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
-          getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
-          getDocs(collection(db, 'batches')),
-          getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
-          getDocs(query(collection(db, 'packagingLogs'), orderBy('date', 'desc'))),
-          getDocs(query(collection(db, 'producerLogs'), orderBy('date', 'desc'))),
-          getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
-        ]);
+        // Fetch user session first
+        const userRes = await fetch('/api/user');
+        const userData = await userRes.json();
         
-        if (establishmentDocSnap.exists()) {
-          setEstablishmentData({ id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData);
+        if (userData.user) {
+            setCurrentUser(userData.user);
+
+            const usersCollectionRef = collection(db, 'users');
+            const usersSnapshot = await getDocs(usersCollectionRef);
+
+            if (usersSnapshot.empty) {
+            const batch = writeBatch(db);
+            availableUsers.forEach(user => {
+                const userRef = doc(db, 'users', user.id);
+                batch.set(userRef, user);
+            });
+            await batch.commit();
+            setUsers(availableUsers);
+            } else {
+            setUsers(usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[]);
+            }
+
+            const [
+            establishmentDocSnap,
+            collectorsSnapshot,
+            packersSnapshot,
+            harvestsSnapshot,
+            agronomistLogsSnapshot,
+            phenologyLogsSnapshot,
+            batchesSnapshot,
+            collectorPaymentsSnapshot,
+            packagingLogsSnapshot,
+            producerLogsSnapshot,
+            transactionsSnapshot,
+            ] = await Promise.all([
+            getDoc(doc(db, 'establishment', 'main')),
+            getDocs(collection(db, 'collectors')),
+            getDocs(collection(db, 'packers')),
+            getDocs(query(collection(db, 'harvests'), orderBy('date', 'desc'))),
+            getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
+            getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
+            getDocs(collection(db, 'batches')),
+            getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
+            getDocs(query(collection(db, 'packagingLogs'), orderBy('date', 'desc'))),
+            getDocs(query(collection(db, 'producerLogs'), orderBy('date', 'desc'))),
+            getDocs(query(collection(db, 'transactions'), orderBy('date', 'desc'))),
+            ]);
+            
+            if (establishmentDocSnap.exists()) {
+            setEstablishmentData({ id: establishmentDocSnap.id, ...establishmentDocSnap.data() } as EstablishmentData);
+            } else {
+            await setDoc(doc(db, 'establishment', 'main'), initialEstablishmentData);
+            setEstablishmentData({ id: 'main', ...initialEstablishmentData });
+            }
+            setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
+            setPackers(packersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Packer[]);
+            setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
+            setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
+            setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
+            setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
+            setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
+            setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
+            setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
+            setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
         } else {
-          await setDoc(doc(db, 'establishment', 'main'), initialEstablishmentData);
-          setEstablishmentData({ id: 'main', ...initialEstablishmentData });
+            setCurrentUser(null);
         }
-        setCollectors(collectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Collector[]);
-        setPackers(packersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Packer[]);
-        setHarvests(harvestsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Harvest[]);
-        setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
-        setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
-        setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
-        setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
-        setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
-        setProducerLogs(producerLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as ProducerLog[]);
-        setTransactions(transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Transaction[]);
       } catch (error) {
         console.error("Error fetching data from Firestore:", error);
         toast({
@@ -159,19 +151,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         setLoading(false);
       }
-    }, [toast, isClient, currentUser]);
+    }, [toast, isClient]);
     
     useEffect(() => {
-        if(isClient && !currentUser) {
-            fetchUser();
+        if(isClient) {
+            fetchAllData();
         }
-    }, [isClient, currentUser, fetchUser]);
-
-    useEffect(() => {
-        if(currentUser) {
-          fetchAllData();
-        }
-    }, [currentUser, fetchAllData]);
+    }, [isClient, fetchAllData]);
     
     const addHarvest = async (harvest: Omit<Harvest, 'id'>, hoursWorked: number): Promise<string | undefined> => {
         const collectorDoc = collectors.find(c => c.id === harvest.collector.id);
@@ -642,5 +628,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
-    

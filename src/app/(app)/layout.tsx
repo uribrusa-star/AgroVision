@@ -86,7 +86,7 @@ function UserMenu() {
   const handleLogout = async () => {
     await fetch('/api/logout', { method: 'POST' });
     setCurrentUser(null);
-    router.refresh();
+    window.location.href = '/';
   }
 
   const onPasswordSubmit = (values: z.infer<typeof PasswordSchema>) => {
@@ -193,13 +193,23 @@ function UserMenu() {
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { currentUser, isClient, loading } = React.useContext(AppDataContext);
+  const router = useRouter();
 
-  if (!isClient || loading || !currentUser) {
+  useEffect(() => {
+    // If on client, not loading, and there's no user, redirect to login.
+    if (isClient && !loading && !currentUser) {
+        router.replace('/');
+    }
+  }, [isClient, loading, currentUser, router]);
+
+  // While the initial user check is happening, or if no user, render a loader or nothing.
+  // This prevents flashing the UI before auth status is confirmed.
+  if (!currentUser) {
     return (
         <div className="flex items-center justify-center h-screen">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">Cargando aplicación...</p>
+            <p className="text-muted-foreground">Verificando sesión...</p>
           </div>
         </div>
     );
@@ -269,5 +279,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </AppLayoutContent>
   );
 }
-
-    

@@ -11,13 +11,13 @@ export default function RedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Wait until the client is ready and the user is set
-    if (isClient && !loading && currentUser) {
-      router.replace('/dashboard');
-    }
-     // If not loading and no user, it means auth check is complete, redirect to login
-    if (isClient && !loading && !currentUser) {
-      router.replace('/');
+    // Wait until the client is ready and the auth check is complete
+    if (isClient && !loading) {
+      if (currentUser) {
+        router.replace('/dashboard');
+      } else {
+        router.replace('/');
+      }
     }
   }, [isClient, loading, currentUser, router]);
 
@@ -25,7 +25,7 @@ export default function RedirectPage() {
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
       <div className="flex flex-col items-center gap-4">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Cargando aplicación...</p>
+        <p className="text-muted-foreground">Cargando...</p>
       </div>
     </div>
   );
