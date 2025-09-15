@@ -267,19 +267,31 @@ export function Supplies() {
                     <TableCell>{supply.info.dose}</TableCell>
                     {canManage && (
                         <TableCell className="text-right">
-                           <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}><MoreVertical className="h-4 w-4" /></Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                    <DropdownMenuItem onSelect={() => handleViewDetails(supply)}>Ver Detalles</DropdownMenuItem>
-                                    <DropdownMenuItem onSelect={() => handleEdit(supply)}>Editar</DropdownMenuItem>
-                                    <AlertDialogTrigger asChild onSelect={(e) => e.preventDefault()}>
-                                        <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
-                                    </AlertDialogTrigger>
-                                </DropdownMenuContent>
-                           </DropdownMenu>
+                           <AlertDialog>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); }}><MoreVertical className="h-4 w-4" /></Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                        <DropdownMenuItem onSelect={() => handleViewDetails(supply)}>Ver Detalles</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={() => handleEdit(supply)}>Editar</DropdownMenuItem>
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                <AlertDialogContent>
+                                     <AlertDialogHeader>
+                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                        <AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el insumo del inventario.</AlertDialogDescription>
+                                     </AlertDialogHeader>
+                                     <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteSupply(supply.id)}>Continuar y Eliminar</AlertDialogAction>
+                                     </AlertDialogFooter>
+                                </AlertDialogContent>
+                           </AlertDialog>
                         </TableCell>
                     )}
                 </TableRow>
@@ -315,4 +327,3 @@ export function Supplies() {
     </Card>
   );
 }
-
