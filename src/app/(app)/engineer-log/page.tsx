@@ -83,8 +83,8 @@ export default function EngineerLogPage() {
         {/* Columna Izquierda */}
         <div className="space-y-8">
             {canManageApplications && <HealthLogForm />}
-            <ApplicationHistory />
             {canManageApplications && <IrrigationLogForm />}
+            <ApplicationHistory />
             <NotesHistory />
         </div>
 
