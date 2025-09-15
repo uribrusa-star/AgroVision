@@ -82,19 +82,19 @@ export default function EngineerLogPage() {
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
         {/* Columna Izquierda */}
         <div className="space-y-8">
-            {canManageApplications ? <HealthLogForm /> : null}
-            {canManageApplications ? <PhenologyLogForm /> : null}
+            {canManageApplications && <HealthLogForm />}
             <ApplicationHistory />
-            <PhenologyHistory />
+            {canManageApplications && <IrrigationLogForm />}
+            <NotesHistory />
         </div>
 
         {/* Columna Derecha */}
         <div className="space-y-8">
-            {canManageApplications ? <IrrigationLogForm /> : null}
-            {canManageApplications ? <EnvironmentalLogForm /> : null}
-            {canManageApplications ? <ActivityOmissionLogForm /> : null}
-            {canManageApplications ? <Supplies /> : null}
-            <NotesHistory />
+            {canManageApplications && <PhenologyLogForm />}
+            <PhenologyHistory />
+            {canManageApplications && <Supplies />}
+            {canManageApplications && <EnvironmentalLogForm />}
+            {canManageApplications && <ActivityOmissionLogForm />}
             <AgronomistReport />
         </div>
       </div>
