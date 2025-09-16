@@ -270,46 +270,16 @@ export function Supplies() {
                 <TableHead>Nombre</TableHead>
                 <TableHead className="hidden md:table-cell">Composición</TableHead>
                 <TableHead className="hidden md:table-cell">Dosis</TableHead>
-                {canManage && <TableHead className="text-right w-[50px]"><span className="sr-only">Acciones</span></TableHead>}
             </TableRow>
         </TableHeader>
         <TableBody>
-            {loading && <tr><TableCell colSpan={canManage ? 4 : 3}><Skeleton className="h-10" /></TableCell></tr>}
-            {!loading && data.length === 0 && <tr><TableCell colSpan={canManage ? 4 : 3} className="text-center text-muted-foreground">No hay insumos en esta categoría.</TableCell></tr>}
+            {loading && <tr><TableCell colSpan={3}><Skeleton className="h-10" /></TableCell></tr>}
+            {!loading && data.length === 0 && <tr><TableCell colSpan={3} className="text-center text-muted-foreground">No hay insumos en esta categoría.</TableCell></tr>}
             {!loading && data.map(supply => (
                 <TableRow key={supply.id} className="cursor-pointer" onClick={() => handleViewDetails(supply)}>
                     <TableCell className="font-medium">{supply.name}</TableCell>
                     <TableCell className="hidden md:table-cell">{supply.info.activeIngredient}</TableCell>
                     <TableCell className="hidden md:table-cell">{supply.info.dose}</TableCell>
-                    {canManage && (
-                        <TableCell className="text-right">
-                           <AlertDialog>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); }}><MoreVertical className="h-4 w-4" /></Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                        <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleViewDetails(supply); }}>Ver Detalles</DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleEdit(supply); }}>Editar</DropdownMenuItem>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.stopPropagation()}>Eliminar</DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <AlertDialogContent>
-                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                        <AlertDialogDescription>Esta acción no se puede deshacer. Esto eliminará permanentemente el insumo del inventario.</AlertDialogDescription>
-                                     </AlertDialogHeader>
-                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteSupply(supply.id)}>Continuar y Eliminar</AlertDialogAction>
-                                     </AlertDialogFooter>
-                                </AlertDialogContent>
-                           </AlertDialog>
-                        </TableCell>
-                    )}
                 </TableRow>
             ))}
         </TableBody>
