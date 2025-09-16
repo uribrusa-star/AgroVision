@@ -7,9 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { BarChart, HardHat, Weight } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import { BatchYieldChart } from './batch-yield-chart';
 import { ApplicationHistory } from './application-history';
-import { MonthlyHarvestChart } from '../monthly-harvest-chart';
 import { PhenologyLogForm } from './phenology-log-form';
 import { PhenologyHistory } from './phenology-history';
 import { HealthLogForm } from './health-log-form';
@@ -80,33 +78,36 @@ export default function EngineerLogPage() {
         </Card>
       </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-        {/* Columna Izquierda */}
-        <div className="space-y-8">
-            {canManageApplications && <HealthLogForm />}
-            {canManageApplications && <IrrigationLogForm />}
-            <ApplicationHistory />
-            <NotesHistory />
+       <div className="space-y-8">
+        {/* Historiales e Insumos */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
+                <ApplicationHistory />
+                <NotesHistory />
+            </div>
+            <div className="space-y-8">
+                {canManageApplications && <ApplicationRecommendation />}
+                <PhenologyHistory />
+                {canManageApplications && <Supplies />}
+            </div>
         </div>
 
-        {/* Columna Derecha */}
-        <div className="space-y-8">
-            {canManageApplications && <ApplicationRecommendation />}
-            {canManageApplications && <PhenologyLogForm />}
-            <PhenologyHistory />
-            {canManageApplications && <Supplies />}
-            {canManageApplications && <EnvironmentalLogForm />}
-            {canManageApplications && <ActivityOmissionLogForm />}
+        {/* Formularios de Registro */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="space-y-8">
+                {canManageApplications && <HealthLogForm />}
+                {canManageApplications && <IrrigationLogForm />}
+            </div>
+            <div className="space-y-8">
+                {canManageApplications && <PhenologyLogForm />}
+                {canManageApplications && <EnvironmentalLogForm />}
+                {canManageApplications && <ActivityOmissionLogForm />}
+            </div>
+        </div>
+
+        {/* Informes */}
+        <div>
             <AgronomistReport />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 mt-8">
-        <div id="batch-yield-chart" className="lg:col-span-1">
-           <BatchYieldChart />
-        </div>
-         <div id="monthly-harvest-chart-container" className="lg:col-span-1">
-           <MonthlyHarvestChart harvests={harvests} />
         </div>
       </div>
     </>
