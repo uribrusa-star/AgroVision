@@ -15,7 +15,7 @@ import { getWeatherForecast } from '@/ai/tools/weather-tool';
 const RecommendApplicationsInputSchema = z.object({
   latitude: z.number().describe('La latitud para la cual obtener el pronóstico del tiempo.'),
   longitude: z.number().describe('La longitud para la cual obtener el pronóstico del tiempo.'),
-  supplies: z.string().describe('JSON string con el inventario de insumos disponibles (fertilizantes, fungicidas, insecticidas).'),
+  supplies: z.string().describe('JSON string con el inventario de insumos disponibles (fertilizantes, fungicidas, insecticidas). Incluye `name`, `type` y `composition`.'),
   agronomistLogs: z.string().describe('JSON string con la bitácora de actividades agronómicas recientes para entender el manejo actual.'),
   phenologyLogs: z.string().describe('JSON string con la bitácora de seguimiento fenológico reciente (floración, fructificación, etc.) para entender el estado actual del cultivo.'),
 });
@@ -50,8 +50,8 @@ const prompt = ai.definePrompt({
   1.  **Obtén el pronóstico**: Usa la herramienta 'getWeatherForecast' con la latitud y longitud para obtener el pronóstico del tiempo.
   2.  **Analiza en silencio los datos proporcionados**: Revisa el estado fenológico ({{{phenologyLogs}}}), las actividades recientes ({{{agronomistLogs}}}), el inventario de insumos ({{{supplies}}}) y el pronóstico del tiempo.
   3.  **Identifica necesidades y oportunidades**:
-      *   ¿Hay una plaga o enfermedad registrada que necesite tratamiento? Cruza esta información con los fungicidas/insecticidas disponibles.
-      *   ¿El estado fenológico (ej. inicio de floración) requiere una fertilización específica? Busca un fertilizante adecuado en el inventario.
+      *   ¿Hay una plaga o enfermedad registrada que necesite tratamiento? Cruza esta información con los fungicidas/insecticidas disponibles en el inventario, revisando su campo 'composition'.
+      *   ¿El estado fenológico (ej. inicio de floración) requiere una fertilización específica? Busca un fertilizante adecuado en el inventario revisando su 'composition'.
       *   ¿El pronóstico del tiempo (ej. lluvias) aumenta el riesgo de enfermedades como Botrytis? Recomienda una aplicación preventiva si tienes un fungicida apropiado.
       *   ¿Hay un período prolongado sin una labor cultural importante (ej. deshoje)? Recomiéndala.
   4.  **Genera Recomendaciones (en español)**:

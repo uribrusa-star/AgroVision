@@ -47,7 +47,7 @@ export function ApplicationRecommendation() {
                 const result = await recommendApplications({
                     latitude: lat,
                     longitude: lng,
-                    supplies: JSON.stringify(supplies.map(s => ({ name: s.name, type: s.type, activeIngredient: s.info.activeIngredient }))),
+                    supplies: JSON.stringify(supplies.map(s => ({ name: s.name, type: s.type, composition: s.info.activeIngredient }))),
                     agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 20)),
                     phenologyLogs: JSON.stringify(phenologyLogs.slice(0, 10)),
                 });
