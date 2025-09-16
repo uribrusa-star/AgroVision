@@ -30,65 +30,63 @@ export default function ProducerLogPage() {
         description="Registre las finanzas y las observaciones diarias del establecimiento."
       />
       <div className="space-y-8">
-        {/* Fila 1: Formularios de Entrada */}
+        
+        {/* Fila 1: Desglose de Costos */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Costo Mano de Obra (Cosecha)</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalHarvestLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+                <p className="text-xs text-muted-foreground">Solo pagos a recolectores</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Costo Mano de Obra (Embalaje)</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalPackagingLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+                <p className="text-xs text-muted-foreground">Solo pagos a embaladores</p>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Costo Mano de Obra (Labores)</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalCulturalPracticeCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
+                <p className="text-xs text-muted-foreground">Labores culturales varias</p>
+                </CardContent>
+            </Card>
+        </div>
+
+        {/* Fila 2: Gráficos Principales */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <MonthlyHarvestChart harvests={harvests} />
+            <IncomeChart transactions={transactions} />
+            <CostDistributionChart />
+        </div>
+
+        {/* Fila 3: Historiales e Informe */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <TransactionHistory />
+            <NotesHistory />
+            <div className="lg:col-span-2">
+                <HarvestSummary />
+            </div>
+        </div>
+        
+        {/* Fila 4: Formularios de Entrada */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <TransactionForm />
           <NotesForm />
         </div>
 
-        {/* Fila 2: Gráfico de Costos y Desglose */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <CostDistributionChart />
-            <div className="space-y-8">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Costo Mano de Obra (Cosecha)</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalHarvestLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                    <p className="text-xs text-muted-foreground">Solo pagos a recolectores</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Costo Mano de Obra (Embalaje)</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalPackagingLaborCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                    <p className="text-xs text-muted-foreground">Solo pagos a embaladores</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Costo Mano de Obra (Labores)</CardTitle>
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                    <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${totalCulturalPracticeCost.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`}</div>
-                    <p className="text-xs text-muted-foreground">Labores culturales varias</p>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-        
-        {/* Fila 3: Gráficos de Producción e Ingresos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <MonthlyHarvestChart harvests={harvests} />
-            <IncomeChart transactions={transactions} />
-        </div>
-
-        {/* Fila 4: Historiales */}
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <TransactionHistory />
-            <NotesHistory />
-        </div>
-
-        {/* Fila 5: Resumen Final */}
-        <div className="lg:col-span-2">
-            <HarvestSummary />
-        </div>
       </div>
     </>
   );
