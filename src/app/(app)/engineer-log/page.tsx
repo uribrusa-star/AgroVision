@@ -87,28 +87,26 @@ export default function EngineerLogPage() {
             </div>
             <div className="space-y-8">
                 {canManageApplications && <ApplicationRecommendation />}
+                {canManageApplications && <AgronomistReport />}
                 <PhenologyHistory />
                 {canManageApplications && <Supplies />}
             </div>
         </div>
 
         {/* Formularios de Registro */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-8">
-                {canManageApplications && <HealthLogForm />}
-                {canManageApplications && <IrrigationLogForm />}
-            </div>
-            <div className="space-y-8">
-                {canManageApplications && <PhenologyLogForm />}
-                {canManageApplications && <EnvironmentalLogForm />}
-                {canManageApplications && <ActivityOmissionLogForm />}
-            </div>
-        </div>
-
-        {/* Informes */}
-        <div>
-            <AgronomistReport />
-        </div>
+        {canManageApplications && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-8">
+                  <HealthLogForm />
+                  <IrrigationLogForm />
+              </div>
+              <div className="space-y-8">
+                  <PhenologyLogForm />
+                  <EnvironmentalLogForm />
+                  <ActivityOmissionLogForm />
+              </div>
+          </div>
+        )}
       </div>
     </>
   );

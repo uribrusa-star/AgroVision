@@ -146,9 +146,25 @@ const SupplyDetailsDialog = ({ open, onOpenChange, supply, onEdit, onDelete }: {
                     </DialogHeader>
                     <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-4">
                         {supply.photoUrl && (
-                            <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted">
-                                <Image src={supply.photoUrl} alt={supply.name} fill className="object-contain" />
-                            </div>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted cursor-pointer">
+                                  <Image src={supply.photoUrl} alt={supply.name} fill className="object-contain" />
+                              </div>
+                            </DialogTrigger>
+                             <DialogContent className="max-w-4xl h-[90vh] flex items-center justify-center p-2">
+                                <DialogHeader>
+                                  <DialogTitle className="sr-only">Imagen: {supply.name}</DialogTitle>
+                                </DialogHeader>
+                                <Image
+                                  src={supply.photoUrl}
+                                  alt={supply.name}
+                                  width={1920}
+                                  height={1080}
+                                  className="object-contain max-h-full max-w-full"
+                                />
+                              </DialogContent>
+                          </Dialog>
                         )}
                         <Table>
                             <TableBody>
