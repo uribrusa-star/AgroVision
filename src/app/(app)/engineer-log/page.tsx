@@ -19,6 +19,7 @@ import { AgronomistReport } from './agronomist-report';
 import { NotesHistory } from '../producer-log/notes-history';
 import { ActivityOmissionLogForm } from './activity-omission-log-form';
 import { Supplies } from './supplies';
+import { ApplicationRecommendation } from './application-recommendation';
 
 
 export default function EngineerLogPage() {
@@ -90,6 +91,7 @@ export default function EngineerLogPage() {
 
         {/* Columna Derecha */}
         <div className="space-y-8">
+            {canManageApplications && <ApplicationRecommendation />}
             {canManageApplications && <PhenologyLogForm />}
             <PhenologyHistory />
             {canManageApplications && <Supplies />}
