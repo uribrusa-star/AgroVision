@@ -29,7 +29,7 @@ const SupplySchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
   type: z.enum(['Fertilizante', 'Fungicida', 'Insecticida']),
   photoUrl: z.string().url("Debe ser una URL de imagen válida.").or(z.literal('')).optional(),
-  activeIngredient: z.string().min(3, "El ingrediente activo es requerido."),
+  activeIngredient: z.string().min(3, "La composición es requerida."),
   dose: z.string().min(1, "La dosis es requerida."),
   notes: z.string().optional(),
 });
@@ -118,7 +118,7 @@ const SupplyDialog = ({
                     <FormMessage />
                 </FormItem>
             )}/>
-            <FormField control={form.control} name="activeIngredient" render={({ field }) => (<FormItem><FormLabel>Ingrediente Activo</FormLabel><FormControl><Input {...field} placeholder="Ej. N-P-K 10-5-30" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="activeIngredient" render={({ field }) => (<FormItem><FormLabel>Composición</FormLabel><FormControl><Input {...field} placeholder="Ej. N-P-K 10-5-30" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="dose" render={({ field }) => (<FormItem><FormLabel>Dosis Recomendada</FormLabel><FormControl><Input {...field} placeholder="Ej. 5 L/ha" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="photoUrl" render={({ field }) => (<FormItem><FormLabel>URL de la Foto del Producto (Opcional)</FormLabel><FormControl><Input {...field} placeholder="https://ejemplo.com/foto.jpg" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notas Adicionales (Opcional)</FormLabel><FormControl><Textarea {...field} placeholder="Ej. Aplicar en pre-floración" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
@@ -152,13 +152,13 @@ const SupplyDetailsDialog = ({ open, onOpenChange, supply, onEdit, onDelete }: {
                         )}
                         <Table>
                             <TableBody>
-                                <TableRow><TableCell className="font-medium text-muted-foreground">Ingrediente Activo</TableCell><TableCell>{supply.info.activeIngredient}</TableCell></TableRow>
+                                <TableRow><TableCell className="font-medium text-muted-foreground">Composición</TableCell><TableCell>{supply.info.activeIngredient}</TableCell></TableRow>
                                 <TableRow><TableCell className="font-medium text-muted-foreground">Dosis</TableCell><TableCell>{supply.info.dose}</TableCell></TableRow>
                                 {supply.info.notes && <TableRow><TableCell className="font-medium text-muted-foreground">Notas</TableCell><TableCell className="whitespace-pre-wrap">{supply.info.notes}</TableCell></TableRow>}
                             </TableBody>
                         </Table>
                     </div>
-                    <DialogFooter className="justify-between">
+                    <DialogFooter className="flex-row justify-between w-full">
                          <AlertDialogTrigger asChild>
                             <Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button>
                          </AlertDialogTrigger>
@@ -252,8 +252,8 @@ export function Supplies() {
         <TableHeader>
             <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Ingrediente Activo</TableHead>
-                <TableHead>Dosis</TableHead>
+                <TableHead className="hidden md:table-cell">Composición</TableHead>
+                <TableHead className="hidden md:table-cell">Dosis</TableHead>
                 {canManage && <TableHead className="text-right w-[50px]"><span className="sr-only">Acciones</span></TableHead>}
             </TableRow>
         </TableHeader>
@@ -263,8 +263,8 @@ export function Supplies() {
             {!loading && data.map(supply => (
                 <TableRow key={supply.id} className="cursor-pointer" onClick={() => handleViewDetails(supply)}>
                     <TableCell className="font-medium">{supply.name}</TableCell>
-                    <TableCell>{supply.info.activeIngredient}</TableCell>
-                    <TableCell>{supply.info.dose}</TableCell>
+                    <TableCell className="hidden md:table-cell">{supply.info.activeIngredient}</TableCell>
+                    <TableCell className="hidden md:table-cell">{supply.info.dose}</TableCell>
                     {canManage && (
                         <TableCell className="text-right">
                            <AlertDialog>
@@ -274,10 +274,10 @@ export function Supplies() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
                                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                        <DropdownMenuItem onSelect={() => handleViewDetails(supply)}>Ver Detalles</DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={() => handleEdit(supply)}>Editar</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleViewDetails(supply); }}>Ver Detalles</DropdownMenuItem>
+                                        <DropdownMenuItem onSelect={(e) => { e.stopPropagation(); handleEdit(supply); }}>Editar</DropdownMenuItem>
                                         <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.stopPropagation()}>Eliminar</DropdownMenuItem>
                                         </AlertDialogTrigger>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
