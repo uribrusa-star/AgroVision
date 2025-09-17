@@ -46,6 +46,7 @@ const prompt = ai.definePrompt({
   input: {schema: PredictYieldInputSchema},
   output: {schema: PredictYieldOutputSchema},
   tools: [getWeatherForecast],
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: `Eres un ingeniero agrónomo experto en frutillas con capacidades de análisis de datos y modelado predictivo. Tu tarea es generar una proyección de rendimiento para un lote específico para la próxima semana.
 
   **Instrucciones:**
