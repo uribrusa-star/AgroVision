@@ -52,6 +52,7 @@ const prompt = ai.definePrompt({
   name: 'summarizeHarvestDataPrompt',
   input: {schema: SummarizeHarvestDataInputSchema},
   output: {schema: SummarizeHarvestDataOutputSchema},
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: `Eres un consultor agrónomo experto en producción de frutillas en Argentina y analista de datos. Tu tarea es generar el contenido para un informe técnico-productivo en español, basado en los datos proporcionados. El informe debe ser profesional, claro y conciso, utilizando Pesos Argentinos (ARS) para todos los análisis financieros.
 
   **Instrucciones:**

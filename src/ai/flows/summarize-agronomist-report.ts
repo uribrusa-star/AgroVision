@@ -45,6 +45,7 @@ const prompt = ai.definePrompt({
   name: 'summarizeAgronomistReportPrompt',
   input: {schema: SummarizeAgronomistReportInputSchema},
   output: {schema: SummarizeAgronomistReportOutputSchema},
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: `Eres un consultor agrónomo experto en la producción de frutillas. Tu tarea es generar el contenido para un informe técnico en español, basado en las bitácoras proporcionadas. El informe debe ser profesional, técnico y orientado a la acción.
 
   **Instrucciones:**
