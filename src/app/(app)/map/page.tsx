@@ -57,7 +57,7 @@ const AIAlertsPanel = ({
     mapCenter: { lat: number, lng: number }, 
     onCoordsChange: (coords: { lat: number, lng: number }) => void 
 }) => {
-    const { phenologyLogs, addAgronomistLog } = useContext(AppDataContext);
+    const { phenologyLogs, agronomistLogs, addAgronomistLog } = useContext(AppDataContext);
     const [isPending, startTransition] = useTransition();
     const [alerts, setAlerts] = useState<Alert[] | null>(null);
     const { toast } = useToast();
@@ -97,6 +97,7 @@ const AIAlertsPanel = ({
                     latitude: values.latitude,
                     longitude: values.longitude,
                     phenologyLogs: JSON.stringify(phenologyLogs.slice(0, 10)),
+                    agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 20)),
                 });
                 if (result.alerts && result.alerts.length > 0) {
                     setAlerts(result.alerts);
@@ -279,11 +280,9 @@ export default function MapPage() {
   }, [parsedGeoJson, establishmentData]);
   
   const [windyCoords, setWindyCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng });
-  const [formCoords, setFormCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng });
   
   useEffect(() => {
     setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
-    setFormCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
   }, [mapCenter]);
 
   const resetWindyMap = () => {
@@ -339,7 +338,7 @@ export default function MapPage() {
                               </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Volver a la ubicación del formulario</p>
+                            <p>Volver a la ubicación de Coronda</p>
                         </TooltipContent>
                     </Tooltip>
                    </TooltipProvider>
@@ -347,7 +346,7 @@ export default function MapPage() {
             </CardContent>
         </Card>
         <div>
-            <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setFormCoords} />
+            <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
         </div>
       </div>
     </>

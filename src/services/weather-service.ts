@@ -6,7 +6,7 @@
  */
 
 export async function getWeather(latitude: number, longitude: number): Promise<string> {
-  const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_mean,wind_speed_10m_max&timezone=auto&forecast_days=5`;
+  const apiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_mean,wind_speed_10m_max&timezone=auto&forecast_days=7`;
 
   try {
     const response = await fetch(apiUrl);
@@ -16,7 +16,7 @@ export async function getWeather(latitude: number, longitude: number): Promise<s
     const data = await response.json();
 
     // Format the data into a human-readable summary string
-    let summary = "Resumen del pronóstico para los próximos 5 días:\n";
+    let summary = "Resumen del pronóstico para los próximos 7 días:\n";
     const daily = data.daily;
     
     for (let i = 0; i < daily.time.length; i++) {
