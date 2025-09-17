@@ -1,6 +1,5 @@
 
 
-
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
