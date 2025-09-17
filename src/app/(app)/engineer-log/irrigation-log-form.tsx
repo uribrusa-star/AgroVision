@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
 const LogSchema = z.object({
-  type: z.enum(['Riego', 'Fertilización']),
+  type: z.enum(['Riego', 'Fertilización', 'Fumigación']),
   batchId: z.string().optional(),
   product: z.string().optional(),
   notes: z.string().min(5, "Las notas son requeridas."),
@@ -66,12 +66,38 @@ export function IrrigationLogForm() {
       });
     });
   };
+
+  const getProductLabel = () => {
+    switch (applicationType) {
+      case 'Fertilización':
+        return 'Fertilizante/Nutriente';
+      case 'Fumigación':
+        return 'Producto Fitosanitario';
+      case 'Riego':
+        return 'Fuente de Agua (Opcional)';
+      default:
+        return 'Producto/Detalle';
+    }
+  };
+
+  const getProductPlaceholder = () => {
+    switch (applicationType) {
+        case 'Fertilización':
+            return 'Ej. Nitrato de Calcio';
+        case 'Fumigación':
+            return 'Ej. Fungicida para Botrytis';
+        case 'Riego':
+            return 'Ej. Pozo N°2';
+        default:
+            return 'Ingrese un detalle';
+    }
+  }
   
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Riego y Fertirrigación</CardTitle>
-        <CardDescription>Registre las aplicaciones de agua y nutrientes, asociándolas a un lote.</CardDescription>
+        <CardTitle>Aplicaciones (Riego, Fertilizante, Fitosanitario)</CardTitle>
+        <CardDescription>Registre las aplicaciones de agua, nutrientes o productos fitosanitarios.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -92,6 +118,7 @@ export function IrrigationLogForm() {
                       <SelectContent>
                         <SelectItem value="Riego">Riego</SelectItem>
                         <SelectItem value="Fertilización">Fertilización</SelectItem>
+                        <SelectItem value="Fumigación">Fumigación</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -127,11 +154,9 @@ export function IrrigationLogForm() {
                 name="product"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      {applicationType === 'Fertilización' ? 'Fertilizante/Nutriente' : 'Fuente de Agua (Opcional)'}
-                    </FormLabel>
+                    <FormLabel>{getProductLabel()}</FormLabel>
                     <FormControl>
-                      <Input placeholder={applicationType === 'Fertilización' ? 'Ej. Nitrato de Calcio' : 'Ej. Pozo N°2'} {...field} disabled={!canManage || isPending} />
+                      <Input placeholder={getProductPlaceholder()} {...field} disabled={!canManage || isPending} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
