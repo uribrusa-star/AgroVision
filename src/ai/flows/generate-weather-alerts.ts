@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateWeatherAlertsInputSchema},
   output: {schema: GenerateWeatherAlertsOutputSchema},
   tools: [getWeatherForecast],
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'googleai/gemini-1.5-pro-latest',
   prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, especializado en gestión de riesgos climáticos. Tu tarea es generar alertas y recomendaciones basadas en el pronóstico del tiempo para una ubicación específica.
 
   **Instrucciones:**
