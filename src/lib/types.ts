@@ -96,7 +96,7 @@ export type PhenologyLog = {
     images?: ImageWithHint[];
 }
 
-export type SupplyType = 'Fertilizante' | 'Fungicida' | 'Insecticida';
+export type SupplyType = 'Fertilizante' | 'Fungicida' | 'Insecticida' | 'Acaricida';
 
 export type Supply = {
   id: string;

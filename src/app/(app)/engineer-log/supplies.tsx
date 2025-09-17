@@ -27,7 +27,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 
 const SupplySchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  type: z.enum(['Fertilizante', 'Fungicida', 'Insecticida']),
+  type: z.enum(['Fertilizante', 'Fungicida', 'Insecticida', 'Acaricida']),
   photoUrl: z.string().url("Debe ser una URL de imagen válida.").or(z.literal('')).optional(),
   activeIngredient: z.string().min(3, "La composición es requerida."),
   dose: z.string().min(1, "La dosis es requerida."),
@@ -113,6 +113,7 @@ const SupplyDialog = ({
                             <SelectItem value="Fertilizante">Fertilizante</SelectItem>
                             <SelectItem value="Fungicida">Fungicida</SelectItem>
                             <SelectItem value="Insecticida">Insecticida</SelectItem>
+                            <SelectItem value="Acaricida">Acaricida</SelectItem>
                         </SelectContent>
                     </Select>
                     <FormMessage />
@@ -214,6 +215,7 @@ export function Supplies() {
       Fertilizante: supplies.filter(s => s.type === 'Fertilizante'),
       Fungicida: supplies.filter(s => s.type === 'Fungicida'),
       Insecticida: supplies.filter(s => s.type === 'Insecticida'),
+      Acaricida: supplies.filter(s => s.type === 'Acaricida'),
     };
   }, [supplies]);
 
@@ -291,20 +293,22 @@ export function Supplies() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
             <CardTitle>Insumos del Establecimiento</CardTitle>
-            <CardDescription>Inventario de fertilizantes, fungicidas e insecticidas.</CardDescription>
+            <CardDescription>Inventario de fertilizantes, fungicidas, insecticidas y acaricidas.</CardDescription>
         </div>
         {canManage && <Button size="sm" onClick={handleAddNew}><PlusCircle className="mr-2 h-4 w-4" />Agregar</Button>}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="Fertilizante">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="Fertilizante">Fertilizantes</TabsTrigger>
             <TabsTrigger value="Fungicida">Fungicidas</TabsTrigger>
             <TabsTrigger value="Insecticida">Insecticidas</TabsTrigger>
+            <TabsTrigger value="Acaricida">Acaricidas</TabsTrigger>
           </TabsList>
           <TabsContent value="Fertilizante"><SupplyTable data={categorizedSupplies.Fertilizante} /></TabsContent>
           <TabsContent value="Fungicida"><SupplyTable data={categorizedSupplies.Fungicida} /></TabsContent>
           <TabsContent value="Insecticida"><SupplyTable data={categorizedSupplies.Insecticida} /></TabsContent>
+          <TabsContent value="Acaricida"><SupplyTable data={categorizedSupplies.Acaricida} /></TabsContent>
         </Tabs>
       </CardContent>
 
