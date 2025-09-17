@@ -164,20 +164,20 @@ export function ApplicationHistory() {
                     const typeInfo = getTypeInfo(log.type);
                     return (
                     <TableRow key={log.id}>
-                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
+                        <TableCell>
                           <Badge variant={typeInfo.variant as any} className="gap-1">
                             <typeInfo.icon className="h-3 w-3" />
                             {typeInfo.label}
                           </Badge>
                         </TableCell>
-                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
+                        <TableCell>
                           {log.batchId ? <Badge variant="outline">{log.batchId}</Badge> : <span className="text-xs text-muted-foreground">General</span>}
                         </TableCell>
-                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
+                        <TableCell>
                           <p className="font-medium">{log.product || '-'}</p>
                           <p className="text-sm text-muted-foreground max-w-xs truncate">{log.notes}</p>
                         </TableCell>
-                        <TableCell onClick={() => handleDetails(log)} className="cursor-pointer">
+                        <TableCell>
                           {log.images && log.images.length > 0 ? (
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <ImageIcon className="h-4 w-4" />
