@@ -2,7 +2,7 @@
 'use client';
 import React, { useContext, useMemo, useState, useTransition, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone } from 'lucide-react';
@@ -50,7 +50,13 @@ const WeatherAlertsSchema = z.object({
   longitude: z.coerce.number(),
 });
 
-const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}) => {
+const AIAlertsPanel = ({ 
+    mapCenter, 
+    onCoordsChange 
+}: { 
+    mapCenter: { lat: number, lng: number }, 
+    onCoordsChange: (coords: { lat: number, lng: number }) => void 
+}) => {
     const { phenologyLogs, addAgronomistLog } = useContext(AppDataContext);
     const [isPending, startTransition] = useTransition();
     const [alerts, setAlerts] = useState<Alert[] | null>(null);
@@ -63,6 +69,18 @@ const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}
             longitude: mapCenter.lng,
         },
     });
+
+    const watchedCoords = useWatch({
+        control: form.control,
+        name: ['latitude', 'longitude'],
+    });
+
+    useEffect(() => {
+        const [lat, lng] = watchedCoords;
+        if (typeof lat === 'number' && typeof lng === 'number' && !isNaN(lat) && !isNaN(lng)) {
+            onCoordsChange({ lat, lng });
+        }
+    }, [watchedCoords, onCoordsChange]);
 
     useEffect(() => {
         form.reset({
@@ -102,6 +120,7 @@ const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}
                     });
 
                 } else {
+                    setAlerts([]);
                     toast({ title: "Análisis Completo", description: "La IA no identificó riesgos mayores con el pronóstico provisto." });
                 }
              } catch (error) {
@@ -185,18 +204,28 @@ const AIAlertsPanel = ({ mapCenter }: { mapCenter: { lat: number, lng: number }}
                         {alerts && (
                             <div className="w-full space-y-4">
                                 <h3 className="font-semibold">Resultados del Análisis:</h3>
-                                {alerts.map((alert, index) => (
-                                    <Alert key={index} variant={alert.urgency === 'Alta' ? 'destructive' : 'default'}>
+                                {alerts.length === 0 ? (
+                                    <Alert>
                                         <AlertCircle className="h-4 w-4" />
-                                        <AlertTitle className="flex justify-between items-center">
-                                            {alert.risk}
-                                            <Badge variant={getUrgencyBadgeVariant(alert.urgency)}>{alert.urgency}</Badge>
-                                        </AlertTitle>
+                                        <AlertTitle>Sin Novedades</AlertTitle>
                                         <AlertDescription>
-                                            {alert.recommendation}
+                                            No se identificaron riesgos climáticos significativos para los próximos días.
                                         </AlertDescription>
                                     </Alert>
-                                ))}
+                                ) : (
+                                    alerts.map((alert, index) => (
+                                        <Alert key={index} variant={alert.urgency === 'Alta' ? 'destructive' : 'default'}>
+                                            <AlertCircle className="h-4 w-4" />
+                                            <AlertTitle className="flex justify-between items-center">
+                                                {alert.risk}
+                                                <Badge variant={getUrgencyBadgeVariant(alert.urgency)}>{alert.urgency}</Badge>
+                                            </AlertTitle>
+                                            <AlertDescription>
+                                                {alert.recommendation}
+                                            </AlertDescription>
+                                        </Alert>
+                                    ))
+                                )}
                             </div>
                         )}
                     </CardFooter>
@@ -250,13 +279,15 @@ export default function MapPage() {
   }, [parsedGeoJson, establishmentData]);
   
   const [windyCoords, setWindyCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng });
+  const [formCoords, setFormCoords] = useState({ lat: mapCenter.lat, lng: mapCenter.lng });
   
   useEffect(() => {
     setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
+    setFormCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
   }, [mapCenter]);
 
   const resetWindyMap = () => {
-    setWindyCoords({ lat: mapCenter.lat, lng: mapCenter.lng });
+    setWindyCoords({ lat: formCoords.lat, lng: formCoords.lng });
   };
 
 
@@ -308,7 +339,7 @@ export default function MapPage() {
                               </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                            <p>Volver a la ubicación del establecimiento</p>
+                            <p>Volver a la ubicación del formulario</p>
                         </TooltipContent>
                     </Tooltip>
                    </TooltipProvider>
@@ -316,7 +347,7 @@ export default function MapPage() {
             </CardContent>
         </Card>
         <div>
-            <AIAlertsPanel mapCenter={mapCenter} />
+            <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setFormCoords} />
         </div>
       </div>
     </>
