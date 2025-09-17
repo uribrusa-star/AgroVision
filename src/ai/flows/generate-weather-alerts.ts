@@ -43,30 +43,23 @@ const prompt = ai.definePrompt({
   output: {schema: GenerateWeatherAlertsOutputSchema},
   tools: [getWeatherForecast],
   model: 'googleai/gemini-1.5-flash-latest',
-  prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, especializado en gestión de riesgos climáticos. Tu tarea es generar alertas y recomendaciones basadas en el pronóstico del tiempo para una ubicación específica para los próximos 7 días.
+  prompt: `Eres un ingeniero agrónomo experto en frutillas y análisis de riesgos climáticos. Tu tarea es generar alertas y recomendaciones basadas en el pronóstico del tiempo para una ubicación específica.
 
-  **Instrucciones de Proceso Obligatorias:**
+  **Instrucciones Obligatorias:**
 
-  1.  **Obtén el Pronóstico del Tiempo (Paso Obligatorio):**
-      *   Debes invocar la herramienta \`getWeatherForecast\` utilizando la latitud ({{{latitude}}}) y longitud ({{{longitude}}}) proporcionadas para obtener el pronóstico del tiempo de los próximos 7 días. No puedes omitir este paso.
-
-  2.  **Analiza en Silencio los Datos (Contexto Completo):**
-      *   **Pronóstico Obtenido:** Revisa en detalle el pronóstico que te devolvió la herramienta. Presta especial atención a: temperaturas máximas y mínimas, probabilidad de precipitación (lluvia) y velocidad del viento.
-      *   **Estado del Cultivo:** Analiza el estado fenológico reciente del cultivo a partir de estos datos: {{{phenologyLogs}}}. Identifica si está en floración, fructificación, maduración, etc.
-      *   **Manejo Reciente:** Considera las últimas actividades agronómicas registradas para entender el contexto: {{{agronomistLogs}}}.
-
-  3.  **Genera Alertas y Recomendaciones (Análisis y Conclusión):**
-      *   Basándote en el **cruce de información** entre el pronóstico y el estado del cultivo, identifica los riesgos clave. Por ejemplo:
-          *   Si el pronóstico indica "lluvia alta" y los registros de fenología muestran "fructificación" o "maduración", el riesgo de "Botrytis" es ALTO.
-          *   Si el pronóstico indica "temperaturas > 30°C" y la fenología es "floración", el riesgo de "aborto floral por estrés térmico" es ALTO.
-          *   Si el pronóstico indica "temperaturas < 2°C", el riesgo de "helada" es CRÍTICO en cualquier etapa.
-      *   Para cada riesgo significativo, crea un objeto de alerta en español.
+  1.  **Obtén y Analiza el Pronóstico:** Utiliza la herramienta \`getWeatherForecast\` con la latitud ({{{latitude}}}) y longitud ({{{longitude}}}) proporcionadas para obtener el pronóstico. Este es tu dato principal.
+  2.  **Cruza la Información:** Compara el pronóstico del tiempo obtenido con el estado actual del cultivo (dado por \`phenologyLogs\` y \`agronomistLogs\`). Por ejemplo, si el pronóstico indica lluvias persistentes y los registros de fenología muestran "Fructificación" o "Maduración", el riesgo de "Botrytis" es ALTO. Si el pronóstico indica temperaturas bajo cero, el riesgo de "helada" es crítico.
+  3.  **Genera Alertas Claras:** Para cada riesgo significativo que identifiques, crea una alerta en español.
       *   **Riesgo:** Sé conciso y claro. Ej: "Riesgo de Botrytis por alta humedad y lluvias".
       *   **Recomendación:** Debe ser una acción concreta. Ej: "Asegurar ventilación máxima de los túneles y preparar aplicación preventiva de fungicida específico para Botrytis".
-      *   **Urgencia:** Determina la urgencia ('Alta', 'Media', 'Baja') basándote en el impacto potencial y la inminencia del evento.
-      *   **Respuesta Mínima:** Siempre debes generar al menos una alerta. Si el clima es ideal y no hay riesgos, genera una alerta de urgencia 'Baja' con un riesgo como "Condiciones óptimas de cultivo" y una recomendación como "Mantener monitoreo regular y continuar con el plan de manejo actual".
+      *   **Urgencia:** Determina la urgencia ('Alta', 'Media', 'Baja') basándote en el impacto potencial.
+  4.  **Respuesta Mínima:** Siempre debes generar al menos una alerta. Si el clima es ideal y no hay riesgos, genera una alerta de urgencia 'Baja' con un riesgo como "Condiciones óptimas de cultivo" y una recomendación como "Mantener monitoreo regular".
 
-  Genera únicamente la salida JSON con el arreglo de alertas. No incluyas ningún texto introductorio o explicaciones adicionales fuera del formato JSON.
+  **Datos de Contexto:**
+  -   **Estado Fenológico:** {{{phenologyLogs}}}
+  -   **Actividades Recientes:** {{{agronomistLogs}}}
+
+  Genera únicamente la salida JSON con el arreglo de alertas. No incluyas ningún texto introductorio o explicaciones adicionales.
   `,
 });
 
