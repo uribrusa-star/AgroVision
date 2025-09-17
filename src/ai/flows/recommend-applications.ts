@@ -44,7 +44,7 @@ const prompt = ai.definePrompt({
   input: {schema: RecommendApplicationsInputSchema},
   output: {schema: RecommendApplicationsOutputSchema},
   tools: [getWeatherForecast],
-  model: 'googleai/gemini-1.5-pro-latest',
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, encargado de planificar las aplicaciones y labores para la semana. Tu objetivo es generar recomendaciones proactivas y eficientes.
 
   **Instrucciones:**
