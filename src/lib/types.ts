@@ -1,5 +1,6 @@
 
 
+
 export type UserRole = 'Productor' | 'Ingeniero Agronomo' | 'Encargado';
 
 export type User = {
@@ -108,6 +109,14 @@ export type Supply = {
     dose: string;
     notes?: string;
   };
+};
+
+export type PredictionLog = {
+  id: string;
+  date: string;
+  batchId: string;
+  prediction: string;
+  confidence: 'Alta' | 'Media' | 'Baja';
 };
 
 export type CollectorPaymentLog = {
@@ -227,6 +236,7 @@ export type AppData = {
   culturalPracticeLogs: CulturalPracticeLog[];
   agronomistLogs: AgronomistLog[];
   phenologyLogs: PhenologyLog[];
+  predictionLogs: PredictionLog[];
   supplies: Supply[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
@@ -242,6 +252,8 @@ export type AppData = {
   addPhenologyLog: (log: Omit<PhenologyLog, 'id'>) => void;
   editPhenologyLog: (log: PhenologyLog) => void;
   deletePhenologyLog: (logId: string) => Promise<void>;
+  addPredictionLog: (log: Omit<PredictionLog, 'id'>) => void;
+  deletePredictionLog: (logId: string) => void;
   addSupply: (supply: Omit<Supply, 'id'>) => void;
   editSupply: (supply: Supply) => void;
   deleteSupply: (supplyId: string) => void;

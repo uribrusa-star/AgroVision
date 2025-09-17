@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext, useState, useTransition, useMemo } from 'react';
@@ -29,7 +30,7 @@ type PredictionResult = {
 }
 
 export function YieldPredictionPanel() {
-  const { batches, harvests, agronomistLogs, phenologyLogs, loading: dataLoading, establishmentData } = useContext(AppDataContext);
+  const { batches, harvests, agronomistLogs, phenologyLogs, loading: dataLoading, establishmentData, addPredictionLog } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   const [predictionResult, setPredictionResult] = useState<PredictionResult | null>(null);
@@ -98,7 +99,6 @@ export function YieldPredictionPanel() {
 
         const recentHarvests = harvests.filter(h => h.batchNumber === values.batchId && new Date(h.date) > thirtyDaysAgo);
         
-        // Correctly filter logs for the selected batch AND general logs
         const recentAgronomistLogs = agronomistLogs.filter(log => 
             (log.batchId === values.batchId || !log.batchId) && new Date(log.date) > thirtyDaysAgo
         );
@@ -128,6 +128,12 @@ export function YieldPredictionPanel() {
         });
 
         setPredictionResult(result);
+        addPredictionLog({
+            date: new Date().toISOString(),
+            batchId: values.batchId,
+            prediction: result.prediction,
+            confidence: result.confidence,
+        });
 
       } catch (error) {
         console.error("Error generating prediction:", error);

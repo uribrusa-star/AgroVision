@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { YieldPredictionPanel } from './yield-prediction-panel';
 import { AlertCircle, LineChart } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { PredictionHistory } from './prediction-history';
 
 export default function PredictionsPage() {
   return (
@@ -23,8 +24,9 @@ export default function PredictionsPage() {
         </AlertDescription>
       </Alert>
 
-      <div className="w-full max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <YieldPredictionPanel />
+        <PredictionHistory />
       </div>
     </>
   );
