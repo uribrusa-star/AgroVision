@@ -9,7 +9,7 @@ import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone } from '
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { AppDataContext } from "@/context/app-data-context";
+import { AppDataContext } from "@/context/app-data-context.tsx";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -287,7 +287,7 @@ export default function MapPage() {
   }, [mapCenter]);
 
   const resetWindyMap = () => {
-    setWindyCoords({ lat: formCoords.lat, lng: formCoords.lng });
+    setWindyCoords({ lat: -31.953363, lng: -60.9346299 });
   };
 
 
