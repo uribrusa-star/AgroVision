@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { predictYield } from '@/ai/flows/predict-yield';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -97,8 +97,15 @@ export function YieldPredictionPanel() {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
         const recentHarvests = harvests.filter(h => h.batchNumber === values.batchId && new Date(h.date) > thirtyDaysAgo);
-        const recentAgronomistLogs = agronomistLogs.filter(log => new Date(log.date) > thirtyDaysAgo);
-        const recentPhenologyLogs = phenologyLogs.filter(log => new Date(log.date) > thirtyDaysAgo);
+        
+        // Correctly filter logs for the selected batch AND general logs
+        const recentAgronomistLogs = agronomistLogs.filter(log => 
+            (log.batchId === values.batchId || !log.batchId) && new Date(log.date) > thirtyDaysAgo
+        );
+        const recentPhenologyLogs = phenologyLogs.filter(log => 
+            (log.batchId === values.batchId || !log.batchId) && new Date(log.date) > thirtyDaysAgo
+        );
+
         const recentEnvironmentalLogs = agronomistLogs.filter(log => log.type === 'Condiciones Ambientales' && new Date(log.date) > thirtyDaysAgo);
 
         if (recentHarvests.length === 0) {
