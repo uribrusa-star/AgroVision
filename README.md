@@ -6,35 +6,58 @@ Olvídese de las planillas complicadas y las anotaciones perdidas. Con AgroVisio
 
 ---
 
-### ¿Qué puede hacer con AgroVision?
+### Funcionalidades para el Productor
 
-#### **1. Panel de Control Centralizado: Su Finca de un Vistazo**
+Como "Productor", tiene acceso total a todas las funcionalidades de AgroVision. A continuación, se detalla todo lo que puede hacer:
+
+#### **1. Panel de Control Centralizado (`/dashboard`)**
 Vea el pulso de su negocio en tiempo real. Al iniciar sesión, tendrá acceso instantáneo a los indicadores más importantes:
-*   **Métricas Clave**: Conozca su cosecha total, el costo de mano de obra acumulado, el rendimiento promedio por lote y cuál fue su día de cosecha más productivo.
-*   **Gráficos Intuitivos**: Visualice la evolución de su cosecha mes a mes y compare el rendimiento entre diferentes lotes para identificar los más productivos.
-*   **Distribución de Costos**: Entienda a dónde se va su dinero con un gráfico claro que desglosa todos sus gastos operativos (insumos, mano de obra, riego, etc.).
-*   **Actividad Reciente**: Siga de cerca las últimas cosechas registradas y la productividad de sus recolectores.
+*   **Métricas Clave**: Conozca su cosecha total, el costo de mano de obra acumulado (incluye cosecha, embalaje y labores culturales), el rendimiento promedio por lote y cuál fue su día de cosecha más productivo.
+*   **Gráficos Intuitivos**:
+    *   **Cosecha Mensual**: Visualice la evolución de su cosecha en kilogramos, mes a mes.
+    *   **Distribución de Costos**: Entienda a dónde se va su dinero con un gráfico claro que desglosa todos sus gastos operativos (insumos, mano de obra, riego, etc.).
+    *   **Rendimiento por Lote**: Compare el rendimiento en kilogramos de sus últimos 10 lotes cosechados.
+*   **Actividad Reciente**:
+    *   **Cosechas Recientes**: Siga de cerca las últimas cosechas registradas.
+    *   **Productividad de Recolectores**: Vea un ranking del rendimiento (kg/hora) de su personal.
+    *   **Historiales de Pago**: Acceda rápidamente a los últimos pagos de producción y embalaje.
 
-#### **2. Bitácora del Productor: El Control Financiero y Estratégico**
-Tome las riendas de sus finanzas y registre sus observaciones diarias en un solo lugar.
-*   **Registro de Gastos e Ingresos**: Anote cada transacción, desde la compra de insumos hasta la venta de su producción.
+#### **2. Predicciones con IA (`/predictions`)**
+Anticípese al futuro y tome decisiones proactivas.
+*   **Generar Predicción de Rendimiento**: Seleccione un lote que ya tenga cosechas registradas. La IA analizará sus datos históricos, el estado fenológico, las actividades agronómicas y el pronóstico del tiempo para proyectar el rendimiento de la próxima semana.
+*   **Historial de Predicciones**: Revise, consulte en detalle y elimine predicciones pasadas para comparar la precisión y evolución.
+
+#### **3. Establecimiento y Mapa (`/establishment`, `/map`)**
+El ADN digital de su finca.
+*   **Perfil del Establecimiento**: Edite y mantenga un registro centralizado de toda la información estructural de su campo: datos del productor, ubicación, superficie, sistema productivo, variedades, fechas de plantación, sistema de riego y más.
+*   **Mapa Interactivo**: Visualice sus lotes y puntos de interés en un mapa satelital. Puede definir los polígonos de sus lotes cargando un archivo GeoJSON. Al hacer clic en un lote, verá un resumen de su producción y actividad.
+*   **Alertas Climáticas con IA**: Ingrese coordenadas (o use las del establecimiento) para que la IA obtenga el pronóstico del tiempo y genere alertas y recomendaciones agronómicas para mitigar riesgos climáticos.
+
+#### **4. Bitácora del Productor (`/producer-log`)**
+Su centro de control financiero y estratégico.
+*   **Registro de Gastos e Ingresos**: Anote cada transacción, desde la compra de insumos hasta la venta de su producción. Cada registro se refleja automáticamente en los resúmenes financieros y gráficos.
 *   **Notas Personales**: Guarde ideas, recordatorios y decisiones importantes para futuras consultas.
-*   **Informes de Cosecha en PDF con IA**: Con un solo clic, genere un informe profesional que resume su producción, analiza sus costos y presenta conclusiones y recomendaciones estratégicas generadas por Inteligencia Artificial para mejorar su rentabilidad.
+*   **Informe de Cosecha en PDF con IA**: Con un solo clic, genere un informe profesional que resume su producción, analiza sus costos y presenta conclusiones y recomendaciones estratégicas generadas por Inteligencia Artificial para mejorar su rentabilidad.
+*   **Gráficos Financieros**: Analice la evolución de sus ingresos mensuales y la distribución de sus costos operativos.
 
-#### **3. Bitácora del Agrónomo: Precisión Técnica en el Campo**
-Facilite el trabajo de su equipo técnico con un registro detallado de cada actividad agronómica.
-*   **Registro de Actividades**: Lleve un historial completo de fertilizaciones, riegos, labores culturales, monitoreo de plagas, enfermedades y condiciones ambientales.
-*   **Seguimiento Fenológico y Sanitario con Imágenes**: Anote el estado del cultivo (floración, fructificación) y registre alertas de sanidad adjuntando imágenes desde su celular para un diagnóstico más preciso.
+#### **5. Entrada de Datos (`/data-entry`)**
+El motor de la aplicación: registre aquí toda la actividad diaria.
+*   **Registrar Carga de Producción**: Ingrese los kilos cosechados por cada recolector, las horas trabajadas, la fecha y el lote. El sistema calcula automáticamente el pago correspondiente y lo valida con IA para detectar anomalías.
+*   **Pre-cargar Lotes**: Defina los IDs de los lotes que estarán disponibles para la cosecha.
+*   **Registrar Costo de Embalaje**: Ingrese los detalles del trabajo de embalaje (personal, kilos, horas, costo/hora) para calcular el pago y registrar el costo.
+*   **Registrar Pago de Labores Culturales**: Registre el pago por tareas como deshoje, mantenimiento, etc., asociándolo a un personal, horas trabajadas y costo.
+
+#### **6. Bitácora del Agrónomo (`/engineer-log`)**
+Supervise y gestione toda la actividad técnica del campo.
+*   **Registro de Actividades**: Puede registrar aplicaciones (riego, fertilizantes, fitosanitarios), seguimiento de sanidad (plagas, enfermedades), registro de fenología (floración, fructificación), condiciones ambientales, labores culturales y falta de actividades.
+*   **Recomendaciones de Aplicaciones con IA**: Genere sugerencias proactivas sobre qué aplicaciones realizar, basadas en el estado del cultivo, el inventario de insumos y el pronóstico del tiempo.
+*   **Gestión de Insumos**: Mantenga un inventario detallado de todos sus insumos (fertilizantes, fungicidas, etc.), incluyendo nombre, tipo, composición y dosis.
 *   **Informe Técnico Agronómico con IA**: Genere un PDF técnico que compila toda la bitácora del agrónomo y ofrece un análisis técnico objetivo y recomendaciones agronómicas impulsadas por Inteligencia Artificial.
 
-#### **4. Gestión de Cosecha y Recolectores: Eficiencia y Transparencia**
-Optimice el proceso de cosecha y gestione a su equipo de manera eficiente.
-*   **Registro de Producción Simplificado**: Ingrese los kilos cosechados por cada recolector, las horas trabajadas y la fecha de cosecha. El sistema calcula automáticamente el pago correspondiente.
-*   **Validación con IA**: Un asistente inteligente analiza cada registro de cosecha para detectar posibles anomalías o errores de tipeo, asegurando la calidad de sus datos.
-*   **Gestión de Recolectores**: Mantenga una base de datos actualizada de su personal, siga su rendimiento histórico (kg/hora) y consulte el historial de cosecha de cada uno.
-
-#### **5. Perfil del Establecimiento: El ADN de su Finca**
-Mantenga un registro digital y centralizado de toda la información estructural de su campo, desde el tipo de suelo y el sistema de riego hasta las variedades plantadas.
+#### **7. Gestión de Personal (`/collectors`, `/packers`, `/users`)**
+Administre su equipo de manera eficiente.
+*   **Recolectores y Embaladores**: Agregue nuevos miembros, consulte su historial de trabajo, vea su productividad (kg/hora) y elimínelos si es necesario.
+*   **Usuarios del Sistema**: Como Productor, puede ver la lista de todos los usuarios (Productor, Ingeniero Agrónomo, Encargado) y cambiar la contraseña de los otros roles.
 
 ---
 
