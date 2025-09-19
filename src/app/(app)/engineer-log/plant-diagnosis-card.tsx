@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useTransition, useContext, useMemo } from 'react';
@@ -5,7 +6,7 @@ import Image from 'next/image';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Sparkles, BrainCircuit, Upload, CheckCircle, AlertTriangle, Leaf, FlaskConical, CircleHelp } from 'lucide-react';
+import { Sparkles, BrainCircuit, Upload, FlaskConical } from 'lucide-react';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,7 @@ const CorrectionSchema = z.object({
 });
 
 export function PlantDiagnosisCard() {
-  const { batches, addAgronomistLog } = useContext(AppDataContext);
+  const { batches, addDiagnosisLog } = useContext(AppDataContext);
   const [isPending, startTransition] = useTransition();
   const [diagnosisResult, setDiagnosisResult] = useState<DiagnosePlantOutput | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -114,23 +115,19 @@ export function PlantDiagnosisCard() {
     });
   };
 
-  const handleSaveLog = (finalDiagnosis: string, probability: number, notes: string) => {
+  const handleSaveLog = (result: DiagnosePlantOutput, userCorrection?: string) => {
     if (!previewImage) return;
 
-    addAgronomistLog({
+    addDiagnosisLog({
         date: new Date().toISOString(),
-        type: 'Sanidad',
         batchId: form.getValues('batchId'),
-        product: 'Diagnóstico por IA',
-        diagnosis: finalDiagnosis,
-        probability: probability,
-        notes: notes,
-        images: [{ url: previewImage, hint: 'plant disease' }],
+        result: result,
+        userCorrection: userCorrection,
     });
 
     toast({
         title: "Diagnóstico Guardado",
-        description: `Se ha registrado el diagnóstico de '${finalDiagnosis}' en la bitácora del lote.`,
+        description: `Se ha registrado el diagnóstico en el historial del lote.`,
     });
     
     // Reset state
@@ -141,22 +138,12 @@ export function PlantDiagnosisCard() {
 
   const handleValidation = () => {
     if (!diagnosisResult) return;
-    const mainDiagnosis = diagnosisResult.posiblesDiagnosticos.find(d => d.nombre === diagnosisResult.diagnosticoPrincipal);
-    handleSaveLog(
-        diagnosisResult.diagnosticoPrincipal,
-        mainDiagnosis?.probabilidad || 0,
-        `Diagnóstico validado por el usuario. Recomendación IA: ${diagnosisResult.recomendacionGeneral}`
-    );
+    handleSaveLog(diagnosisResult);
   };
   
   const onCorrectionSubmit = (values: z.infer<typeof CorrectionSchema>) => {
      if (!diagnosisResult) return;
-      const originalDiagnosis = diagnosisResult.posiblesDiagnosticos.find(d => d.nombre === values.correctedDiagnosis);
-      handleSaveLog(
-          values.correctedDiagnosis,
-          originalDiagnosis?.probabilidad || 0,
-          `Diagnóstico corregido por el usuario. Nota: ${values.correctionNotes || 'Sin notas'}. Diagnóstico original IA: ${diagnosisResult.diagnosticoPrincipal}.`
-      );
+      handleSaveLog(diagnosisResult, `${values.correctedDiagnosis}${values.correctionNotes ? `: ${values.correctionNotes}`: ''}`);
       setIsCorrectionOpen(false);
   }
 
@@ -341,3 +328,4 @@ export function PlantDiagnosisCard() {
     </>
   );
 }
+

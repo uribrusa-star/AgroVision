@@ -3,7 +3,7 @@
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog, Supply, PredictionLog } from '@/lib/types';
+import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog, Supply, PredictionLog, DiagnosisLog } from '@/lib/types';
 import { initialEstablishmentData, users as availableUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -22,6 +22,7 @@ export const AppDataContext = React.createContext<AppData>({
   agronomistLogs: [],
   phenologyLogs: [],
   predictionLogs: [],
+  diagnosisLogs: [],
   supplies: [],
   batches: [],
   collectorPaymentLogs: [],
@@ -39,6 +40,8 @@ export const AppDataContext = React.createContext<AppData>({
   deletePhenologyLog: async () => { throw new Error('Not implemented') },
   addPredictionLog: () => { throw new Error('Not implemented') },
   deletePredictionLog: () => { throw new Error('Not implemented') },
+  addDiagnosisLog: () => { throw new Error('Not implemented') },
+  deleteDiagnosisLog: () => { throw new Error('Not implemented') },
   addSupply: () => { throw new Error('Not implemented') },
   editSupply: () => { throw new Error('Not implemented') },
   deleteSupply: () => { throw new Error('Not implemented') },
@@ -75,6 +78,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [agronomistLogs, setAgronomistLogs] = useState<AgronomistLog[]>([]);
     const [phenologyLogs, setPhenologyLogs] = useState<PhenologyLog[]>([]);
     const [predictionLogs, setPredictionLogs] = useState<PredictionLog[]>([]);
+    const [diagnosisLogs, setDiagnosisLogs] = useState<DiagnosisLog[]>([]);
     const [supplies, setSupplies] = useState<Supply[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
     const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
@@ -131,6 +135,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               agronomistLogsSnapshot,
               phenologyLogsSnapshot,
               predictionLogsSnapshot,
+              diagnosisLogsSnapshot,
               suppliesSnapshot,
               batchesSnapshot,
               collectorPaymentsSnapshot,
@@ -146,6 +151,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               getDocs(query(collection(db, 'agronomistLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'phenologyLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'predictionLogs'), orderBy('date', 'desc'))),
+              getDocs(query(collection(db, 'diagnosisLogs'), orderBy('date', 'desc'))),
               getDocs(collection(db, 'supplies')),
               getDocs(collection(db, 'batches')),
               getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
@@ -167,6 +173,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setAgronomistLogs(agronomistLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as AgronomistLog[]);
             setPhenologyLogs(phenologyLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PhenologyLog[]);
             setPredictionLogs(predictionLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PredictionLog[]);
+            setDiagnosisLogs(diagnosisLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as DiagnosisLog[]);
             setSupplies(suppliesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Supply[]);
             setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
             setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
@@ -537,6 +544,30 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
+    const addDiagnosisLog = (log: Omit<DiagnosisLog, 'id'>) => {
+        const tempId = `diagnosislog_${Date.now()}`;
+        setDiagnosisLogs(prev => [{ id: tempId, ...log }, ...prev]);
+
+        addDoc(collection(db, 'diagnosisLogs'), log).then(ref => {
+            setDiagnosisLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
+        }).catch(error => {
+            console.error("Failed to add diagnosis log:", error);
+            setDiagnosisLogs(prev => prev.filter(l => l.id !== tempId));
+            toast({ title: "Error", description: "No se pudo guardar el diagnóstico.", variant: "destructive"});
+        });
+    };
+
+    const deleteDiagnosisLog = (logId: string) => {
+        const originalLogs = diagnosisLogs;
+        setDiagnosisLogs(prev => prev.filter(l => l.id !== logId));
+
+        deleteDoc(doc(db, 'diagnosisLogs', logId)).catch(error => {
+            console.error("Failed to delete diagnosis log:", error);
+            setDiagnosisLogs(originalLogs);
+            toast({ title: "Error", description: "No se pudo eliminar el diagnóstico.", variant: "destructive"});
+        });
+    };
+
     const addSupply = (supply: Omit<Supply, 'id'>) => {
         const tempId = `supply_${Date.now()}`;
         setSupplies(prev => [{ id: tempId, ...supply }, ...prev]);
@@ -762,6 +793,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         agronomistLogs,
         phenologyLogs,
         predictionLogs,
+        diagnosisLogs,
         supplies,
         batches,
         collectorPaymentLogs,
@@ -779,6 +811,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         deletePhenologyLog,
         addPredictionLog,
         deletePredictionLog,
+        addDiagnosisLog,
+        deleteDiagnosisLog,
         addSupply,
         editSupply,
         deleteSupply,
@@ -808,3 +842,4 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+

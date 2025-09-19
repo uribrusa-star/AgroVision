@@ -120,6 +120,26 @@ export type PredictionLog = {
   confidence: 'Alta' | 'Media' | 'Baja';
 };
 
+export type DiagnosisResult = {
+  diagnosticoPrincipal: string;
+  posiblesDiagnosticos: {
+    nombre: string;
+    probabilidad: number;
+    descripcion: string;
+  }[];
+  recomendacionGeneral: string;
+};
+
+
+export type DiagnosisLog = {
+  id: string;
+  date: string;
+  batchId: string;
+  result: DiagnosisResult;
+  userCorrection?: string;
+};
+
+
 export type CollectorPaymentLog = {
   id: string;
   date: string;
@@ -238,6 +258,7 @@ export type AppData = {
   agronomistLogs: AgronomistLog[];
   phenologyLogs: PhenologyLog[];
   predictionLogs: PredictionLog[];
+  diagnosisLogs: DiagnosisLog[];
   supplies: Supply[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
@@ -255,6 +276,8 @@ export type AppData = {
   deletePhenologyLog: (logId: string) => Promise<void>;
   addPredictionLog: (log: Omit<PredictionLog, 'id'>) => void;
   deletePredictionLog: (logId: string) => void;
+  addDiagnosisLog: (log: Omit<DiagnosisLog, 'id'>) => void;
+  deleteDiagnosisLog: (logId: string) => void;
   addSupply: (supply: Omit<Supply, 'id'>) => void;
   editSupply: (supply: Supply) => void;
   deleteSupply: (supplyId: string) => void;
@@ -277,3 +300,4 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
+
