@@ -65,13 +65,13 @@ function ProductionPaymentHistoryComponent() {
             let logoPngDataUri = '';
 
             if (logoRef.current) {
-                const canvas = await html2canvas(logoRef.current, { backgroundColor: null });
+                const canvas = await html2canvas(logoRef.current, { backgroundColor: null, scale: 3 });
                 logoPngDataUri = canvas.toDataURL('image/png');
             }
 
             // Header
             if (logoPngDataUri) {
-                doc.addImage(logoPngDataUri, 'PNG', 15, 12, 15, 15);
+                doc.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
             }
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(16);
