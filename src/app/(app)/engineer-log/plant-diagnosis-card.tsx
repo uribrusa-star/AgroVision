@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useTransition, useContext, useMemo } from 'react';
@@ -115,37 +114,47 @@ export function PlantDiagnosisCard() {
       }
     });
   };
-
-  const handleSaveLog = (result: DiagnosePlantOutput, userCorrection?: string) => {
-    if (!previewImage) return;
+  
+  const handleValidation = () => {
+    if (!diagnosisResult) return;
 
     addDiagnosisLog({
-        date: new Date().toISOString(),
-        batchId: form.getValues('batchId'),
-        result: result,
-        userCorrection: userCorrection,
+      date: new Date().toISOString(),
+      batchId: form.getValues('batchId'),
+      result: diagnosisResult,
     });
 
     toast({
-        title: "Diagnóstico Guardado",
-        description: `Se ha registrado el diagnóstico en el historial.`,
+      title: "Diagnóstico Guardado",
+      description: `Se ha registrado el diagnóstico en el historial.`,
     });
-    
+
     // Reset state
     setDiagnosisResult(null);
     setPreviewImage(null);
     form.reset();
-  }
-
-  const handleValidation = () => {
-    if (!diagnosisResult) return;
-    handleSaveLog(diagnosisResult);
   };
   
   const onCorrectionSubmit = (values: z.infer<typeof CorrectionSchema>) => {
-     if (!diagnosisResult) return;
-      handleSaveLog(diagnosisResult, `${values.correctedDiagnosis}${values.correctionNotes ? `: ${values.correctionNotes}`: ''}`);
-      setIsCorrectionOpen(false);
+    if (!diagnosisResult) return;
+
+    addDiagnosisLog({
+      date: new Date().toISOString(),
+      batchId: form.getValues('batchId'),
+      result: diagnosisResult,
+      userCorrection: `${values.correctedDiagnosis}${values.correctionNotes ? `: ${values.correctionNotes}` : ''}`,
+    });
+
+    toast({
+      title: "Diagnóstico Guardado",
+      description: `Se ha registrado la corrección en el historial.`,
+    });
+
+    // Reset state
+    setIsCorrectionOpen(false);
+    setDiagnosisResult(null);
+    setPreviewImage(null);
+    form.reset();
   }
 
   return (
@@ -329,4 +338,3 @@ export function PlantDiagnosisCard() {
     </>
   );
 }
-
