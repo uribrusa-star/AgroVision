@@ -125,6 +125,13 @@ function PackagingHistoryComponent() {
 
   return (
     <>
+       {/* Hidden Logo for PDF generation */}
+       <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: 'auto', height: 'auto' }} aria-hidden="true">
+          <div ref={logoRef} style={{width: '96px', height: '96px'}}>
+              <Image src="/logo.png" alt="AgroVision Logo" width={96} height={96} />
+          </div>
+       </div>
+       
       <Card>
         <CardHeader>
           <CardTitle>Historial de Embalaje</CardTitle>
@@ -169,13 +176,6 @@ function PackagingHistoryComponent() {
           </div>
         </CardContent>
       </Card>
-      
-       {/* Hidden Logo for PDF generation */}
-       <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: 'auto', height: 'auto' }} aria-hidden="true">
-          <div ref={logoRef} style={{width: '96px', height: '96px'}}>
-              <Image src="/logo.png" alt="AgroVision Logo" width={96} height={96} />
-          </div>
-       </div>
 
        <Dialog open={!!selectedLog} onOpenChange={(isOpen) => !isOpen && setSelectedLog(null)}>
         <DialogContent className="sm:max-w-xl">
