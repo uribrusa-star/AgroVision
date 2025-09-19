@@ -60,12 +60,12 @@ function PackagingHistoryComponent() {
         let logoPngDataUri = '';
 
         if (logoRef.current) {
-          const canvas = await html2canvas(logoRef.current, { backgroundColor: null, scale: 3 });
+          const canvas = await html2canvas(logoRef.current, { backgroundColor: null });
           logoPngDataUri = canvas.toDataURL('image/png');
         }
 
         if (logoPngDataUri) {
-          doc.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
+          doc.addImage(logoPngDataUri, 'PNG', 15, 12, 15, 15);
         }
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
