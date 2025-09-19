@@ -124,10 +124,6 @@ export function PlantDiagnosisCard() {
         batchId: form.getValues('batchId'),
         result: result,
         userCorrection: userCorrection,
-        image: {
-            url: previewImage,
-            hint: 'crop disease pest'
-        }
     });
 
     toast({
