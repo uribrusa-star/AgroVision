@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useTransition, useContext, useMemo } from 'react';
@@ -123,11 +124,15 @@ export function PlantDiagnosisCard() {
         batchId: form.getValues('batchId'),
         result: result,
         userCorrection: userCorrection,
+        image: {
+            url: previewImage,
+            hint: 'crop disease pest'
+        }
     });
 
     toast({
         title: "Diagnóstico Guardado",
-        description: `Se ha registrado el diagnóstico en el historial del lote.`,
+        description: `Se ha registrado el diagnóstico en el historial.`,
     });
     
     // Reset state

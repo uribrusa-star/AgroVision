@@ -137,6 +137,7 @@ export type DiagnosisLog = {
   batchId: string;
   result: DiagnosisResult;
   userCorrection?: string;
+  image?: ImageWithHint;
 };
 
 
@@ -300,4 +301,5 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
+
 
