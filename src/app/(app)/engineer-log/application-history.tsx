@@ -409,6 +409,13 @@ export function ApplicationHistory() {
                                     </div>
                                 )}
                                 
+                                 {selectedLog.diagnosis && (
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-muted-foreground">Diagnóstico</p>
+                                        <p className="font-semibold">{selectedLog.diagnosis} {selectedLog.probability && `(${selectedLog.probability}% de certeza)`}</p>
+                                    </div>
+                                )}
+                                
                                 <div className="space-y-1">
                                     <p className="text-sm font-medium text-muted-foreground">Notas</p>
                                     <p className="text-foreground whitespace-pre-wrap">{selectedLog.notes}</p>

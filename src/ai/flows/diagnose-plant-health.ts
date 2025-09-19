@@ -16,21 +16,20 @@ const DiagnosePlantInputSchema = z.object({
     .describe(
       "A photo of a plant, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
     ),
-  description: z.string().describe('The description of the plant.'),
+  description: z.string().describe('Una descripción detallada de los síntomas observados en la planta de frutilla.'),
 });
 export type DiagnosePlantInput = z.infer<typeof DiagnosePlantInputSchema>;
 
+const PossibleDiagnosisSchema = z.object({
+    nombre: z.string().describe('El nombre de la plaga o enfermedad (ej. "Oídio", "Araña Roja").'),
+    probabilidad: z.number().min(0).max(100).describe('La probabilidad estimada de este diagnóstico (0-100).'),
+    descripcion: z.string().describe('Una breve descripción de por qué se considera este diagnóstico.'),
+});
+
 const DiagnosePlantOutputSchema = z.object({
-  identification: z.object({
-    isPlant: z.boolean().describe('Whether or not the input is a plant.'),
-    commonName: z.string().describe('The name of the identified plant.'),
-    latinName: z.string().describe('The Latin name of the identified plant.'),
-  }),
-  diagnosis: z.object({
-    isHealthy: z.boolean().describe('Whether or not the plant is healthy.'),
-    diagnosis: z.string().describe("The diagnosis of the plant's health."),
-    remedy: z.string().describe('A suggested remedy for the plant, if applicable.'),
-  }),
+  diagnosticoPrincipal: z.string().describe('El nombre del diagnóstico más probable.'),
+  posiblesDiagnosticos: z.array(PossibleDiagnosisSchema).describe('Una lista de 1 a 3 posibles diagnósticos con su probabilidad.'),
+  recomendacionGeneral: z.string().describe('Una recomendación inicial y general para el manejo del problema detectado.'),
 });
 export type DiagnosePlantOutput = z.infer<typeof DiagnosePlantOutputSchema>;
 
@@ -42,14 +41,22 @@ const prompt = ai.definePrompt({
   name: 'diagnosePlantPrompt',
   input: {schema: DiagnosePlantInputSchema},
   output: {schema: DiagnosePlantOutputSchema},
-  prompt: `You are an expert botanist specializing diagnosing plant illnesses.
+  prompt: `Eres un Ingeniero Agrónomo experto en fitopatología del cultivo de frutilla. Tu tarea es analizar una imagen y una descripción para diagnosticar problemas sanitarios.
 
-You will use this information to diagnose the plant, and any issues it has. You will make a determination as to whether the plant is healthy or not, and what is wrong with it, and set the isHealthy output field appropriately. If there is a problem, suggest a remedy.
+  **Base de Conocimiento de Plagas y Enfermedades Frecuentes en Frutilla:**
+  - **Enfermedades:** Botrytis (Moho Gris), Oídio (Cenicilla), Viruela, Antracnosis.
+  - **Plagas:** Araña Roja (Tetranychus urticae), Trips (Frankliniella occidentalis), Pulgones.
+  - **Otros:** Deficiencias nutricionales (Nitrógeno, Hierro, etc.), quemaduras por sol, daño por helada.
 
-Use the following as the primary source of information about the plant.
+  **Instrucciones:**
+  1.  Analiza la imagen ({{media url=photoDataUri}}) y la descripción del usuario ({{{description}}}).
+  2.  Compara los síntomas observados con tu base de conocimiento.
+  3.  Genera de 1 a 3 posibles diagnósticos. Para cada uno, asigna un nombre, una probabilidad (de 0 a 100) y una breve descripción justificando tu conclusión. La suma de probabilidades no tiene que ser 100.
+  4.  Identifica el diagnóstico más probable y asígnalo a 'diagnosticoPrincipal'.
+  5.  Basado en el diagnóstico principal, proporciona una recomendación inicial y general. Debe ser una acción preventiva o de monitoreo, no una aplicación de producto específica. Por ejemplo: "Aumentar ventilación en túneles", "Monitorear lotes vecinos", "Realizar análisis foliar para confirmar deficiencia".
 
-Description: {{{description}}}
-Photo: {{media url=photoDataUri}}`,
+  Genera únicamente la salida JSON.
+  `,
 });
 
 const diagnosePlantFlow = ai.defineFlow(
