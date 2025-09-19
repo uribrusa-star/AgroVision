@@ -320,7 +320,16 @@ export default function EstablishmentPage() {
                 />
             </InfoCard>
 
-             <InfoCard title="Superficie y Sistema" icon={Ruler} onEdit={() => handleEdit('area')} editableBy={producerAccess}>
+            <InfoCard title="Mapa del Establecimiento (GeoJSON)" icon={Map} onEdit={() => handleEdit('geoJson')} editableBy={agronomistAccess}>
+                <div className="h-64 w-full rounded-md overflow-hidden z-0 bg-muted">
+                   <MapComponent center={mapCenter} geoJsonData={parsedGeoJson} />
+                </div>
+            </InfoCard>
+        </div>
+
+        {/* Columna 2 */}
+        <div className="space-y-6">
+            <InfoCard title="Superficie y Sistema" icon={Ruler} onEdit={() => handleEdit('area')} editableBy={producerAccess}>
                <InfoItem label="Superficie Total" value={`${establishmentData.area.total} ha`} />
                <InfoItem label="Destinada a Frutilla" value={`${establishmentData.area.strawberry} ha`} />
                <InfoItem label="Sistema Productivo" value={establishmentData.system} />
@@ -331,9 +340,17 @@ export default function EstablishmentPage() {
                <InfoItem label="Análisis Inicial" value={establishmentData.soil.analysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
                <InfoItem label="Cobertura (Mulching)" value={establishmentData.planting.mulching} />
             </InfoCard>
+
+            <InfoCard title="Manejo y Cosecha" icon={Wind} onEdit={() => handleEdit('management')} editableBy={agronomistAccess}>
+                <InfoItem label="Control de Malezas" value={establishmentData.management.weeds} />
+                <InfoItem label="Plan Sanitario" value={establishmentData.management.sanitaryPlan} />
+                <InfoItem label="Período de Cosecha" value={establishmentData.harvest.period} />
+                <InfoItem label="Frecuencia" value={establishmentData.harvest.frequency} />
+            </InfoCard>
+
         </div>
 
-        {/* Columna 2 */}
+        {/* Columna 3 */}
         <div className="space-y-6">
             <InfoCard title="Implantación del Cultivo" icon={Sprout} onEdit={() => handleEdit('planting')} editableBy={agronomistAccess}>
                 <InfoItem label="Variedades" value={establishmentData.planting.variety} />
@@ -349,26 +366,9 @@ export default function EstablishmentPage() {
                 <InfoItem label="Análisis de Agua" value={establishmentData.irrigation.waterAnalysis ? <CheckCircle className="h-5 w-5 text-green-500" /> : 'No'} />
             </InfoCard>
 
-            <InfoCard title="Manejo y Cosecha" icon={Wind} onEdit={() => handleEdit('management')} editableBy={agronomistAccess}>
-                <InfoItem label="Control de Malezas" value={establishmentData.management.weeds} />
-                <InfoItem label="Plan Sanitario" value={establishmentData.management.sanitaryPlan} />
-                <InfoItem label="Período de Cosecha" value={establishmentData.harvest.period} />
-                <InfoItem label="Frecuencia" value={establishmentData.harvest.frequency} />
-            </InfoCard>
-
-        </div>
-
-        {/* Columna 3 */}
-        <div className="space-y-6">
             <InfoCard title="Comercialización" icon={TrendingUp} onEdit={() => handleEdit('commercialization')} editableBy={producerAccess}>
                  <InfoItem label="Destino Principal" value={establishmentData.harvest.destination} />
                  <InfoItem label="Objetivo Económico" value={establishmentData.economics.objective} />
-            </InfoCard>
-
-             <InfoCard title="Mapa del Establecimiento (GeoJSON)" icon={Map} onEdit={() => handleEdit('geoJson')} editableBy={agronomistAccess}>
-                <div className="h-64 w-full rounded-md overflow-hidden z-0 bg-muted">
-                   <MapComponent center={mapCenter} geoJsonData={parsedGeoJson} />
-                </div>
             </InfoCard>
         </div>
       </div>
