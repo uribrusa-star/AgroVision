@@ -1,4 +1,4 @@
-git commit -m # AgroVision: Gestión Inteligente para su Cultivo de Frutilla
+# AgroVision: Gestión Inteligente para su Cultivo de Frutilla
 
 **Su campo, en la palma de su mano. AgroVision es la herramienta definitiva que centraliza, simplifica y potencia la gestión de su producción de frutilla, desde la siembra hasta la venta.**
 
