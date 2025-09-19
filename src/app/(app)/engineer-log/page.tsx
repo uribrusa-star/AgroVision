@@ -19,8 +19,6 @@ import { NotesHistory } from '../producer-log/notes-history';
 import { ActivityOmissionLogForm } from './activity-omission-log-form';
 import { Supplies } from './supplies';
 import { ApplicationRecommendation } from './application-recommendation';
-import { PlantDiagnosisCard } from './plant-diagnosis-card';
-import { DiagnosisHistory } from './diagnosis-history';
 
 
 export default function EngineerLogPage() {
@@ -85,9 +83,7 @@ export default function EngineerLogPage() {
         {/* Historiales e Insumos */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-8">
-                {canManageApplications && <PlantDiagnosisCard />}
                 {canManageApplications && <ApplicationRecommendation />}
-                <DiagnosisHistory />
                 <PhenologyHistory />
             </div>
             <div className="space-y-8">
@@ -116,4 +112,3 @@ export default function EngineerLogPage() {
     </>
   );
 }
-
