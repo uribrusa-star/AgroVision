@@ -37,6 +37,7 @@ const prompt = ai.definePrompt({
   name: 'diagnosePlantPrompt',
   input: {schema: DiagnosePlantInputSchema},
   output: {schema: DiagnosePlantOutputSchema},
+  model: 'googleai/gemini-1.5-flash-latest',
   prompt: `Eres un Ingeniero Agrónomo experto en fitopatología del cultivo de frutilla. Tu tarea es analizar una imagen y una descripción para diagnosticar problemas sanitarios.
 
   **Base de Conocimiento de Plagas y Enfermedades Frecuentes en Frutilla:**
