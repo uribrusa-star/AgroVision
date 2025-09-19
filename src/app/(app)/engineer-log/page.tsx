@@ -83,6 +83,7 @@ export default function EngineerLogPage() {
         {/* Columna Izquierda: Visualización y Análisis */}
         <div className="space-y-8">
             {canManageApplications && <ApplicationRecommendation />}
+            {canManageApplications && <AgronomistReport />}
             <PhenologyHistory />
             <ApplicationHistory />
             <NotesHistory />
@@ -98,7 +99,6 @@ export default function EngineerLogPage() {
               <EnvironmentalLogForm />
               <ActivityOmissionLogForm />
               <Supplies />
-              <AgronomistReport />
             </>
           )}
           {!canManageApplications && (
