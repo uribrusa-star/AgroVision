@@ -33,12 +33,6 @@ const RecommendApplicationsOutputSchema = z.object({
 });
 export type RecommendApplicationsOutput = z.infer<typeof RecommendApplicationsOutputSchema>;
 
-export async function recommendApplications(
-  input: RecommendApplicationsInput
-): Promise<RecommendApplicationsOutput> {
-  return recommendApplicationsFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'recommendApplicationsPrompt',
   input: {schema: RecommendApplicationsInputSchema},
@@ -73,14 +67,9 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const recommendApplicationsFlow = ai.defineFlow(
-  {
-    name: 'recommendApplicationsFlow',
-    inputSchema: RecommendApplicationsInputSchema,
-    outputSchema: RecommendApplicationsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function recommendApplications(
+  input: RecommendApplicationsInput
+): Promise<RecommendApplicationsOutput> {
+  const {output} = await prompt(input);
+  return output!;
+}

@@ -48,12 +48,6 @@ export type ValidateProductionDataOutput = z.infer<
   typeof ValidateProductionDataOutputSchema
 >;
 
-export async function validateProductionData(
-  input: ValidateProductionDataInput
-): Promise<ValidateProductionDataOutput> {
-  return validateProductionDataFlow(input);
-}
-
 const validateProductionDataPrompt = ai.definePrompt({
   name: 'validateProductionDataPrompt',
   input: {schema: ValidateProductionDataInputSchema},
@@ -78,14 +72,9 @@ const validateProductionDataPrompt = ai.definePrompt({
   `,
 });
 
-const validateProductionDataFlow = ai.defineFlow(
-  {
-    name: 'validateProductionDataFlow',
-    inputSchema: ValidateProductionDataInputSchema,
-    outputSchema: ValidateProductionDataOutputSchema,
-  },
-  async input => {
-    const {output} = await validateProductionDataPrompt(input);
-    return output!;
-  }
-);
+export async function validateProductionData(
+  input: ValidateProductionDataInput
+): Promise<ValidateProductionDataOutput> {
+  const {output} = await validateProductionDataPrompt(input);
+  return output!;
+}

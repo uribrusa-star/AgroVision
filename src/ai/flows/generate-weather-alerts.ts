@@ -31,12 +31,6 @@ const GenerateWeatherAlertsOutputSchema = z.object({
 });
 export type GenerateWeatherAlertsOutput = z.infer<typeof GenerateWeatherAlertsOutputSchema>;
 
-export async function generateWeatherAlerts(
-  input: GenerateWeatherAlertsInput
-): Promise<GenerateWeatherAlertsOutput> {
-  return generateWeatherAlertsFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'generateWeatherAlertsPrompt',
   input: {schema: GenerateWeatherAlertsInputSchema},
@@ -63,14 +57,9 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const generateWeatherAlertsFlow = ai.defineFlow(
-  {
-    name: 'generateWeatherAlertsFlow',
-    inputSchema: GenerateWeatherAlertsInputSchema,
-    outputSchema: GenerateWeatherAlertsOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function generateWeatherAlerts(
+  input: GenerateWeatherAlertsInput
+): Promise<GenerateWeatherAlertsOutput> {
+  const {output} = await prompt(input);
+  return output!;
+}

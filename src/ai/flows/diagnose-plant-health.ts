@@ -33,10 +33,6 @@ const DiagnosePlantOutputSchema = z.object({
 });
 export type DiagnosePlantOutput = z.infer<typeof DiagnosePlantOutputSchema>;
 
-export async function diagnosePlant(input: DiagnosePlantInput): Promise<DiagnosePlantOutput> {
-  return diagnosePlantFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'diagnosePlantPrompt',
   input: {schema: DiagnosePlantInputSchema},
@@ -59,14 +55,7 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const diagnosePlantFlow = ai.defineFlow(
-  {
-    name: 'diagnosePlantFlow',
-    inputSchema: DiagnosePlantInputSchema,
-    outputSchema: DiagnosePlantOutputSchema,
-  },
-  async input => {
+export async function diagnosePlant(input: DiagnosePlantInput): Promise<DiagnosePlantOutput> {
     const {output} = await prompt(input);
     return output!;
-  }
-);
+}

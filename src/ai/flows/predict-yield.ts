@@ -35,12 +35,6 @@ const PredictYieldOutputSchema = z.object({
 });
 export type PredictYieldOutput = z.infer<typeof PredictYieldOutputSchema>;
 
-export async function predictYield(
-  input: PredictYieldInput
-): Promise<PredictYieldOutput> {
-  return predictYieldFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'predictYieldPrompt',
   input: {schema: PredictYieldInputSchema},
@@ -75,14 +69,9 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const predictYieldFlow = ai.defineFlow(
-  {
-    name: 'predictYieldFlow',
-    inputSchema: PredictYieldInputSchema,
-    outputSchema: PredictYieldOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function predictYield(
+  input: PredictYieldInput
+): Promise<PredictYieldOutput> {
+  const {output} = await prompt(input);
+  return output!;
+}

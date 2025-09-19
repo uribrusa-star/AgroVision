@@ -42,12 +42,6 @@ const SummarizeHarvestDataOutputSchema = z.object({
 });
 export type SummarizeHarvestDataOutput = z.infer<typeof SummarizeHarvestDataOutputSchema>;
 
-export async function summarizeHarvestData(
-  input: SummarizeHarvestDataInput
-): Promise<SummarizeHarvestDataOutput> {
-  return summarizeHarvestDataFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'summarizeHarvestDataPrompt',
   input: {schema: SummarizeHarvestDataInputSchema},
@@ -79,14 +73,9 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const summarizeHarvestDataFlow = ai.defineFlow(
-  {
-    name: 'summarizeHarvestDataFlow',
-    inputSchema: SummarizeHarvestDataInputSchema,
-    outputSchema: SummarizeHarvestDataOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function summarizeHarvestData(
+  input: SummarizeHarvestDataInput
+): Promise<SummarizeHarvestDataOutput> {
+  const {output} = await prompt(input);
+  return output!;
+}

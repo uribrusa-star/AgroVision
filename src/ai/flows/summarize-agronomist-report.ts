@@ -35,12 +35,6 @@ const SummarizeAgronomistReportOutputSchema = z.object({
 });
 export type SummarizeAgronomistReportOutput = z.infer<typeof SummarizeAgronomistReportOutputSchema>;
 
-export async function summarizeAgronomistReport(
-  input: SummarizeAgronomistReportInput
-): Promise<SummarizeAgronomistReportOutput> {
-  return summarizeAgronomistReportFlow(input);
-}
-
 const prompt = ai.definePrompt({
   name: 'summarizeAgronomistReportPrompt',
   input: {schema: SummarizeAgronomistReportInputSchema},
@@ -69,14 +63,9 @@ const prompt = ai.definePrompt({
   `,
 });
 
-const summarizeAgronomistReportFlow = ai.defineFlow(
-  {
-    name: 'summarizeAgronomistReportFlow',
-    inputSchema: SummarizeAgronomistReportInputSchema,
-    outputSchema: SummarizeAgronomistReportOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+export async function summarizeAgronomistReport(
+  input: SummarizeAgronomistReportInput
+): Promise<SummarizeAgronomistReportOutput> {
+  const {output} = await prompt(input);
+  return output!;
+}

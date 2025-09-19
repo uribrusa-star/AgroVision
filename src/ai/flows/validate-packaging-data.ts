@@ -44,12 +44,6 @@ export type ValidatePackagingDataOutput = z.infer<
   typeof ValidatePackagingDataOutputSchema
 >;
 
-export async function validatePackagingData(
-  input: ValidatePackagingDataInput
-): Promise<ValidatePackagingDataOutput> {
-  return validatePackagingDataFlow(input);
-}
-
 const validatePackagingDataPrompt = ai.definePrompt({
   name: 'validatePackagingDataPrompt',
   input: {schema: ValidatePackagingDataInputSchema},
@@ -73,14 +67,9 @@ const validatePackagingDataPrompt = ai.definePrompt({
   `,
 });
 
-const validatePackagingDataFlow = ai.defineFlow(
-  {
-    name: 'validatePackagingDataFlow',
-    inputSchema: ValidatePackagingDataInputSchema,
-    outputSchema: ValidatePackagingDataOutputSchema,
-  },
-  async input => {
-    const {output} = await validatePackagingDataPrompt(input);
-    return output!;
-  }
-);
+export async function validatePackagingData(
+  input: ValidatePackagingDataInput
+): Promise<ValidatePackagingDataOutput> {
+  const {output} = await validatePackagingDataPrompt(input);
+  return output!;
+}
