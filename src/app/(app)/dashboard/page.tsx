@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
-import { BarChart as BarChartIcon, CalendarDays, DollarSign, Weight } from "lucide-react";
+import { BarChart as BarChartIcon, CalendarDays, DollarSign, Trophy, Weight } from "lucide-react";
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Harvest, CollectorPaymentLog, PackagingLog, CulturalPracticeLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -72,6 +72,7 @@ export default function DashboardPage() {
 
   const dashboardStats = calculateDashboardStats(harvests, collectorPaymentLogs, packagingLogs, culturalPracticeLogs);
   const sortedHarvests = [...(harvests || [])].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const sortedCollectors = [...(collectors || [])].sort((a,b) => b.productivity - a.productivity);
 
   return (
     <>
@@ -173,14 +174,14 @@ export default function DashboardPage() {
         <div className="lg:col-span-1">
             <Card>
                 <CardHeader>
-                    <CardTitle>Productividad</CardTitle>
-                    <CardDescription>Resumen del rendimiento de cada recolector.</CardDescription>
+                    <CardTitle>Ranking de Productividad</CardTitle>
+                    <CardDescription>Rendimiento de cada recolector ordenado de mayor a menor.</CardDescription>
                 </CardHeader>
                 <CardContent className="max-h-[300px] overflow-auto">
                     <Table>
                         <TableHeader>
                         <TableRow>
-                            <TableHead>Nombre</TableHead>
+                            <TableHead>Recolector</TableHead>
                             <TableHead className="text-right">kg/hr</TableHead>
                         </TableRow>
                         </TableHeader>
@@ -190,9 +191,12 @@ export default function DashboardPage() {
                             <TableCell colSpan={2}><Skeleton className="h-8 w-full" /></TableCell>
                            </TableRow>
                         ))}
-                        {!loading && [...(collectors || [])].sort((a,b) => b.productivity - a.productivity).map((collector) => (
+                        {!loading && sortedCollectors.map((collector, index) => (
                             <TableRow key={collector.id}>
-                            <TableCell className="font-medium">{collector.name}</TableCell>
+                            <TableCell className="font-medium flex items-center gap-2">
+                                {index === 0 && <Trophy className="h-4 w-4 text-amber-500" />}
+                                {collector.name}
+                            </TableCell>
                             <TableCell className="text-right font-bold">{collector.productivity.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
