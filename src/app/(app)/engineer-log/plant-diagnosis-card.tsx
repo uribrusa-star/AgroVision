@@ -63,7 +63,7 @@ export function PlantDiagnosisCard() {
     startTransition(async () => {
       try {
         const result = await diagnosePlant({
-          imageDataUri: previewImage,
+          photoDataUri: previewImage,
           description: values.description,
         });
 

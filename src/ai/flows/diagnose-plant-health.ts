@@ -11,7 +11,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const DiagnosePlantInputSchema = z.object({
-  imageDataUri: z
+  photoDataUri: z
     .string()
     .describe(
       "A photo of a plant, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
@@ -49,7 +49,7 @@ You will use this information to diagnose the plant, and any issues it has. You 
 Use the following as the primary source of information about the plant.
 
 Description: {{{description}}}
-Photo: {{media url=imageDataUri}}`,
+Photo: {{media url=photoDataUri}}`,
 });
 
 const diagnosePlantFlow = ai.defineFlow(
