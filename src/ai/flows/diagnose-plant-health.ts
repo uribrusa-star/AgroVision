@@ -60,6 +60,6 @@ const diagnosePlantFlow = ai.defineFlow(
   },
   async input => {
     const result = await prompt(input);
-    return result.output();
+    return result.output!;
   }
 );
