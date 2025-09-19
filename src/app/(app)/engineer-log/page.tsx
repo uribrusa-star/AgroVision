@@ -79,35 +79,39 @@ export default function EngineerLogPage() {
         </Card>
       </div>
 
-       <div className="space-y-8">
-        {/* Historiales e Insumos */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-8">
-                {canManageApplications && <ApplicationRecommendation />}
-                <PhenologyHistory />
-            </div>
-            <div className="space-y-8">
-                <ApplicationHistory />
-                {canManageApplications && <Supplies />}
-                {canManageApplications && <AgronomistReport />}
-                <NotesHistory />
-            </div>
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Columna Izquierda: Visualización y Análisis */}
+        <div className="space-y-8">
+            {canManageApplications && <ApplicationRecommendation />}
+            <PhenologyHistory />
+            <ApplicationHistory />
+            <NotesHistory />
         </div>
 
-        {/* Formularios de Registro */}
-        {canManageApplications && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-8">
-                  <HealthLogForm />
-                  <IrrigationLogForm />
-              </div>
-              <div className="space-y-8">
-                  <PhenologyLogForm />
-                  <EnvironmentalLogForm />
-                  <ActivityOmissionLogForm />
-              </div>
-          </div>
-        )}
+        {/* Columna Derecha: Registro y Gestión */}
+        <div className="space-y-8">
+          {canManageApplications && (
+            <>
+              <HealthLogForm />
+              <IrrigationLogForm />
+              <PhenologyLogForm />
+              <EnvironmentalLogForm />
+              <ActivityOmissionLogForm />
+              <Supplies />
+              <AgronomistReport />
+            </>
+          )}
+          {!canManageApplications && (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Acceso de solo lectura</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p>No tiene permisos para registrar nuevas actividades.</p>
+                </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
     </>
   );
