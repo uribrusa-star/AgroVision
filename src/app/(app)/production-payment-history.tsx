@@ -5,6 +5,7 @@
 import React, { useContext, useMemo, useTransition, useState, useRef } from 'react';
 import Image from 'next/image';
 import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
 import type { CollectorPaymentLog } from '@/lib/types';
+
+// Extend jsPDF with autoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+  lastAutoTable: { finalY: number };
+}
 
 function ProductionPaymentHistoryComponent() {
   const { loading, collectorPaymentLogs, deleteCollectorPaymentLog, harvests, currentUser, establishmentData } = useContext(AppDataContext);
@@ -54,7 +61,7 @@ function ProductionPaymentHistoryComponent() {
     startPdfTransition(async () => {
         toast({ title: 'Generando Recibo', description: 'Por favor espere...' });
         try {
-            const doc = new jsPDF();
+            const doc = new jsPDF() as jsPDFWithAutoTable;
             let logoPngDataUri = '';
 
             if (logoRef.current) {
