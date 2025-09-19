@@ -10,3 +10,5 @@ import '@/ai/flows/generate-weather-alerts.ts';
 import '@/ai/tools/weather-tool.ts';
 import '@/ai/flows/validate-packaging-data.ts';
 import '@/ai/flows/recommend-applications.ts';
+import '@/ai/flows/diagnose-plant-health.ts';
+
