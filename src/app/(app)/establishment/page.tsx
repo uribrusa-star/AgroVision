@@ -1,5 +1,3 @@
-
-
 'use client';
 import React, { useContext, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -74,15 +72,20 @@ const geoJsonSchema = z.object({
     (val) => {
       if (!val) return true; // Allow empty string
       try {
-        JSON.parse(val);
-        return true;
+        const parsed = JSON.parse(val);
+        // Basic GeoJSON validation
+        if (parsed.type === 'FeatureCollection' && Array.isArray(parsed.features)) {
+          return true;
+        }
+        return false;
       } catch (e) {
         return false;
       }
     },
-    { message: "El texto ingresado debe ser un objeto GeoJSON válido." }
+    { message: "El texto ingresado debe ser un objeto GeoJSON válido con un 'type': 'FeatureCollection'." }
   ).optional(),
 });
+
 
 const InfoCard = ({ title, icon: Icon, children, onEdit, editableBy }: { title: string, icon: React.ElementType, children: React.ReactNode, onEdit?: () => void, editableBy?: UserRole[] }) => {
   const { currentUser } = useContext(AppDataContext);
@@ -519,7 +522,7 @@ export default function EstablishmentPage() {
           <DialogHeader>
             <DialogTitle>Editar Datos GeoJSON</DialogTitle>
             <DialogDescription>
-              Pegue aquí el contenido de su archivo GeoJSON para definir los lotes y puntos de interés en el mapa.
+              Pegue aquí el contenido de su archivo GeoJSON para definir los lotes y puntos de interés en el mapa. Asegúrese de que cada lote (polígono) tenga una propiedad "name" con su ID (ej. "L001").
             </DialogDescription>
           </DialogHeader>
           <Form {...geoJsonForm}>

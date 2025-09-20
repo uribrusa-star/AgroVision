@@ -2,7 +2,7 @@
 
 import React, { useContext, useState } from 'react';
 import { GoogleMap, useJsApiLoader, Polygon, Marker, InfoWindow } from '@react-google-maps/api';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { Leaf, Notebook, Weight } from 'lucide-react';
 
 type MapProps = {
@@ -31,9 +31,8 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                     lat: coord[1],
                     lng: coord[0],
                 }));
-
-                const properties = Object.keys(feature.properties);
-                const polygonId = properties.length > 0 ? properties[0] : `polygon-${feature.id || Math.random()}`;
+                
+                const polygonId = feature.properties?.name || `polygon-${feature.id || Math.random()}`;
 
                 return (
                     <Polygon
@@ -56,8 +55,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
         if (!activeInfoWindow || !geoJsonData || !geoJsonData.features) return null;
 
         const activeFeature = geoJsonData.features.find((feature: any) => {
-             const properties = Object.keys(feature.properties);
-             const polygonId = properties.length > 0 ? properties[0] : null;
+             const polygonId = feature.properties?.name;
              return polygonId === activeInfoWindow;
         });
 
@@ -129,7 +127,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
             .filter((feature: any) => feature.geometry && feature.geometry.type === 'Point')
             .map((feature: any, index: number) => {
                 const [lng, lat] = feature.geometry.coordinates;
-                const title = feature.properties ? Object.keys(feature.properties)[0] : 'Punto de interés';
+                const title = feature.properties?.name || `Punto de interés ${index + 1}`;
                 
                  return (
                     <Marker
