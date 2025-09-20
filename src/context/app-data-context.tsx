@@ -960,7 +960,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
-
-
-  

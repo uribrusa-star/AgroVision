@@ -28,12 +28,13 @@ const LogSchema = z.object({
   personId: z.string().min(1, "Debe seleccionar a una persona."),
   hoursWorked: z.coerce.number().min(0.5, "Las horas deben ser un número positivo."),
   costPerHour: z.coerce.number().min(1, "El costo por hora es requerido."),
+  batchId: z.string().optional(),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function CulturalPracticesLogForm() {
-  const { addCulturalPracticeLog, currentUser, collectors, packers } = useContext(AppDataContext);
+  const { addCulturalPracticeLog, currentUser, collectors, packers, batches } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -55,7 +56,8 @@ export function CulturalPracticesLogForm() {
       practiceType: '',
       personId: '',
       hoursWorked: 8,
-      costPerHour: 5,
+      costPerHour: 0,
+      batchId: 'general',
     },
   });
 
@@ -79,6 +81,7 @@ export function CulturalPracticesLogForm() {
         costPerHour: data.costPerHour,
         payment: payment,
         notes: `Pago por labor de ${data.practiceType}`,
+        batchId: data.batchId === 'general' ? undefined : data.batchId,
       });
 
       toast({
@@ -91,7 +94,8 @@ export function CulturalPracticesLogForm() {
         practiceType: '',
         personId: '',
         hoursWorked: 8,
-        costPerHour: 5,
+        costPerHour: 0,
+        batchId: 'general',
       });
     });
   };
@@ -100,7 +104,7 @@ export function CulturalPracticesLogForm() {
     <Card>
       <CardHeader>
         <CardTitle>Registrar Pago de Labores Culturales</CardTitle>
-        <CardDescription>Registre la labor, el personal y el costo asociado a la tarea.</CardDescription>
+        <CardDescription>Registre la labor, el personal, el lote y el costo asociado a la tarea.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -196,6 +200,29 @@ export function CulturalPracticesLogForm() {
                 </FormItem>
               )}
             />
+            <FormField
+                    control={form.control}
+                    name="batchId"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Lote (Opcional)</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Labor General" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            <SelectItem value="general">Labor General</SelectItem>
+                            {batches.map(b => (
+                                <SelectItem key={b.id} value={b.id}>{b.id}</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
             <div className="grid grid-cols-2 gap-4">
               <FormField
                   control={form.control}
