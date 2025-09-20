@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useState, useMemo, useTransition } from 'react';
@@ -186,7 +187,7 @@ const SupplyDetailsDialog = ({ open, onOpenChange, supply, onEdit, onDelete }: {
                             <TableBody>
                                 <TableRow><TableCell className="font-medium text-muted-foreground">Composición</TableCell><TableCell>{supply.info.activeIngredient}</TableCell></TableRow>
                                 <TableRow><TableCell className="font-medium text-muted-foreground">Dosis</TableCell><TableCell>{supply.info.dose}</TableCell></TableRow>
-                                <TableRow><TableCell className="font-medium text-muted-foreground">Stock</TableCell><TableCell className={cn(supply.stock !== undefined && supply.lowStockThreshold !== undefined && supply.stock < supply.lowStockThreshold ? 'text-destructive font-bold' : '')}>{supply.stock ?? 'N/A'} kg/L</TableCell></TableRow>
+                                <TableRow><TableCell className="font-medium text-muted-foreground">Stock</TableCell><TableCell className={cn(supply.stock !== undefined && supply.lowStockThreshold !== undefined && supply.stock < supply.lowStockThreshold ? 'text-destructive font-bold' : '')}>{supply.stock !== undefined ? supply.stock.toFixed(3) : 'N/A'} kg/L</TableCell></TableRow>
                                 <TableRow><TableCell className="font-medium text-muted-foreground">Umbral Stock Bajo</TableCell><TableCell>{supply.lowStockThreshold ?? 'N/A'} kg/L</TableCell></TableRow>
                                 {supply.info.notes && <TableRow><TableCell className="font-medium text-muted-foreground">Notas</TableCell><TableCell className="whitespace-pre-wrap">{supply.info.notes}</TableCell></TableRow>}
                             </TableBody>
@@ -303,7 +304,7 @@ export function Supplies() {
                         <TableCell className="font-medium">{supply.name}</TableCell>
                         <TableCell className="hidden md:table-cell">{supply.info.activeIngredient}</TableCell>
                         <TableCell className={cn("text-right font-semibold", isLowStock && "text-destructive")}>
-                            {supply.stock ?? 'N/A'}
+                            {supply.stock !== undefined ? supply.stock.toFixed(3) : 'N/A'}
                         </TableCell>
                     </TableRow>
                 );
