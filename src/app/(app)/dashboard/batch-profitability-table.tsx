@@ -1,16 +1,29 @@
 
 'use client';
 
-import React, { useContext, useMemo } from 'react';
-import { AppDataContext } from '@/context/app-data-context.tsx';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, HardHat, TestTube2, Weight } from 'lucide-react';
+import type { Harvest, CollectorPaymentLog, CulturalPracticeLog, AgronomistLog, Transaction } from '@/lib/types';
 
-export function BatchProfitabilityTable() {
-    const { loading, harvests, collectorPaymentLogs, culturalPracticeLogs, agronomistLogs, transactions } = useContext(AppDataContext);
+interface BatchProfitabilityTableProps {
+    harvests: Harvest[];
+    collectorPaymentLogs: CollectorPaymentLog[];
+    culturalPracticeLogs: CulturalPracticeLog[];
+    agronomistLogs: AgronomistLog[];
+    transactions: Transaction[];
+}
+
+export function BatchProfitabilityTable({ 
+    harvests, 
+    collectorPaymentLogs, 
+    culturalPracticeLogs, 
+    agronomistLogs, 
+    transactions 
+}: BatchProfitabilityTableProps) {
 
     const batchData = useMemo(() => {
         const harvestedBatchIds = [...new Set(harvests.map(h => h.batchNumber))];
@@ -53,8 +66,20 @@ export function BatchProfitabilityTable() {
         });
     }, [harvests, collectorPaymentLogs, culturalPracticeLogs, agronomistLogs, transactions]);
 
-    if (loading) {
-        return <Skeleton className="h-[300px] w-full" />;
+    if (harvests.length === 0) {
+        return (
+             <Card>
+                <CardHeader>
+                    <CardTitle>Análisis de Rentabilidad por Lote</CardTitle>
+                    <CardDescription>Desglose de producción y costos para cada lote cosechado.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-center h-24 flex items-center justify-center text-muted-foreground">
+                        No hay datos de lotes cosechados para analizar.
+                    </div>
+                </CardContent>
+            </Card>
+        )
     }
 
     return (

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/page-header";
 import { BarChart as BarChartIcon, CalendarDays, DollarSign, Trophy, Weight } from "lucide-react";
 import { AppDataContext } from '@/context/app-data-context.tsx';
-import type { Harvest, CollectorPaymentLog, PackagingLog, CulturalPracticeLog } from '@/lib/types';
+import type { Harvest, CollectorPaymentLog, PackagingLog, CulturalPracticeLog, Transaction } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 import { CostDistributionChart } from './cost-distribution-chart';
@@ -18,7 +18,7 @@ import { BatchProfitabilityTable } from './batch-profitability-table';
 
 
 export default function DashboardPage() {
-  const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs, culturalPracticeLogs } = React.useContext(AppDataContext);
+  const { loading, harvests, collectors, collectorPaymentLogs, packagingLogs, culturalPracticeLogs, transactions, agronomistLogs } = React.useContext(AppDataContext);
 
   const calculateDashboardStats = (harvests: Harvest[], paymentLogs: CollectorPaymentLog[], packagingLogs: PackagingLog[], culturalPracticeLogs: CulturalPracticeLog[]) => {
     if (!harvests || harvests.length === 0) {
@@ -94,7 +94,7 @@ export default function DashboardPage() {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${dashboardStats.totalLaborCost.toLocaleString('es-AR', { maximumFractionDigits: 0 })}`}</div>
+            <div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-24" /> : `$${dashboardStats.totalLaborCost.toLocaleString('es-ES', { maximumFractionDigits: 0 })}`}</div>
             <p className="text-xs text-muted-foreground">Cosecha + Embalaje + Labores</p>
           </CardContent>
         </Card>
@@ -203,7 +203,13 @@ export default function DashboardPage() {
             </Card>
         </div>
         <div className="lg:col-span-3">
-          <BatchProfitabilityTable />
+          <BatchProfitabilityTable 
+            harvests={harvests} 
+            collectorPaymentLogs={collectorPaymentLogs} 
+            culturalPracticeLogs={culturalPracticeLogs} 
+            agronomistLogs={agronomistLogs} 
+            transactions={transactions} 
+          />
         </div>
       </div>
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
