@@ -177,6 +177,19 @@ export type CulturalPracticeLog = {
     batchId?: string;
 };
 
+export type TaskStatus = 'pending' | 'in-progress' | 'completed';
+
+export type Task = {
+    id: string;
+    title: string;
+    description: string;
+    assignedTo: { id: string, name: string };
+    createdBy: { id: string, name: string };
+    status: TaskStatus;
+    createdAt: string;
+    dueDate?: string;
+};
+
 
 export type EstablishmentData = {
   id: string;
@@ -260,6 +273,7 @@ export type AppData = {
   predictionLogs: PredictionLog[];
   diagnosisLogs: DiagnosisLog[];
   supplies: Supply[];
+  tasks: Task[];
   batches: Batch[];
   collectorPaymentLogs: CollectorPaymentLog[];
   establishmentData: EstablishmentData | null;
@@ -281,6 +295,9 @@ export type AppData = {
   addSupply: (supply: Omit<Supply, 'id'>) => void;
   editSupply: (supply: Supply) => void;
   deleteSupply: (supplyId: string) => void;
+  addTask: (task: Omit<Task, 'id'>) => void;
+  updateTaskStatus: (taskId: string, status: TaskStatus) => void;
+  deleteTask: (taskId: string) => void;
   addCollector: (collector: Omit<Collector, 'id'>) => void;
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
   deletePacker: (packerId: string) => void;
@@ -300,6 +317,3 @@ export type AppData = {
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
   isClient: boolean;
 };
-
-
-

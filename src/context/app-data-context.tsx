@@ -3,7 +3,7 @@
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
-import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog, Supply, PredictionLog, DiagnosisLog } from '@/lib/types';
+import type { AppData, User, Harvest, Collector, AgronomistLog, PhenologyLog, Batch, CollectorPaymentLog, EstablishmentData, ProducerLog, Transaction, Packer, PackagingLog, CulturalPracticeLog, Supply, PredictionLog, DiagnosisLog, Task, TaskStatus } from '@/lib/types';
 import { initialEstablishmentData, users as availableUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -24,6 +24,7 @@ export const AppDataContext = React.createContext<AppData>({
   predictionLogs: [],
   diagnosisLogs: [],
   supplies: [],
+  tasks: [],
   batches: [],
   collectorPaymentLogs: [],
   establishmentData: null,
@@ -45,6 +46,9 @@ export const AppDataContext = React.createContext<AppData>({
   addSupply: () => { throw new Error('Not implemented') },
   editSupply: () => { throw new Error('Not implemented') },
   deleteSupply: () => { throw new Error('Not implemented') },
+  addTask: () => { throw new Error('Not implemented') },
+  updateTaskStatus: () => { throw new Error('Not implemented') },
+  deleteTask: () => { throw new Error('Not implemented') },
   addCollector: () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
   deletePacker: () => { throw new Error('Not implemented') },
@@ -80,6 +84,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const [predictionLogs, setPredictionLogs] = useState<PredictionLog[]>([]);
     const [diagnosisLogs, setDiagnosisLogs] = useState<DiagnosisLog[]>([]);
     const [supplies, setSupplies] = useState<Supply[]>([]);
+    const [tasks, setTasks] = useState<Task[]>([]);
     const [batches, setBatches] = useState<Batch[]>([]);
     const [collectorPaymentLogs, setCollectorPaymentLogs] = useState<CollectorPaymentLog[]>([]);
     const [establishmentData, setEstablishmentData] = useState<EstablishmentData | null>(null);
@@ -137,6 +142,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               predictionLogsSnapshot,
               diagnosisLogsSnapshot,
               suppliesSnapshot,
+              tasksSnapshot,
               batchesSnapshot,
               collectorPaymentsSnapshot,
               packagingLogsSnapshot,
@@ -153,6 +159,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
               getDocs(query(collection(db, 'predictionLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'diagnosisLogs'), orderBy('date', 'desc'))),
               getDocs(collection(db, 'supplies')),
+              getDocs(query(collection(db, 'tasks'), orderBy('createdAt', 'desc'))),
               getDocs(collection(db, 'batches')),
               getDocs(query(collection(db, 'collectorPaymentLogs'), orderBy('date', 'desc'))),
               getDocs(query(collection(db, 'packagingLogs'), orderBy('date', 'desc'))),
@@ -175,6 +182,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setPredictionLogs(predictionLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PredictionLog[]);
             setDiagnosisLogs(diagnosisLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as DiagnosisLog[]);
             setSupplies(suppliesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Supply[]);
+            setTasks(tasksSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Task[]);
             setBatches(batchesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Batch[]);
             setCollectorPaymentLogs(collectorPaymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as CollectorPaymentLog[]);
             setPackagingLogs(packagingLogsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PackagingLog[]);
@@ -605,6 +613,43 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
+    const addTask = (task: Omit<Task, 'id'>) => {
+        const tempId = `task_${Date.now()}`;
+        setTasks(prev => [{ id: tempId, ...task }, ...prev]);
+
+        addDoc(collection(db, 'tasks'), task).then(ref => {
+            setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: ref.id } : t));
+        }).catch(error => {
+            console.error("Failed to add task:", error);
+            setTasks(prev => prev.filter(t => t.id !== tempId));
+            toast({ title: "Error", description: "No se pudo agregar la tarea.", variant: "destructive"});
+        });
+    };
+    
+    const updateTaskStatus = (taskId: string, status: TaskStatus) => {
+        const originalTasks = tasks;
+        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
+        
+        const taskRef = doc(db, 'tasks', taskId);
+        setDoc(taskRef, { status }, { merge: true }).catch(error => {
+            console.error("Failed to update task status:", error);
+            setTasks(originalTasks);
+            toast({ title: "Error", description: "No se pudo actualizar el estado de la tarea.", variant: "destructive"});
+        });
+    };
+
+    const deleteTask = (taskId: string) => {
+        const originalTasks = tasks;
+        setTasks(prev => prev.filter(t => t.id !== taskId));
+        
+        deleteDoc(doc(db, 'tasks', taskId)).catch(error => {
+            console.error("Failed to delete task:", error);
+            setTasks(originalTasks);
+            toast({ title: "Error", description: "No se pudo eliminar la tarea.", variant: "destructive"});
+        });
+    };
+
+
     const addBatch = (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string; preloadedDate: string; status: string }) => {
         const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
         setBatches(prev => [newBatch, ...prev]);
@@ -795,6 +840,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         predictionLogs,
         diagnosisLogs,
         supplies,
+        tasks,
         batches,
         collectorPaymentLogs,
         establishmentData,
@@ -816,6 +862,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         addSupply,
         editSupply,
         deleteSupply,
+        addTask,
+        updateTaskStatus,
+        deleteTask,
         addCollector,
         addPacker,
         deletePacker,
@@ -842,4 +891,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
