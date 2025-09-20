@@ -36,8 +36,19 @@ const TaskSchema = z.object({
 type TaskFormValues = z.infer<typeof TaskSchema>;
 
 const TaskCard = ({ task }: { task: Task }) => {
-    const { users } = useContext(AppDataContext);
+    const { users, currentUser, updateTaskStatus } = useContext(AppDataContext);
+    const { toast } = useToast();
     const assignedUser = users.find(u => u.id === task.assignedTo.id);
+
+    const handleUpdateStatus = (newStatus: TaskStatus) => {
+        updateTaskStatus(task.id, newStatus);
+        toast({
+            title: 'Tarea Actualizada',
+            description: `La tarea "${task.title}" se ha movido a "${newStatus === 'in-progress' ? 'En Progreso' : 'Completado'}".`,
+        });
+    }
+
+    const canUpdateStatus = currentUser?.id === task.assignedTo.id;
 
     return (
         <Card className="hover:shadow-md transition-shadow">
@@ -52,8 +63,8 @@ const TaskCard = ({ task }: { task: Task }) => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            {task.status === 'pending' && <DropdownMenuItem><ArrowRight className="mr-2 h-4 w-4" />Mover a En Progreso</DropdownMenuItem>}
-                            {task.status === 'in-progress' && <DropdownMenuItem><ArrowRight className="mr-2 h-4 w-4" />Mover a Completado</DropdownMenuItem>}
+                            {task.status === 'pending' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('in-progress')}><ArrowRight className="mr-2 h-4 w-4" />Mover a En Progreso</DropdownMenuItem>}
+                            {task.status === 'in-progress' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('completed')}><ArrowRight className="mr-2 h-4 w-4" />Mover a Completado</DropdownMenuItem>}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
