@@ -408,6 +408,13 @@ export function ApplicationHistory() {
                                         <p className="font-semibold">{selectedLog.product}</p>
                                     </div>
                                 )}
+
+                                {selectedLog.quantityUsed && selectedLog.quantityUsed > 0 && (
+                                    <div className="space-y-1">
+                                        <p className="text-sm font-medium text-muted-foreground">Cantidad Aplicada</p>
+                                        <p className="font-semibold">{selectedLog.quantityUsed} kg/L</p>
+                                    </div>
+                                )}
                                 
                                  {selectedLog.diagnosis && (
                                     <div className="space-y-1">
