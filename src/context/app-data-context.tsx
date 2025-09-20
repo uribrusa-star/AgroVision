@@ -468,7 +468,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     const supplyRef = doc(db, 'supplies', supplyToUpdate.id);
                     batch.update(supplyRef, { stock: newStock });
 
-                    // Check for low stock threshold
                     if (supplyToUpdate.lowStockThreshold !== undefined && newStock < supplyToUpdate.lowStockThreshold && oldStock >= supplyToUpdate.lowStockThreshold) {
                        lowStockAlertTriggered = true;
                        const producerUser = users.find(u => u.role === 'Productor');
@@ -517,7 +516,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteAgronomistLog = (logId: string) => {
-        const originalState = { logs: agronomistLogs, supplies: supplies };
+        const originalState = { logs: [...agronomistLogs], supplies: [...supplies], tasks: [...tasks] };
         const logToDelete = agronomistLogs.find(l => l.id === logId);
 
         setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
@@ -529,22 +528,30 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             if (logToDelete && (logToDelete.type === 'Fertilización' || logToDelete.type === 'Fumigación') && logToDelete.product && logToDelete.quantityUsed) {
                 const supplyToUpdate = supplies.find(s => s.name === logToDelete.product);
                 if (supplyToUpdate && supplyToUpdate.stock !== undefined) {
-                    const newStock = supplyToUpdate.stock + logToDelete.quantityUsed;
+                    const restoredStock = supplyToUpdate.stock + logToDelete.quantityUsed;
                     const supplyRef = doc(db, 'supplies', supplyToUpdate.id);
-                    batch.update(supplyRef, { stock: newStock });
+                    batch.update(supplyRef, { stock: restoredStock });
 
-                    // Optimistic UI update for supply
-                    setSupplies(prev => prev.map(s => s.id === supplyToUpdate.id ? { ...s, stock: newStock } : s));
+                    setSupplies(prev => prev.map(s => s.id === supplyToUpdate.id ? { ...s, stock: restoredStock } : s));
+
+                    if (supplyToUpdate.lowStockThreshold !== undefined && supplyToUpdate.stock < supplyToUpdate.lowStockThreshold && restoredStock >= supplyToUpdate.lowStockThreshold) {
+                        const relatedTask = tasks.find(t => t.title === `Stock bajo: ${supplyToUpdate.name}` && t.status === 'pending');
+                        if (relatedTask) {
+                            batch.delete(doc(db, 'tasks', relatedTask.id));
+                            setTasks(prev => prev.filter(t => t.id !== relatedTask.id));
+                        }
+                    }
                 }
             }
             await batch.commit();
         };
 
         runDelete().catch(error => {
-            console.error("Failed to delete agronomist log and restore stock:", error);
+            console.error("Failed to delete agronomist log and related data:", error);
             setAgronomistLogs(originalState.logs);
             setSupplies(originalState.supplies);
-            toast({ title: "Error", description: "No se pudo eliminar el registro o restaurar el stock.", variant: "destructive"});
+            setTasks(originalState.tasks);
+            toast({ title: "Error", description: "No se pudo eliminar el registro o restaurar los datos asociados.", variant: "destructive"});
         });
     };
 
