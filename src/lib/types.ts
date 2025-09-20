@@ -178,6 +178,8 @@ export type CulturalPracticeLog = {
 };
 
 export type TaskStatus = 'pending' | 'in-progress' | 'completed';
+export type TaskPriority = 'baja' | 'media' | 'alta';
+
 
 export type Task = {
     id: string;
@@ -186,6 +188,8 @@ export type Task = {
     assignedTo: { id: string, name: string };
     createdBy: { id: string, name: string };
     status: TaskStatus;
+    priority: TaskPriority;
+    materials?: { name: string }[];
     createdAt: string;
     dueDate?: string;
 };

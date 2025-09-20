@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useContext, useMemo, useState, useTransition } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
@@ -22,16 +22,20 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Calendar as CalendarIcon, MoreHorizontal, ArrowRight } from 'lucide-react';
+import { Calendar as CalendarIcon, MoreHorizontal, ArrowRight, Flag, Wrench, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const TaskSchema = z.object({
     title: z.string().min(5, "El título debe tener al menos 5 caracteres."),
     description: z.string().min(10, "La descripción debe tener al menos 10 caracteres."),
     assignedToId: z.string().min(1, "Debe asignar la tarea a un usuario."),
     dueDate: z.date().optional(),
+    priority: z.enum(['baja', 'media', 'alta']).default('media'),
+    materials: z.array(z.object({ name: z.string().min(1, "El nombre del material es requerido.") })).optional(),
 });
+
 
 type TaskFormValues = z.infer<typeof TaskSchema>;
 
@@ -44,17 +48,26 @@ const TaskCard = ({ task }: { task: Task }) => {
         updateTaskStatus(task.id, newStatus);
         toast({
             title: 'Tarea Actualizada',
-            description: `La tarea "${task.title}" se ha movido a "${newStatus === 'in-progress' ? 'En Progreso' : 'Completado'}".`,
+            description: `La tarea "${task.title}" se ha movido a "${newStatus === 'in-progress' ? 'En Progreso' : newStatus === 'pending' ? 'Pendiente' : 'Completado'}".`,
         });
     }
 
-    const canUpdateStatus = currentUser?.id === task.assignedTo.id;
+    const canUpdateStatus = currentUser?.id === task.assignedTo.id || currentUser?.role === 'Productor';
+    
+    const priorityInfo = {
+        alta: { label: 'Alta', color: 'bg-red-500', iconColor: 'text-red-500' },
+        media: { label: 'Media', color: 'bg-yellow-500', iconColor: 'text-yellow-500' },
+        baja: { label: 'Baja', color: 'bg-blue-500', iconColor: 'text-blue-500' },
+    }[task.priority || 'media'];
 
     return (
         <Card className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-2">
                 <div className="flex justify-between items-start">
-                    <CardTitle className="text-base font-bold">{task.title}</CardTitle>
+                    <CardTitle className="text-base font-bold flex items-center gap-2">
+                       <Flag className={cn("h-4 w-4", priorityInfo.iconColor)} />
+                       {task.title}
+                    </CardTitle>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -62,33 +75,42 @@ const TaskCard = ({ task }: { task: Task }) => {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            {task.status === 'pending' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('in-progress')}><ArrowRight className="mr-2 h-4 w-4" />Mover a En Progreso</DropdownMenuItem>}
-                            {task.status === 'in-progress' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('completed')}><ArrowRight className="mr-2 h-4 w-4" />Mover a Completado</DropdownMenuItem>}
+                            <DropdownMenuLabel>Mover a</DropdownMenuLabel>
+                            {task.status !== 'pending' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('pending')}><ArrowRight className="mr-2 h-4 w-4" />Pendiente</DropdownMenuItem>}
+                            {task.status !== 'in-progress' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('in-progress')}><ArrowRight className="mr-2 h-4 w-4" />En Progreso</DropdownMenuItem>}
+                            {task.status !== 'completed' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('completed')}><ArrowRight className="mr-2 h-4 w-4" />Completado</DropdownMenuItem>}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground pb-4">
-                <p className="mb-4">{task.description}</p>
-                <div className="flex justify-between items-center">
+            <CardContent className="text-sm text-muted-foreground pb-4 space-y-3">
+                <p>{task.description}</p>
+                 {task.materials && task.materials.length > 0 && (
+                    <div className="flex items-start gap-2">
+                        <Wrench className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                        <div className="flex flex-wrap gap-1">
+                            {task.materials.map((m, i) => <Badge key={i} variant="secondary">{m.name}</Badge>)}
+                        </div>
+                    </div>
+                )}
+            </CardContent>
+             <CardFooter className="flex justify-between items-center text-xs pb-4">
                      {assignedUser && (
                         <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                                 <AvatarImage src={`https://picsum.photos/seed/${assignedUser.avatar}/24/24`} />
                                 <AvatarFallback>{assignedUser.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="text-xs font-medium">{assignedUser.name}</span>
+                            <span className="font-medium">{assignedUser.name}</span>
                         </div>
                     )}
                     {task.dueDate && (
-                        <div className="flex items-center gap-1 text-xs">
+                        <div className="flex items-center gap-1">
                             <CalendarIcon className="h-3 w-3" />
                             <span>{new Date(task.dueDate).toLocaleDateString('es-ES')}</span>
                         </div>
                     )}
-                </div>
-            </CardContent>
+                </CardFooter>
         </Card>
     )
 }
@@ -101,11 +123,17 @@ export default function TasksPage() {
 
     const form = useForm<TaskFormValues>({
         resolver: zodResolver(TaskSchema),
-        defaultValues: { title: '', description: '', assignedToId: '', dueDate: undefined },
+        defaultValues: { title: '', description: '', assignedToId: '', dueDate: undefined, priority: 'media', materials: [{name: ''}] },
     });
 
+    const { fields, append, remove } = useFieldArray({
+        control: form.control,
+        name: "materials"
+    });
+
+
     if (!currentUser) return null;
-    const canCreateTasks = currentUser.role === 'Productor';
+    const canCreateTasks = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
     const assignableUsers = users.filter(u => u.id !== currentUser.id);
 
@@ -128,18 +156,22 @@ export default function TasksPage() {
         if (!assignedToUser || !currentUser) return;
         
         startTransition(() => {
+            const validMaterials = values.materials?.filter(m => m.name.trim() !== '');
+
             addTask({
                 title: values.title,
                 description: values.description,
                 assignedTo: { id: assignedToUser.id, name: assignedToUser.name },
                 createdBy: { id: currentUser.id, name: currentUser.name },
                 status: 'pending',
+                priority: values.priority,
+                materials: validMaterials,
                 createdAt: new Date().toISOString(),
                 dueDate: values.dueDate?.toISOString(),
             });
             toast({ title: "Tarea Creada", description: `La tarea "${values.title}" ha sido asignada a ${assignedToUser.name}.` });
             setIsAddDialogOpen(false);
-            form.reset();
+            form.reset({ title: '', description: '', assignedToId: '', dueDate: undefined, priority: 'media', materials: [{name: ''}] });
         });
     }
 
@@ -154,16 +186,16 @@ export default function TasksPage() {
                 <DialogTrigger asChild>
                     <Button>Crear Nueva Tarea</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Crear Nueva Tarea</DialogTitle>
                         <DialogDescription>Complete los detalles para asignar una nueva tarea.</DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onAddTask)} className="space-y-4">
+                        <form onSubmit={form.handleSubmit(onAddTask)} className="space-y-4 max-h-[80vh] overflow-y-auto pr-6">
                             <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título</FormLabel><FormControl><Input {...field} placeholder="Ej. Revisar riego en Lote 005" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descripción</FormLabel><FormControl><Textarea {...field} placeholder="Añadir detalles sobre la tarea..." disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <FormField control={form.control} name="assignedToId" render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Asignar a</FormLabel>
@@ -178,12 +210,12 @@ export default function TasksPage() {
                                 )} />
                                 <FormField control={form.control} name="dueDate" render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Fecha Límite (Opcional)</FormLabel>
+                                        <FormLabel>Fecha Límite</FormLabel>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button variant={"outline"} className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")} disabled={isPending}>
-                                                        {field.value ? format(field.value, "PPP", { locale: es }) : <span>Seleccione fecha</span>}
+                                                        {field.value ? format(field.value, "PPP", { locale: es }) : <span>Opcional</span>}
                                                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                                     </Button>
                                                 </FormControl>
@@ -195,8 +227,43 @@ export default function TasksPage() {
                                         <FormMessage />
                                     </FormItem>
                                 )} />
+                                 <FormField control={form.control} name="priority" render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Prioridad</FormLabel>
+                                        <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="baja">Baja</SelectItem>
+                                                <SelectItem value="media">Media</SelectItem>
+                                                <SelectItem value="alta">Alta</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}/>
                             </div>
-                            <DialogFooter>
+                            <div className="space-y-4">
+                                <FormLabel>Materiales Necesarios (Opcional)</FormLabel>
+                                {fields.map((item, index) => (
+                                    <div key={item.id} className="flex items-center gap-2">
+                                    <FormField
+                                        control={form.control}
+                                        name={`materials.${index}.name`}
+                                        render={({ field }) => (
+                                        <FormItem className="flex-grow">
+                                            <FormControl>
+                                            <Input {...field} placeholder={`Ej. 10kg de Fertilizante X`} disabled={isPending} />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                        )}
+                                    />
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPending || fields.length <= 1}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                    </div>
+                                ))}
+                                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '' })} disabled={isPending}><PlusCircle className="mr-2 h-4 w-4" />Añadir Material</Button>
+                            </div>
+                            <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
                                 <Button type="submit" disabled={isPending}>{isPending ? "Creando..." : "Crear Tarea"}</Button>
                             </DialogFooter>
