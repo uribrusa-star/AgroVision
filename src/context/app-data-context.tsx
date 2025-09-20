@@ -452,25 +452,50 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const addAgronomistLog = (log: Omit<AgronomistLog, 'id'>) => {
         const tempId = `agrolog_${Date.now()}`;
         setAgronomistLogs(prev => [{ id: tempId, ...log }, ...prev]);
-
+    
         const runAdd = async () => {
             const batch = writeBatch(db);
             const newLogRef = doc(collection(db, 'agronomistLogs'));
             batch.set(newLogRef, log);
             
+            let lowStockAlertTriggered = false;
+
             if ((log.type === 'Fertilización' || log.type === 'Fumigación') && log.product && log.quantityUsed) {
                 const supplyToUpdate = supplies.find(s => s.name === log.product);
                 if (supplyToUpdate && supplyToUpdate.stock !== undefined) {
-                    const newStock = supplyToUpdate.stock - log.quantityUsed;
+                    const oldStock = supplyToUpdate.stock;
+                    const newStock = oldStock - log.quantityUsed;
                     const supplyRef = doc(db, 'supplies', supplyToUpdate.id);
                     batch.update(supplyRef, { stock: newStock });
+
+                    // Check for low stock threshold
+                    if (supplyToUpdate.lowStockThreshold !== undefined && newStock < supplyToUpdate.lowStockThreshold && oldStock >= supplyToUpdate.lowStockThreshold) {
+                       lowStockAlertTriggered = true;
+                       const producerUser = users.find(u => u.role === 'Productor');
+                       if (producerUser && currentUser) {
+                           const newTask: Omit<Task, 'id'> = {
+                                title: `Stock bajo: ${supplyToUpdate.name}`,
+                                description: `El stock de '${supplyToUpdate.name}' ha caído a ${newStock.toFixed(1)} kg/L, por debajo del umbral de ${supplyToUpdate.lowStockThreshold} kg/L. Se recomienda reponer.`,
+                                assignedTo: { id: producerUser.id, name: producerUser.name },
+                                createdBy: { id: currentUser.id, name: currentUser.name },
+                                status: 'pending',
+                                priority: 'media',
+                                createdAt: new Date().toISOString(),
+                           };
+                           const newTaskRef = doc(collection(db, 'tasks'));
+                           batch.set(newTaskRef, newTask);
+                       }
+                    }
                 }
             }
-
+    
             await batch.commit();
             await fetchAllData();
+            if (lowStockAlertTriggered) {
+                toast({ title: "Alerta de Stock Bajo", description: `Se ha creado una tarea para reponer ${log.product}.` });
+            }
         }
-
+    
         runAdd().catch(error => {
             console.error("Failed to add agronomist log and update stock:", error);
             setAgronomistLogs(prev => prev.filter(l => l.id !== tempId));
@@ -929,3 +954,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     );
 };
 
+
+
+  
