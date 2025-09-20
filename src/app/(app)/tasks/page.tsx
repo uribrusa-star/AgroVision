@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useMemo, useState, useTransition } from 'react';
@@ -21,11 +22,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Calendar as CalendarIcon, MoreHorizontal, ArrowRight, Flag, Wrench, PlusCircle, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
 
 const TaskSchema = z.object({
     title: z.string().min(5, "El título debe tener al menos 5 caracteres."),
@@ -40,19 +43,34 @@ const TaskSchema = z.object({
 type TaskFormValues = z.infer<typeof TaskSchema>;
 
 const TaskCard = ({ task }: { task: Task }) => {
-    const { users, currentUser, updateTaskStatus } = useContext(AppDataContext);
+    const { users, currentUser, updateTaskStatus, deleteTask } = useContext(AppDataContext);
+    const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
     const assignedUser = users.find(u => u.id === task.assignedTo.id);
 
     const handleUpdateStatus = (newStatus: TaskStatus) => {
-        updateTaskStatus(task.id, newStatus);
-        toast({
-            title: 'Tarea Actualizada',
-            description: `La tarea "${task.title}" se ha movido a "${newStatus === 'in-progress' ? 'En Progreso' : newStatus === 'pending' ? 'Pendiente' : 'Completado'}".`,
+        startTransition(() => {
+            updateTaskStatus(task.id, newStatus);
+            toast({
+                title: 'Tarea Actualizada',
+                description: `La tarea "${task.title}" se ha movido a "${newStatus === 'in-progress' ? 'En Progreso' : newStatus === 'pending' ? 'Pendiente' : 'Completado'}".`,
+            });
+        });
+    }
+    
+    const handleDelete = () => {
+        startTransition(() => {
+            deleteTask(task.id);
+            toast({
+                title: 'Tarea Eliminada',
+                description: `La tarea "${task.title}" ha sido eliminada.`,
+                variant: 'destructive'
+            });
         });
     }
 
     const canUpdateStatus = currentUser?.id === task.assignedTo.id || currentUser?.role === 'Productor';
+    const canDeleteTask = currentUser?.role === 'Productor' || currentUser?.id === task.createdBy.id;
     
     const priorityInfo = {
         alta: { label: 'Alta', color: 'bg-red-500', iconColor: 'text-red-500' },
@@ -68,19 +86,44 @@ const TaskCard = ({ task }: { task: Task }) => {
                        <Flag className={cn("h-4 w-4", priorityInfo.iconColor)} />
                        {task.title}
                     </CardTitle>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Mover a</DropdownMenuLabel>
-                            {task.status !== 'pending' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('pending')}><ArrowRight className="mr-2 h-4 w-4" />Pendiente</DropdownMenuItem>}
-                            {task.status !== 'in-progress' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('in-progress')}><ArrowRight className="mr-2 h-4 w-4" />En Progreso</DropdownMenuItem>}
-                            {task.status !== 'completed' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('completed')}><ArrowRight className="mr-2 h-4 w-4" />Completado</DropdownMenuItem>}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <AlertDialog>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-6 w-6" disabled={isPending}>
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Mover a</DropdownMenuLabel>
+                                {task.status !== 'pending' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('pending')}><ArrowRight className="mr-2 h-4 w-4" />Pendiente</DropdownMenuItem>}
+                                {task.status !== 'in-progress' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('in-progress')}><ArrowRight className="mr-2 h-4 w-4" />En Progreso</DropdownMenuItem>}
+                                {task.status !== 'completed' && canUpdateStatus && <DropdownMenuItem onSelect={() => handleUpdateStatus('completed')}><ArrowRight className="mr-2 h-4 w-4" />Completado</DropdownMenuItem>}
+                                {canDeleteTask && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Eliminar
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                    </>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Esto eliminará permanentemente la tarea.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete}>Continuar y Eliminar</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground pb-4 space-y-3">
@@ -135,7 +178,7 @@ export default function TasksPage() {
     if (!currentUser) return null;
     const canCreateTasks = currentUser.role === 'Productor' || currentUser.role === 'Ingeniero Agronomo';
 
-    const assignableUsers = users.filter(u => u.id !== currentUser.id);
+    const assignableUsers = users;
 
     const categorizedTasks = useMemo(() => {
         const pending: Task[] = [];
