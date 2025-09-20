@@ -87,11 +87,11 @@ export function BatchProfitabilityTable() {
                             {batchData.map(batch => (
                                 <TableRow key={batch.id}>
                                     <TableCell><Badge variant="outline">{batch.id}</Badge></TableCell>
-                                    <TableCell className="text-right font-semibold flex items-center justify-end gap-2"><Weight className="h-4 w-4 text-muted-foreground" /> {batch.totalKilos.toLocaleString('es-AR')}</TableCell>
-                                    <TableCell className="text-right flex items-center justify-end gap-2"><HardHat className="h-4 w-4 text-muted-foreground" /> ${batch.totalLaborCost.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</TableCell>
-                                    <TableCell className="text-right flex items-center justify-end gap-2"><TestTube2 className="h-4 w-4 text-muted-foreground" /> ${batch.inputCost.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</TableCell>
-                                    <TableCell className="text-right flex items-center justify-end gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /> ${batch.totalCost.toLocaleString('es-AR', { maximumFractionDigits: 2 })}</TableCell>
-                                    <TableCell className="text-right font-bold">${batch.costPerKg.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                    <TableCell className="text-right font-semibold flex items-center justify-end gap-2"><Weight className="h-4 w-4 text-muted-foreground" /> {batch.totalKilos.toLocaleString('es-ES')}</TableCell>
+                                    <TableCell className="text-right flex items-center justify-end gap-2"><HardHat className="h-4 w-4 text-muted-foreground" /> ${batch.totalLaborCost.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                    <TableCell className="text-right flex items-center justify-end gap-2"><TestTube2 className="h-4 w-4 text-muted-foreground" /> ${batch.inputCost.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                    <TableCell className="text-right flex items-center justify-end gap-2"><DollarSign className="h-4 w-4 text-muted-foreground" /> ${batch.totalCost.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                                    <TableCell className="text-right font-bold">${batch.costPerKg.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                                 </TableRow>
                             ))}
                         </TableBody>
