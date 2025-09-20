@@ -1,7 +1,12 @@
 
 'use client';
 
-import React, { useContext, useMemo, useState, useTransition } from 'react';
+import React, { useContext, useMemo, useState, useTransition, useRef } from 'react';
+import Image from 'next/image';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
+import html2canvas from 'html2canvas';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -10,15 +15,23 @@ import type { CulturalPracticeLog } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Calendar, DollarSign, HardHat, Info, Trash2, Watch } from 'lucide-react';
+import { Calendar, DollarSign, HardHat, Info, Trash2, Watch, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 
+// Extend jsPDF with autoTable
+interface jsPDFWithAutoTable extends jsPDF {
+  autoTable: (options: any) => jsPDF;
+  lastAutoTable: { finalY: number };
+}
+
 function CulturalPracticesHistoryComponent() {
-  const { loading, culturalPracticeLogs, deleteCulturalPracticeLog, currentUser } = useContext(AppDataContext);
+  const { loading, culturalPracticeLogs, deleteCulturalPracticeLog, currentUser, establishmentData } = useContext(AppDataContext);
   const [selectedLog, setSelectedLog] = useState<CulturalPracticeLog | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [isPdfPending, startPdfTransition] = useTransition();
   const { toast } = useToast();
+  const logoRef = useRef<HTMLDivElement>(null);
 
   const canManage = currentUser?.role === 'Productor' || currentUser?.role === 'Encargado';
 
@@ -37,9 +50,90 @@ function CulturalPracticesHistoryComponent() {
       setSelectedLog(null);
     });
   }
+  
+  const handleGenerateReceipt = () => {
+    if (!selectedLog || !establishmentData) return;
+
+    startPdfTransition(async () => {
+      toast({ title: 'Generando Recibo', description: 'Por favor espere...' });
+      try {
+        const doc = new jsPDF() as jsPDFWithAutoTable;
+        let logoPngDataUri = '';
+
+        if (logoRef.current) {
+          const canvas = await html2canvas(logoRef.current, { backgroundColor: null, scale: 3 });
+          logoPngDataUri = canvas.toDataURL('image/png');
+        }
+        
+        if (logoPngDataUri) {
+          doc.addImage(logoPngDataUri, 'PNG', 15, 12, 18, 18);
+        }
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text(establishmentData.producer, 40, 22);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(150);
+        doc.text(`${establishmentData.location.locality}, ${establishmentData.location.province}`, 40, 28);
+        
+        doc.setFontSize(22);
+        doc.setFont('helvetica', 'bold');
+        doc.text('RECIBO DE PAGO POR LABOR CULTURAL', 105, 50, { align: 'center' });
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(80);
+        doc.text(`Fecha: ${new Date(selectedLog.date).toLocaleDateString('es-AR')}`, 195, 60, { align: 'right' });
+
+        const bodyY = 80;
+        doc.setFontSize(12);
+        doc.text(`Por medio del presente, se deja constancia de que ${selectedLog.personnelName} ha recibido el pago por los servicios detallados a continuación:`, 15, bodyY, { maxWidth: 180 });
+
+        const tableBody = [
+            ['Tipo de Labor', `${selectedLog.practiceType}`],
+            ['Lote', `${selectedLog.batchId || 'General'}`],
+            ['Horas Trabajadas', `${selectedLog.hoursWorked.toLocaleString('es-AR')} hs`],
+            ['Costo por Hora', `$${selectedLog.costPerHour.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`],
+            ['Total Pagado', `$${selectedLog.payment.toLocaleString('es-AR', { minimumFractionDigits: 2 })}`]
+        ];
+        
+        doc.autoTable({
+            startY: bodyY + 25,
+            body: tableBody,
+            theme: 'grid',
+            headStyles: { fillColor: [38, 70, 83] },
+            styles: { fontSize: 12, cellPadding: 3 },
+            columnStyles: { 0: { fontStyle: 'bold', fillColor: '#f8f9fa' } }
+        });
+
+        const finalY = (doc as any).lastAutoTable.finalY || 150;
+        doc.setFontSize(11);
+        doc.text('Firma: _________________________', 15, finalY + 30);
+        doc.text(`Aclaración: ${selectedLog.personnelName}`, 15, finalY + 40);
+
+        doc.setFontSize(9);
+        doc.setTextColor(150);
+        doc.text('Este es un comprobante no válido como factura.', 105, 280, { align: 'center' });
+
+        doc.save(`Recibo_Labor_${selectedLog.personnelName.replace(' ', '_')}_${new Date(selectedLog.date).toLocaleDateString('sv-SE')}.pdf`);
+        toast({ title: '¡Recibo Generado!', description: 'El archivo PDF se ha descargado exitosamente.' });
+      
+      } catch (error) {
+        console.error("PDF generation error:", error);
+        toast({ title: 'Error', description: 'No se pudo generar el recibo en PDF.', variant: 'destructive'});
+      }
+    });
+  }
+
 
   return (
     <>
+      <div style={{ position: 'fixed', opacity: 0, zIndex: -100, left: 0, top: 0, width: 'auto', height: 'auto' }} aria-hidden="true">
+          <div ref={logoRef} style={{width: '96px', height: '96px'}}>
+              <Image src="/logo.png" alt="AgroVision Logo" width={96} height={96} />
+          </div>
+       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Historial de Labores Culturales</CardTitle>
@@ -141,14 +235,20 @@ function CulturalPracticesHistoryComponent() {
               </div>
 
                <DialogFooter className="flex-row justify-between w-full pt-2">
-                  {canManage ? (
-                      <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="icon" disabled={isPending}>
-                              <Trash2 className="h-4 w-4" />
-                              <span className="sr-only">Eliminar</span>
-                          </Button>
-                      </AlertDialogTrigger>
-                  ) : <div />}
+                  <div className="flex gap-2">
+                    {canManage ? (
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="icon" disabled={isPending}>
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Eliminar</span>
+                            </Button>
+                        </AlertDialogTrigger>
+                    ) : <div />}
+                     <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage}>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        {isPdfPending ? "Generando..." : "Generar Recibo"}
+                    </Button>
+                  </div>
                   <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
                    <AlertDialogContent>
                       <AlertDialogHeader>
