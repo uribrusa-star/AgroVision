@@ -192,7 +192,7 @@ export type Task = {
     createdBy: { id: string, name: string };
     status: TaskStatus;
     priority: TaskPriority;
-    materials?: { name: string }[];
+    materials?: { supplyId: string, name: string, quantity: number }[];
     createdAt: string;
     dueDate?: string;
 };

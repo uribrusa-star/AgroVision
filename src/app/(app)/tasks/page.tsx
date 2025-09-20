@@ -12,7 +12,7 @@ import { es } from 'date-fns/locale';
 import { PageHeader } from "@/components/page-header";
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Task, TaskStatus } from '@/lib/types';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -36,7 +36,10 @@ const TaskSchema = z.object({
     assignedToId: z.string().min(1, "Debe asignar la tarea a un usuario."),
     dueDate: z.date().optional(),
     priority: z.enum(['baja', 'media', 'alta']).default('media'),
-    materials: z.array(z.object({ name: z.string().min(1, "El nombre del material es requerido.") })).optional(),
+    materials: z.array(z.object({ 
+        supplyId: z.string().min(1, "Debe seleccionar un material."),
+        quantity: z.coerce.number().min(0.1, "La cantidad debe ser mayor a 0."),
+     })).optional(),
 });
 
 
@@ -132,7 +135,7 @@ const TaskCard = ({ task }: { task: Task }) => {
                     <div className="flex items-start gap-2">
                         <Wrench className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                         <div className="flex flex-wrap gap-1">
-                            {task.materials.map((m, i) => <Badge key={i} variant="secondary">{m.name}</Badge>)}
+                            {task.materials.map((m, i) => <Badge key={i} variant="secondary">{m.name}: {m.quantity} kg/L</Badge>)}
                         </div>
                     </div>
                 )}
@@ -159,14 +162,14 @@ const TaskCard = ({ task }: { task: Task }) => {
 }
 
 export default function TasksPage() {
-    const { tasks, users, currentUser, addTask } = useContext(AppDataContext);
+    const { tasks, users, currentUser, addTask, supplies } = useContext(AppDataContext);
     const { toast } = useToast();
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     const form = useForm<TaskFormValues>({
         resolver: zodResolver(TaskSchema),
-        defaultValues: { title: '', description: '', assignedToId: '', dueDate: undefined, priority: 'media', materials: [{name: ''}] },
+        defaultValues: { title: '', description: '', assignedToId: '', dueDate: undefined, priority: 'media', materials: [{supplyId: '', quantity: 0}] },
     });
 
     const { fields, append, remove } = useFieldArray({
@@ -199,7 +202,16 @@ export default function TasksPage() {
         if (!assignedToUser || !currentUser) return;
         
         startTransition(() => {
-            const validMaterials = values.materials?.filter(m => m.name.trim() !== '');
+            const validMaterials = values.materials
+                ?.filter(m => m.supplyId && m.quantity > 0)
+                .map(m => {
+                    const supply = supplies.find(s => s.id === m.supplyId);
+                    return {
+                        supplyId: m.supplyId,
+                        name: supply?.name || 'Desconocido',
+                        quantity: m.quantity
+                    };
+                });
 
             addTask({
                 title: values.title,
@@ -214,7 +226,7 @@ export default function TasksPage() {
             });
             toast({ title: "Tarea Creada", description: `La tarea "${values.title}" ha sido asignada a ${assignedToUser.name}.` });
             setIsAddDialogOpen(false);
-            form.reset({ title: '', description: '', assignedToId: '', dueDate: undefined, priority: 'media', materials: [{name: ''}] });
+            form.reset({ title: '', description: '', assignedToId: '', dueDate: undefined, priority: 'media', materials: [{supplyId: '', quantity: 0}] });
         });
     }
 
@@ -289,22 +301,35 @@ export default function TasksPage() {
                                 <FormLabel>Materiales Necesarios (Opcional)</FormLabel>
                                 {fields.map((item, index) => (
                                     <div key={item.id} className="flex items-center gap-2">
-                                    <FormField
-                                        control={form.control}
-                                        name={`materials.${index}.name`}
-                                        render={({ field }) => (
-                                        <FormItem className="flex-grow">
-                                            <FormControl>
-                                            <Input {...field} placeholder={`Ej. 10kg de Fertilizante X`} disabled={isPending} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                        )}
-                                    />
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPending || fields.length <= 1}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                        <FormField
+                                            control={form.control}
+                                            name={`materials.${index}.supplyId`}
+                                            render={({ field }) => (
+                                            <FormItem className="flex-grow">
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={isPending}>
+                                                    <FormControl><SelectTrigger><SelectValue placeholder="Seleccione un insumo..." /></SelectTrigger></FormControl>
+                                                    <SelectContent>
+                                                        {supplies.map(supply => <SelectItem key={supply.id} value={supply.id}>{supply.name} ({supply.stock} disp.)</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
+                                            name={`materials.${index}.quantity`}
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl><Input type="number" {...field} placeholder="Cant." className="w-20" disabled={isPending} /></FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={isPending}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                     </div>
                                 ))}
-                                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '' })} disabled={isPending}><PlusCircle className="mr-2 h-4 w-4" />Añadir Material</Button>
+                                <Button type="button" variant="outline" size="sm" onClick={() => append({ supplyId: '', quantity: 0 })} disabled={isPending}><PlusCircle className="mr-2 h-4 w-4" />Añadir Material</Button>
                             </div>
                             <DialogFooter className="pt-4">
                                 <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
