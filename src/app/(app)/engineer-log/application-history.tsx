@@ -38,7 +38,7 @@ const LogSchema = z.object({
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function ApplicationHistory() {
-  const { loading, agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser, batches } = useContext(AppDataContext);
+  const { loading, agronomistLogs, editAgronomistLog, deleteAgronomistLog, currentUser, batches, supplies } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -372,6 +372,12 @@ export function ApplicationHistory() {
         <DialogContent className="sm:max-w-2xl">
            {selectedLog && (() => {
               const typeInfo = getTypeInfo(selectedLog.type);
+              const supply = supplies.find(s => s.name === selectedLog.product);
+              const imagesToShow = selectedLog.images || [];
+              if (supply?.photoUrl && !imagesToShow.some(img => img.url === supply.photoUrl)) {
+                  imagesToShow.unshift({ url: supply.photoUrl, hint: 'supply product' });
+              }
+
               return (
                  <AlertDialog>
                     <DialogHeader>
@@ -428,12 +434,12 @@ export function ApplicationHistory() {
                                     <p className="text-foreground whitespace-pre-wrap">{selectedLog.notes}</p>
                                 </div>
                                 
-                                {selectedLog.images && selectedLog.images.length > 0 && (
+                                {imagesToShow.length > 0 && (
                                     <div className="space-y-2">
                                         <p className="text-sm font-medium text-muted-foreground">Imágenes Adjuntas</p>
                                         <Carousel className="w-full">
                                           <CarouselContent>
-                                            {selectedLog.images.map((image, index) => (
+                                            {imagesToShow.map((image, index) => (
                                               <CarouselItem key={index}>
                                                 <Dialog>
                                                   <DialogTrigger asChild>
@@ -464,7 +470,7 @@ export function ApplicationHistory() {
                                               </CarouselItem>
                                             ))}
                                           </CarouselContent>
-                                          {selectedLog.images.length > 1 && (
+                                          {imagesToShow.length > 1 && (
                                             <>
                                               <CarouselPrevious className="-left-8" />
                                               <CarouselNext className="-right-8" />
