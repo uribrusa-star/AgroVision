@@ -458,7 +458,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const newLogRef = doc(collection(db, 'agronomistLogs'));
             batch.set(newLogRef, log);
             
-            // Stock deduction logic
             if ((log.type === 'Fertilización' || log.type === 'Fumigación') && log.product && log.quantityUsed) {
                 const supplyToUpdate = supplies.find(s => s.name === log.product);
                 if (supplyToUpdate && supplyToUpdate.stock !== undefined) {
@@ -474,7 +473,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
         runAdd().catch(error => {
             console.error("Failed to add agronomist log and update stock:", error);
-            setAgronomistLogs(prev => prev.filter(l => l.id !== tempId)); // Revert optimistic update
+            setAgronomistLogs(prev => prev.filter(l => l.id !== tempId));
             toast({ title: "Error", description: "No se pudo guardar el registro y actualizar el stock.", variant: "destructive"});
         });
     };
@@ -493,13 +492,34 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const deleteAgronomistLog = (logId: string) => {
-        const originalLogs = agronomistLogs;
+        const originalState = { logs: agronomistLogs, supplies: supplies };
+        const logToDelete = agronomistLogs.find(l => l.id === logId);
+
         setAgronomistLogs(prev => prev.filter(l => l.id !== logId));
 
-        deleteDoc(doc(db, 'agronomistLogs', logId)).catch(error => {
-            console.error("Failed to delete agronomist log:", error);
-            setAgronomistLogs(originalLogs);
-            toast({ title: "Error", description: "No se pudo eliminar el registro.", variant: "destructive"});
+        const runDelete = async () => {
+            const batch = writeBatch(db);
+            batch.delete(doc(db, 'agronomistLogs', logId));
+
+            if (logToDelete && (logToDelete.type === 'Fertilización' || logToDelete.type === 'Fumigación') && logToDelete.product && logToDelete.quantityUsed) {
+                const supplyToUpdate = supplies.find(s => s.name === logToDelete.product);
+                if (supplyToUpdate && supplyToUpdate.stock !== undefined) {
+                    const newStock = supplyToUpdate.stock + logToDelete.quantityUsed;
+                    const supplyRef = doc(db, 'supplies', supplyToUpdate.id);
+                    batch.update(supplyRef, { stock: newStock });
+
+                    // Optimistic UI update for supply
+                    setSupplies(prev => prev.map(s => s.id === supplyToUpdate.id ? { ...s, stock: newStock } : s));
+                }
+            }
+            await batch.commit();
+        };
+
+        runDelete().catch(error => {
+            console.error("Failed to delete agronomist log and restore stock:", error);
+            setAgronomistLogs(originalState.logs);
+            setSupplies(originalState.supplies);
+            toast({ title: "Error", description: "No se pudo eliminar el registro o restaurar el stock.", variant: "destructive"});
         });
     };
 
@@ -908,3 +928,4 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
