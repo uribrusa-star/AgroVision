@@ -38,7 +38,7 @@ export function IrrigationLogForm() {
       type: 'Riego',
       batchId: 'general',
       product: '',
-      quantityUsed: undefined,
+      quantityUsed: 0,
       notes: '',
     },
   });
@@ -87,7 +87,7 @@ export function IrrigationLogForm() {
         type: 'Riego',
         batchId: 'general',
         product: '',
-        quantityUsed: undefined,
+        quantityUsed: 0,
         notes: '',
       });
     });
@@ -125,7 +125,7 @@ export function IrrigationLogForm() {
                     <Select onValueChange={(value) => {
                       field.onChange(value);
                       form.setValue('product', '');
-                      form.setValue('quantityUsed', undefined);
+                      form.setValue('quantityUsed', 0);
                     }} value={field.value} disabled={!canManage || isPending}>
                       <FormControl>
                         <SelectTrigger>
