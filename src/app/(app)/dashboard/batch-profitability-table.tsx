@@ -29,7 +29,7 @@ export function BatchProfitabilityTable() {
 
             const totalLaborCost = harvestLaborCost + culturalPracticeCost;
 
-            const batchApplications = agronomistLogs.filter(log => log.batchId === batchId && log.product && log.quantityUsed);
+            const batchApplications = agronomistLogs.filter(log => log.batchId === batchId && log.product && log.quantityUsed && (log.type === 'Fertilización' || log.type === 'Fumigación'));
             
             const inputCost = batchApplications.reduce((sum, app) => {
                 const supplyPurchase = transactions.find(t => t.type === 'Gasto' && t.category === 'Insumos' && t.description.includes(app.product!) && t.pricePerUnit);
