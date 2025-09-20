@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { DollarSign, HardHat, TestTube2, Weight } from 'lucide-react';
 
 export function BatchProfitabilityTable() {
-    const { loading, batches, harvests, collectorPaymentLogs, culturalPracticeLogs, agronomistLogs, supplies, transactions } = useContext(AppDataContext);
+    const { loading, harvests, collectorPaymentLogs, culturalPracticeLogs, agronomistLogs, transactions } = useContext(AppDataContext);
 
     const batchData = useMemo(() => {
         const harvestedBatchIds = [...new Set(harvests.map(h => h.batchNumber))];
@@ -19,15 +19,22 @@ export function BatchProfitabilityTable() {
             const batchHarvests = harvests.filter(h => h.batchNumber === batchId);
             const totalKilos = batchHarvests.reduce((sum, h) => sum + h.kilograms, 0);
 
-            const harvestLaborCost = collectorPaymentLogs.filter(p => batchHarvests.some(h => h.id === p.harvestId)).reduce((sum, p) => sum + p.payment, 0);
-            const culturalPracticeCost = culturalPracticeLogs.filter(p => p.batchId === batchId).reduce((sum, p) => sum + p.payment, 0);
+            const harvestLaborCost = collectorPaymentLogs
+                .filter(p => batchHarvests.some(h => h.id === p.harvestId))
+                .reduce((sum, p) => sum + p.payment, 0);
+
+            const culturalPracticeCost = culturalPracticeLogs
+                .filter(p => p.batchId === batchId)
+                .reduce((sum, p) => sum + p.payment, 0);
+
             const totalLaborCost = harvestLaborCost + culturalPracticeCost;
 
             const batchApplications = agronomistLogs.filter(log => log.batchId === batchId && log.product && log.quantityUsed);
+            
             const inputCost = batchApplications.reduce((sum, app) => {
                 const supplyPurchase = transactions.find(t => t.type === 'Gasto' && t.category === 'Insumos' && t.description.includes(app.product!) && t.pricePerUnit);
-                if (supplyPurchase && supplyPurchase.pricePerUnit) {
-                    return sum + (app.quantityUsed! * supplyPurchase.pricePerUnit);
+                if (supplyPurchase && supplyPurchase.pricePerUnit && app.quantityUsed) {
+                    return sum + (app.quantityUsed * supplyPurchase.pricePerUnit);
                 }
                 return sum;
             }, 0);
@@ -44,7 +51,7 @@ export function BatchProfitabilityTable() {
                 costPerKg
             };
         });
-    }, [harvests, collectorPaymentLogs, culturalPracticeLogs, agronomistLogs, supplies, transactions]);
+    }, [harvests, collectorPaymentLogs, culturalPracticeLogs, agronomistLogs, transactions]);
 
     if (loading) {
         return <Skeleton className="h-[300px] w-full" />;

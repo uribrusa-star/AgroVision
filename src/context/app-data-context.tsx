@@ -757,13 +757,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const deleteCollectorPaymentLog = (logId: string) => {
         return new Promise<void>((resolve, reject) => {
-            const originalState = { collectors, harvests, collectorPaymentLogs };
+            const originalState = { collectors: [...collectors], harvests: [...harvests], collectorPaymentLogs: [...collectorPaymentLogs] };
             const logToDelete = collectorPaymentLogs.find(l => l.id === logId);
             if (!logToDelete) {
                 return reject("Log not found");
             }
             const collectorDoc = collectors.find(c => c.id === logToDelete.collectorId);
 
+            // Optimistic UI updates
             setCollectorPaymentLogs(prev => prev.filter(l => l.id !== logId));
             setHarvests(prev => prev.filter(h => h.id !== logToDelete.harvestId));
             if (collectorDoc) {
@@ -782,6 +783,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 const batchOp = writeBatch(db);
                 batchOp.delete(doc(db, 'collectorPaymentLogs', logId));
                 batchOp.delete(doc(db, 'harvests', logToDelete.harvestId));
+                
                 if (collectorDoc) {
                     const collectorRef = doc(db, 'collectors', logToDelete.collectorId);
                     const newTotalHarvested = collectorDoc.totalHarvested - logToDelete.kilograms;
@@ -792,6 +794,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                         productivity: newHoursWorked > 0 ? newTotalHarvested / newHoursWorked : 0,
                     });
                 }
+                
                 await batchOp.commit();
                 resolve();
             }
@@ -801,7 +804,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 setCollectors(originalState.collectors);
                 setHarvests(originalState.harvests);
                 setCollectorPaymentLogs(originalState.collectorPaymentLogs);
-                toast({ title: "Error", description: "No se pudo eliminar el registro de pago.", variant: "destructive"});
+                toast({ title: "Error", description: "No se pudo eliminar el registro de pago y restaurar los datos.", variant: "destructive"});
                 reject(error);
             });
         });
