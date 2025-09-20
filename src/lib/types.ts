@@ -262,6 +262,9 @@ export type Transaction = {
     category: string;
     description: string;
     amount: number;
+    quantity?: number;
+    unit?: string;
+    pricePerUnit?: number;
 }
 
 

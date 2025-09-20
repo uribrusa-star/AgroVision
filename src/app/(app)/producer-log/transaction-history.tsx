@@ -106,7 +106,7 @@ export function TransactionHistory() {
         <Dialog open={!!selectedTransaction} onOpenChange={(open) => !open && setSelectedTransaction(null)}>
             <DialogContent className="sm:max-w-2xl">
                 {selectedTransaction && (
-                    <>
+                    <AlertDialog>
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2">
                                 {selectedTransaction.type === 'Ingreso' 
@@ -138,8 +138,20 @@ export function TransactionHistory() {
                                         <p className="text-sm font-medium text-muted-foreground">Descripción</p>
                                         <p className="font-semibold">{selectedTransaction.description}</p>
                                     </div>
+                                     {selectedTransaction.quantity && selectedTransaction.unit && (
+                                        <div className="space-y-1">
+                                            <p className="text-sm font-medium text-muted-foreground">Cantidad Comprada</p>
+                                            <p className="font-semibold">{selectedTransaction.quantity} {selectedTransaction.unit}</p>
+                                        </div>
+                                     )}
+                                     {selectedTransaction.pricePerUnit && (
+                                         <div className="space-y-1">
+                                            <p className="text-sm font-medium text-muted-foreground">Precio por Unidad</p>
+                                            <p className="font-semibold">${selectedTransaction.pricePerUnit.toLocaleString('es-AR', {minimumFractionDigits: 2})}</p>
+                                        </div>
+                                     )}
                                     <div className="space-y-1">
-                                        <p className="text-sm font-medium text-muted-foreground">Monto</p>
+                                        <p className="text-sm font-medium text-muted-foreground">Monto Total</p>
                                         <p className={`font-bold text-lg ${selectedTransaction.type === 'Ingreso' ? 'text-green-600' : 'text-red-600'}`}>
                                             {selectedTransaction.type === 'Ingreso' ? '+' : '-'} ${selectedTransaction.amount.toLocaleString('es-AR', {minimumFractionDigits: 2})}
                                         </p>
@@ -149,30 +161,28 @@ export function TransactionHistory() {
                         </div>
                         <DialogFooter className="flex-row justify-between w-full pt-2">
                             {canManage ? (
-                              <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                       <Button variant="destructive" size="icon" disabled={isPending}>
                                           <Trash2 className="h-4 w-4" />
                                           <span className="sr-only">Eliminar</span>
                                       </Button>
                                   </AlertDialogTrigger>
-                                  <AlertDialogContent>
-                                      <AlertDialogHeader>
-                                          <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                          <AlertDialogDescription>
-                                              Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción de sus registros.
-                                          </AlertDialogDescription>
-                                      </AlertDialogHeader>
-                                      <AlertDialogFooter>
-                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                          <AlertDialogAction onClick={() => handleDelete(selectedTransaction.id)}>Continuar y Eliminar</AlertDialogAction>
-                                      </AlertDialogFooter>
-                                  </AlertDialogContent>
-                              </AlertDialog>
                             ) : <div />}
                             <Button onClick={() => setSelectedTransaction(null)} variant="secondary">Cerrar</Button>
+                             <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Esta acción no se puede deshacer. Esto eliminará permanentemente la transacción de sus registros.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(selectedTransaction.id)}>Continuar y Eliminar</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
                         </DialogFooter>
-                    </>
+                    </AlertDialog>
                 )}
             </DialogContent>
         </Dialog>

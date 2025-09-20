@@ -10,11 +10,11 @@ import { BarChart as BarChartIcon, CalendarDays, DollarSign, Trophy, Weight } fr
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import type { Harvest, CollectorPaymentLog, PackagingLog, CulturalPracticeLog } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { BatchYieldChart } from '@/app/(app)/engineer-log/batch-yield-chart';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
 import { CostDistributionChart } from './cost-distribution-chart';
 import { ProductionPaymentHistory } from '../production-payment-history';
 import { PackagingHistory } from '../data-entry/packaging-history';
+import { BatchProfitabilityTable } from './batch-profitability-table';
 
 
 export default function DashboardPage() {
@@ -124,9 +124,6 @@ export default function DashboardPage() {
           <MonthlyHarvestChart harvests={harvests} />
         </div>
         <CostDistributionChart />
-        <div className="lg:col-span-3">
-          <BatchYieldChart />
-        </div>
         <div className="lg:col-span-2">
             <Card>
             <CardHeader>
@@ -204,6 +201,9 @@ export default function DashboardPage() {
                     </Table>
                 </CardContent>
             </Card>
+        </div>
+        <div className="lg:col-span-3">
+          <BatchProfitabilityTable />
         </div>
       </div>
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
