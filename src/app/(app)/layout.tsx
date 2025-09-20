@@ -21,6 +21,7 @@ import {
   SidebarMenuButton,
   SidebarTrigger,
   SidebarFooter,
+  SidebarMenuBadge,
 } from '@/components/ui/sidebar';
 import { StrawberryIcon, NotebookPen } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -194,7 +195,7 @@ function UserMenu() {
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { currentUser, isClient, loading } = React.useContext(AppDataContext);
+  const { currentUser, isClient, loading, tasks } = React.useContext(AppDataContext);
   const router = useRouter();
 
   useEffect(() => {
@@ -202,6 +203,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         router.replace('/');
     }
   }, [isClient, loading, currentUser, router]);
+
+  const pendingTasksCount = React.useMemo(() => {
+      if (!currentUser || !tasks) return 0;
+      return tasks.filter(task => task.assignedTo.id === currentUser.id && task.status === 'pending').length;
+  }, [currentUser, tasks]);
+
 
   if (loading || !currentUser) {
     return (
@@ -242,6 +249,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                         <span>{item.label}</span>
                       </Link>
                     </SidebarMenuButton>
+                    {item.href === '/tasks' && pendingTasksCount > 0 && (
+                        <SidebarMenuBadge>{pendingTasksCount}</SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
