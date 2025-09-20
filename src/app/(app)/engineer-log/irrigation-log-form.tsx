@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useTransition } from 'react';
+import React, { useTransition, useContext, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -18,13 +18,14 @@ const LogSchema = z.object({
   type: z.enum(['Riego', 'Fertilización', 'Fumigación']),
   batchId: z.string().optional(),
   product: z.string().optional(),
+  quantityUsed: z.coerce.number().optional(),
   notes: z.string().min(5, "Las notas son requeridas."),
 });
 
 type LogFormValues = z.infer<typeof LogSchema>;
 
 export function IrrigationLogForm() {
-  const { addAgronomistLog, currentUser, batches } = React.useContext(AppDataContext);
+  const { addAgronomistLog, currentUser, batches, supplies } = useContext(AppDataContext);
   const { toast } = useToast();
   const [isPending, startTransition] = useTransition();
   
@@ -37,19 +38,43 @@ export function IrrigationLogForm() {
       type: 'Riego',
       batchId: 'general',
       product: '',
+      quantityUsed: undefined,
       notes: '',
     },
   });
   
   const applicationType = form.watch('type');
 
+  const availableSupplies = useMemo(() => {
+    if (applicationType === 'Riego') return [];
+    const supplyTypeMap = {
+      'Fertilización': 'Fertilizante',
+      'Fumigación': ['Fungicida', 'Insecticida', 'Acaricida'],
+    };
+    const targetType = supplyTypeMap[applicationType as keyof typeof supplyTypeMap];
+    if (!targetType) return [];
+    
+    return supplies.filter(s => Array.isArray(targetType) ? targetType.includes(s.type) : s.type === targetType);
+  }, [applicationType, supplies]);
+
+
   const onSubmit = (data: LogFormValues) => {
+    if (data.type !== 'Riego' && (!data.product || !data.quantityUsed || data.quantityUsed <= 0)) {
+        toast({
+            title: "Datos Incompletos",
+            description: "Para Fertilización o Fumigación, debe seleccionar un producto y especificar la cantidad utilizada.",
+            variant: "destructive"
+        });
+        return;
+    }
+
     startTransition(() => {
       addAgronomistLog({
         date: new Date().toISOString(),
         type: data.type,
         batchId: data.batchId === 'general' ? undefined : data.batchId,
         product: data.product,
+        quantityUsed: data.quantityUsed,
         notes: data.notes,
       });
       
@@ -62,6 +87,7 @@ export function IrrigationLogForm() {
         type: 'Riego',
         batchId: 'general',
         product: '',
+        quantityUsed: undefined,
         notes: '',
       });
     });
@@ -70,7 +96,7 @@ export function IrrigationLogForm() {
   const getProductLabel = () => {
     switch (applicationType) {
       case 'Fertilización':
-        return 'Fertilizante/Nutriente';
+        return 'Fertilizante';
       case 'Fumigación':
         return 'Producto Fitosanitario';
       case 'Riego':
@@ -79,19 +105,6 @@ export function IrrigationLogForm() {
         return 'Producto/Detalle';
     }
   };
-
-  const getProductPlaceholder = () => {
-    switch (applicationType) {
-        case 'Fertilización':
-            return 'Ej. Nitrato de Calcio';
-        case 'Fumigación':
-            return 'Ej. Fungicida para Botrytis';
-        case 'Riego':
-            return 'Ej. Pozo N°2';
-        default:
-            return 'Ingrese un detalle';
-    }
-  }
   
   return (
     <Card>
@@ -109,7 +122,11 @@ export function IrrigationLogForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Aplicación</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                    <Select onValueChange={(value) => {
+                      field.onChange(value);
+                      form.setValue('product', '');
+                      form.setValue('quantityUsed', undefined);
+                    }} value={field.value} disabled={!canManage || isPending}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue />
@@ -149,25 +166,53 @@ export function IrrigationLogForm() {
                 )}
               />
             </div>
-             <FormField
-                control={form.control}
-                name="product"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{getProductLabel()}</FormLabel>
-                    <FormControl>
-                      <Input placeholder={getProductPlaceholder()} {...field} disabled={!canManage || isPending} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+             
+            {applicationType !== 'Riego' && (
+                <div className="grid md:grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="product"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>{getProductLabel()}</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!canManage || isPending}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccione un producto" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {availableSupplies.map(s => (
+                                        <SelectItem key={s.id} value={s.name}>{s.name} ({s.stock} kg/L disp.)</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="quantityUsed"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Dosis Aplicada (kg/L)</FormLabel>
+                                <FormControl>
+                                <Input type="number" step="0.1" {...field} placeholder="Ej: 5.5" disabled={!canManage || isPending} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+            )}
+
             <FormField
               control={form.control}
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notas (dosis, CE, pH, duración, etc.)</FormLabel>
+                  <FormLabel>Notas (CE, pH, duración, etc.)</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Ej. 2 horas de riego. CE: 1.5 dS/m, pH: 6.2. Dosis de 5kg/ha."

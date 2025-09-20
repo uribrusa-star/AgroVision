@@ -453,12 +453,29 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const tempId = `agrolog_${Date.now()}`;
         setAgronomistLogs(prev => [{ id: tempId, ...log }, ...prev]);
 
-        addDoc(collection(db, 'agronomistLogs'), log).then(ref => {
-            setAgronomistLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-        }).catch(error => {
-            console.error("Failed to add agronomist log:", error);
-            setAgronomistLogs(prev => prev.filter(l => l.id !== tempId));
-            toast({ title: "Error", description: "No se pudo guardar el registro.", variant: "destructive"});
+        const runAdd = async () => {
+            const batch = writeBatch(db);
+            const newLogRef = doc(collection(db, 'agronomistLogs'));
+            batch.set(newLogRef, log);
+            
+            // Stock deduction logic
+            if ((log.type === 'Fertilización' || log.type === 'Fumigación') && log.product && log.quantityUsed) {
+                const supplyToUpdate = supplies.find(s => s.name === log.product);
+                if (supplyToUpdate && supplyToUpdate.stock !== undefined) {
+                    const newStock = supplyToUpdate.stock - log.quantityUsed;
+                    const supplyRef = doc(db, 'supplies', supplyToUpdate.id);
+                    batch.update(supplyRef, { stock: newStock });
+                }
+            }
+
+            await batch.commit();
+            await fetchAllData();
+        }
+
+        runAdd().catch(error => {
+            console.error("Failed to add agronomist log and update stock:", error);
+            setAgronomistLogs(prev => prev.filter(l => l.id !== tempId)); // Revert optimistic update
+            toast({ title: "Error", description: "No se pudo guardar el registro y actualizar el stock.", variant: "destructive"});
         });
     };
 
