@@ -105,6 +105,8 @@ export type Supply = {
   name: string;
   type: SupplyType;
   photoUrl?: string;
+  stock?: number;
+  lowStockThreshold?: number;
   info: {
     activeIngredient: string;
     dose: string;

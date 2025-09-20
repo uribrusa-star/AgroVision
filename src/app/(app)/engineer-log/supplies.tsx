@@ -23,6 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 
 const SupplySchema = z.object({
@@ -32,6 +33,8 @@ const SupplySchema = z.object({
   activeIngredient: z.string().min(3, "La composición es requerida."),
   dose: z.string().min(1, "La dosis es requerida."),
   notes: z.string().optional(),
+  stock: z.coerce.number().min(0, "El stock no puede ser negativo.").optional(),
+  lowStockThreshold: z.coerce.number().min(0, "El umbral no puede ser negativo.").optional(),
 });
 
 type SupplyFormValues = z.infer<typeof SupplySchema>;
@@ -58,6 +61,8 @@ const SupplyDialog = ({
       activeIngredient: supply.info.activeIngredient,
       dose: supply.info.dose,
       notes: supply.info.notes || '',
+      stock: supply.stock || 0,
+      lowStockThreshold: supply.lowStockThreshold || 0,
     } : {
       name: '',
       type: 'Fertilizante',
@@ -65,6 +70,8 @@ const SupplyDialog = ({
       activeIngredient: '',
       dose: '',
       notes: '',
+      stock: 0,
+      lowStockThreshold: 0,
     }
   });
 
@@ -77,6 +84,8 @@ const SupplyDialog = ({
         activeIngredient: supply.info.activeIngredient,
         dose: supply.info.dose,
         notes: supply.info.notes || '',
+        stock: supply.stock || 0,
+        lowStockThreshold: supply.lowStockThreshold || 0,
       } : {
         name: '',
         type: 'Fertilizante',
@@ -84,6 +93,8 @@ const SupplyDialog = ({
         activeIngredient: '',
         dose: '',
         notes: '',
+        stock: 0,
+        lowStockThreshold: 0,
       });
     }
   }, [open, supply, form]);
@@ -121,7 +132,11 @@ const SupplyDialog = ({
             )}/>
             <FormField control={form.control} name="activeIngredient" render={({ field }) => (<FormItem><FormLabel>Composición</FormLabel><FormControl><Input {...field} placeholder="Ej. N-P-K 10-5-30" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="dose" render={({ field }) => (<FormItem><FormLabel>Dosis Recomendada</FormLabel><FormControl><Input {...field} placeholder="Ej. 5 L/ha" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="photoUrl" render={({ field }) => (<FormItem><FormLabel>URL de la Foto del Producto (Opcional)</FormLabel><FormControl><Input {...field} placeholder="https://ejemplo.com/foto.jpg" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="stock" render={({ field }) => (<FormItem><FormLabel>Stock Actual (kg/L)</FormLabel><FormControl><Input type="number" {...field} placeholder="Ej. 50" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="lowStockThreshold" render={({ field }) => (<FormItem><FormLabel>Umbral Stock Bajo</FormLabel><FormControl><Input type="number" {...field} placeholder="Ej. 10" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            <FormField control={form.control} name="photoUrl" render={({ field }) => (<FormItem><FormLabel>URL de la Foto (Opcional)</FormLabel><FormControl><Input {...field} placeholder="https://ejemplo.com/foto.jpg" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="notes" render={({ field }) => (<FormItem><FormLabel>Notas Adicionales (Opcional)</FormLabel><FormControl><Textarea {...field} placeholder="Ej. Aplicar en pre-floración" disabled={isPending} /></FormControl><FormMessage /></FormItem>)} />
             <DialogFooter className="pt-4">
                 <DialogClose asChild><Button variant="secondary" type="button">Cancelar</Button></DialogClose>
@@ -171,6 +186,8 @@ const SupplyDetailsDialog = ({ open, onOpenChange, supply, onEdit, onDelete }: {
                             <TableBody>
                                 <TableRow><TableCell className="font-medium text-muted-foreground">Composición</TableCell><TableCell>{supply.info.activeIngredient}</TableCell></TableRow>
                                 <TableRow><TableCell className="font-medium text-muted-foreground">Dosis</TableCell><TableCell>{supply.info.dose}</TableCell></TableRow>
+                                <TableRow><TableCell className="font-medium text-muted-foreground">Stock</TableCell><TableCell className={cn(supply.stock !== undefined && supply.lowStockThreshold !== undefined && supply.stock < supply.lowStockThreshold ? 'text-destructive font-bold' : '')}>{supply.stock ?? 'N/A'} kg/L</TableCell></TableRow>
+                                <TableRow><TableCell className="font-medium text-muted-foreground">Umbral Stock Bajo</TableCell><TableCell>{supply.lowStockThreshold ?? 'N/A'} kg/L</TableCell></TableRow>
                                 {supply.info.notes && <TableRow><TableCell className="font-medium text-muted-foreground">Notas</TableCell><TableCell className="whitespace-pre-wrap">{supply.info.notes}</TableCell></TableRow>}
                             </TableBody>
                         </Table>
@@ -224,6 +241,8 @@ export function Supplies() {
         name: values.name,
         type: values.type as SupplyType,
         photoUrl: values.photoUrl,
+        stock: values.stock,
+        lowStockThreshold: values.lowStockThreshold,
         info: {
             activeIngredient: values.activeIngredient,
             dose: values.dose,
@@ -271,19 +290,24 @@ export function Supplies() {
             <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead className="hidden md:table-cell">Composición</TableHead>
-                <TableHead className="hidden md:table-cell">Dosis</TableHead>
+                <TableHead className="text-right">Stock (kg/L)</TableHead>
             </TableRow>
         </TableHeader>
         <TableBody>
             {loading && <tr><TableCell colSpan={3}><Skeleton className="h-10" /></TableCell></tr>}
             {!loading && data.length === 0 && <tr><TableCell colSpan={3} className="text-center text-muted-foreground">No hay insumos en esta categoría.</TableCell></tr>}
-            {!loading && data.map(supply => (
-                <TableRow key={supply.id} className="cursor-pointer" onClick={() => handleViewDetails(supply)}>
-                    <TableCell className="font-medium">{supply.name}</TableCell>
-                    <TableCell className="hidden md:table-cell">{supply.info.activeIngredient}</TableCell>
-                    <TableCell className="hidden md:table-cell">{supply.info.dose}</TableCell>
-                </TableRow>
-            ))}
+            {!loading && data.map(supply => {
+                const isLowStock = supply.stock !== undefined && supply.lowStockThreshold !== undefined && supply.stock < supply.lowStockThreshold;
+                return (
+                    <TableRow key={supply.id} className="cursor-pointer" onClick={() => handleViewDetails(supply)}>
+                        <TableCell className="font-medium">{supply.name}</TableCell>
+                        <TableCell className="hidden md:table-cell">{supply.info.activeIngredient}</TableCell>
+                        <TableCell className={cn("text-right font-semibold", isLowStock && "text-destructive")}>
+                            {supply.stock ?? 'N/A'}
+                        </TableCell>
+                    </TableRow>
+                );
+            })}
         </TableBody>
     </Table>
   );

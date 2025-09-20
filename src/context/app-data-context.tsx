@@ -650,7 +650,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
 
-    const addBatch = (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string; preloadedDate: string; status: string }) => {
+    const addBatch = (batchData: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => {
         const newBatch = { ...batchData, status: 'pending' as 'pending' | 'completed' };
         setBatches(prev => [newBatch, ...prev]);
 
