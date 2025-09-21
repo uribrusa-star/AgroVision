@@ -26,13 +26,14 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
 
         return geoJsonData.features
             .filter((feature: any) => feature.geometry && feature.geometry.type === 'Polygon')
-            .map((feature: any) => {
+            .map((feature: any, index: number) => {
                 const paths = feature.geometry.coordinates[0].map((coord: [number, number]) => ({
                     lat: coord[1],
                     lng: coord[0],
                 }));
                 
-                const polygonId = feature.properties?.name || `polygon-${feature.id || Math.random()}`;
+                const properties = feature.properties || {};
+                const polygonId = properties.name || Object.keys(properties).find(k => k.startsWith('L')) || `polygon-${index}`;
 
                 return (
                     <Polygon
@@ -55,7 +56,8 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
         if (!activeInfoWindow || !geoJsonData || !geoJsonData.features) return null;
 
         const activeFeature = geoJsonData.features.find((feature: any) => {
-             const polygonId = feature.properties?.name;
+             const properties = feature.properties || {};
+             const polygonId = properties.name || Object.keys(properties).find(k => k.startsWith('L'));
              return polygonId === activeInfoWindow;
         });
 
