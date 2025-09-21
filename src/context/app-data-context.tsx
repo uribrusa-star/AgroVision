@@ -855,6 +855,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
         const tempId = `transaction_${Date.now()}`;
+        
+        // Ensure pricePerUnit is not undefined
+        if (transaction.pricePerUnit === undefined) {
+            delete (transaction as Partial<Transaction>).pricePerUnit;
+        }
+
         setTransactions(prev => [{ id: tempId, ...transaction }, ...prev]);
         
         addDoc(collection(db, 'transactions'), transaction).then(ref => {
@@ -963,3 +969,4 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
