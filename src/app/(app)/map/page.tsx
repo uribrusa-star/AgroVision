@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone } from 'lucide-react';
+import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone, Save } from 'lucide-react';
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -58,8 +58,10 @@ const AIAlertsPanel = ({
     onCoordsChange: (coords: { lat: number, lng: number }) => void 
 }) => {
     const { phenologyLogs, agronomistLogs, addAgronomistLog } = useContext(AppDataContext);
-    const [isPending, startTransition] = useTransition();
+    const [isGenerating, startGeneratingTransition] = useTransition();
+    const [isSaving, startSavingTransition] = useTransition();
     const [alerts, setAlerts] = useState<Alert[] | null>(null);
+    const [alertsSaved, setAlertsSaved] = useState(false);
     const { toast } = useToast();
 
     const form = useForm<z.infer<typeof WeatherAlertsSchema>>({
@@ -91,7 +93,8 @@ const AIAlertsPanel = ({
 
     const onSubmit = (values: z.infer<typeof WeatherAlertsSchema>) => {
         setAlerts(null);
-        startTransition(async () => {
+        setAlertsSaved(false);
+        startGeneratingTransition(async () => {
              try {
                 const result = await generateWeatherAlerts({
                     latitude: values.latitude,
@@ -99,27 +102,12 @@ const AIAlertsPanel = ({
                     phenologyLogs: JSON.stringify(phenologyLogs.slice(0, 10)),
                     agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 20)),
                 });
-                if (result.alerts && result.alerts.length > 0) {
+                if (result.alerts) {
                     setAlerts(result.alerts);
-
-                    // Save alerts to agronomist log
-                    const logPromises = result.alerts.map(alert => {
-                        const newLog: Omit<AgronomistLog, 'id'> = {
-                            date: new Date().toISOString(),
-                            type: 'Condiciones Ambientales',
-                            product: `Alerta IA: ${alert.risk}`,
-                            notes: `Recomendación: ${alert.recommendation} (Urgencia: ${alert.urgency})`,
-                        };
-                        return addAgronomistLog(newLog);
-                    });
-                    
-                    await Promise.all(logPromises);
-
                     toast({ 
                         title: "Análisis Completo", 
-                        description: "Se generaron nuevas alertas y se guardaron en la bitácora del agrónomo."
+                        description: `Se generaron ${result.alerts.length} alerta(s) climática(s).`
                     });
-
                 } else {
                     setAlerts([]);
                     toast({ title: "Análisis Completo", description: "La IA no identificó riesgos mayores con el pronóstico provisto." });
@@ -133,7 +121,34 @@ const AIAlertsPanel = ({
                  });
              }
         });
-    }
+    };
+
+    const handleSaveChanges = () => {
+        if (!alerts || alerts.length === 0) return;
+
+        startSavingTransition(() => {
+            const logPromises = alerts.map(alert => {
+                const newLog: Omit<AgronomistLog, 'id'> = {
+                    date: new Date().toISOString(),
+                    type: 'Condiciones Ambientales',
+                    product: `Alerta IA: ${alert.risk}`,
+                    notes: `Recomendación: ${alert.recommendation} (Urgencia: ${alert.urgency})`,
+                };
+                return addAgronomistLog(newLog);
+            });
+
+            Promise.all(logPromises).then(() => {
+                toast({
+                    title: "Alertas Guardadas",
+                    description: "Las alertas climáticas han sido guardadas en la bitácora del agrónomo.",
+                });
+                setAlertsSaved(true);
+            }).catch(error => {
+                console.error("Failed to save alerts:", error);
+                toast({ title: "Error", description: "No se pudieron guardar las alertas.", variant: "destructive" });
+            });
+        });
+    };
 
     const getUrgencyBadgeVariant = (urgency: Alert['urgency']) => {
         switch (urgency) {
@@ -165,7 +180,7 @@ const AIAlertsPanel = ({
                                 <FormItem>
                                 <FormLabel>Latitud</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="any" {...field} placeholder="Ej. -31.953" disabled={isPending} />
+                                    <Input type="number" step="any" {...field} placeholder="Ej. -31.953" disabled={isGenerating} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -178,7 +193,7 @@ const AIAlertsPanel = ({
                                 <FormItem>
                                 <FormLabel>Longitud</FormLabel>
                                 <FormControl>
-                                    <Input type="number" step="any" {...field} placeholder="Ej. -60.934" disabled={isPending} />
+                                    <Input type="number" step="any" {...field} placeholder="Ej. -60.934" disabled={isGenerating} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
@@ -186,8 +201,8 @@ const AIAlertsPanel = ({
                         />
                     </CardContent>
                     <CardFooter className="flex-col items-start gap-4">
-                        <Button type="submit" disabled={isPending}>
-                            {isPending ? (
+                        <Button type="submit" disabled={isGenerating}>
+                            {isGenerating ? (
                                 <>
                                     <BrainCircuit className="mr-2 h-4 w-4 animate-spin" />
                                     Buscando pronóstico y analizando...
@@ -195,7 +210,7 @@ const AIAlertsPanel = ({
                             ) : "Generar Alertas"}
                         </Button>
 
-                         {isPending && (
+                         {isGenerating && (
                             <div className="w-full space-y-4">
                                <Skeleton className="h-10 w-full" />
                                <Skeleton className="h-10 w-full" />
@@ -226,6 +241,12 @@ const AIAlertsPanel = ({
                                             </AlertDescription>
                                         </Alert>
                                     ))
+                                )}
+                                {alerts.length > 0 && (
+                                     <Button onClick={handleSaveChanges} disabled={isSaving || alertsSaved}>
+                                        <Save className="mr-2 h-4 w-4" />
+                                        {isSaving ? "Guardando..." : alertsSaved ? "Guardado" : "Guardar Alertas en Bitácora"}
+                                    </Button>
                                 )}
                             </div>
                         )}
