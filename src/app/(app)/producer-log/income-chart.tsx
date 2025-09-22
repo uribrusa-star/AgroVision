@@ -55,7 +55,7 @@ const processTransactionsForChart = (transactions: Transaction[]) => {
     }));
 };
 
-export function IncomeChart({ transactions }: { transactions: Transaction[] }) {
+function IncomeChartComponent({ transactions }: { transactions: Transaction[] }) {
   const chartData = useMemo(() => processTransactionsForChart(transactions), [transactions]);
 
   if (chartData.length === 0) {
@@ -108,3 +108,5 @@ export function IncomeChart({ transactions }: { transactions: Transaction[] }) {
     </Card>
   );
 }
+
+export const IncomeChart = React.memo(IncomeChartComponent);

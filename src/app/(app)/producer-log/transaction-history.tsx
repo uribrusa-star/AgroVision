@@ -16,7 +16,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 
-export function TransactionHistory() {
+function TransactionHistoryComponent() {
   const { loading, transactions, deleteTransaction, currentUser } = useContext(AppDataContext);
   const { toast } = useToast();
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -189,3 +189,5 @@ export function TransactionHistory() {
     </>
   )
 }
+
+export const TransactionHistory = React.memo(TransactionHistoryComponent);
