@@ -28,7 +28,7 @@ const transporter = nodemailer.createTransport({
 
 export const sendEmail = async (mailOptions: MailOptions) => {
     // Si las credenciales no están configuradas, no intentes enviar el correo.
-    if (!emailUser || !emailPass || emailUser === 'tu-correo@gmail.com') {
+    if (!emailUser || !emailPass || emailUser.includes('tu-correo')) {
         console.error("Intento de envío de correo fallido: las credenciales EMAIL_USER y EMAIL_PASS no están configuradas.");
         return; // No arrojes un error, solo registra y no envíes.
     }
