@@ -70,10 +70,50 @@ export const AppDataContext = React.createContext<AppData>({
   isClient: false,
 });
 
+const usePersistentState = <T,>(key: string): [T, (value: T | null, rememberMe?: boolean) => void] => {
+  const [state, setState] = useState<T>(() => null as T); // Start with null state on server
+
+  // Load state from storage only on the client side
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const localItem = window.localStorage.getItem(key);
+        if (localItem) {
+          setState(JSON.parse(localItem));
+          return;
+        }
+
+        const sessionItem = window.sessionStorage.getItem(key);
+        if (sessionItem) {
+          setState(JSON.parse(sessionItem));
+          return;
+        }
+      } catch (error) {
+        console.warn(`Error reading storage key “${key}”:`, error);
+      }
+    }
+  }, [key]);
+
+  const setPersistentState = (value: T | null, rememberMe: boolean = false) => {
+    if (typeof window !== 'undefined') {
+      // Clear both storages to ensure only one is used
+      window.localStorage.removeItem(key);
+      window.sessionStorage.removeItem(key);
+      
+      if (value !== null) {
+        const storage: Storage = rememberMe ? window.localStorage : window.sessionStorage;
+        storage.setItem(key, JSON.stringify(value));
+      }
+    }
+    setState(value as T);
+  };
+
+  return [state, setPersistentState];
+};
 
 export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const { toast } = useToast();
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const [currentUser, setCurrentUser] = usePersistentState<User | null>('currentUser');
     const [users, setUsers] = useState<User[]>([]);
     const [harvests, setHarvests] = useState<Harvest[]>([]);
     const [collectors, setCollectors] = useState<Collector[]>([]);
@@ -96,23 +136,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     useEffect(() => {
       setIsClient(true);
-      const fetchUser = async () => {
-          try {
-              const res = await fetch('/api/user');
-              if(res.ok) {
-                  const { user } = await res.json();
-                  if(user) {
-                      setCurrentUser(user);
-                  }
-              }
-          } catch (e) {
-              console.error("Could not fetch user", e);
-          } finally {
-              setLoading(false);
-          }
+      // Removed user fetching logic from here, as it's now handled by the persistent state hook
+      // and the initial session check in the layout.
+      if (!currentUser) {
+          setLoading(false);
       }
-      fetchUser();
-    }, []);
+    }, [currentUser]);
 
     const fetchAllData = useCallback(async () => {
       if (!isClient) return;
@@ -913,22 +942,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         const userRef = doc(db, 'users', userId);
         await setDoc(userRef, profileData, { merge: true });
         
-        setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...profileData } : u));
-        if (currentUser?.id === userId) {
-            setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
+        const updatedUser = users.find(u => u.id === userId);
+        if(updatedUser) {
+            const newUsers = users.map(u => u.id === userId ? { ...u, ...profileData } : u);
+            setUsers(newUsers);
+            if (currentUser?.id === userId) {
+                const updatedCurrentUser = { ...currentUser, ...profileData };
+                setCurrentUser(updatedCurrentUser, true); // Assume rememberMe
+            }
         }
     };
-
-    const handleSetCurrentUser = (user: User | null, rememberMe: boolean = false) => {
-        setCurrentUser(user);
-    }
-
 
     const value = {
         loading,
         currentUser,
         users,
-        setCurrentUser: handleSetCurrentUser,
+        setCurrentUser,
         harvests,
         collectors,
         packers,

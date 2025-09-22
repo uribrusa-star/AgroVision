@@ -97,10 +97,11 @@ function UserMenu() {
   
   if(!currentUser) return null;
   
-  const handleLogout = async () => {
-    await fetch('/api/logout', { method: 'POST' });
-    setCurrentUser(null);
-    window.location.href = '/';
+  const handleLogout = () => {
+    setCurrentUser(null, false); // Clear persistent state
+    fetch('/api/logout', { method: 'POST' }).then(() => {
+        router.push('/');
+    });
   }
 
   const onPasswordSubmit = (values: z.infer<typeof PasswordSchema>) => {
@@ -148,7 +149,7 @@ function UserMenu() {
     if (currentUser) {
         profileForm.reset({ name: currentUser.name, email: currentUser.email });
     }
-  }, [currentUser, profileForm]);
+  }, [currentUser, profileForm, isProfileDialogOpen]);
   
   return (
       <>
