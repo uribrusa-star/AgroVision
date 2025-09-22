@@ -66,6 +66,7 @@ export const AppDataContext = React.createContext<AppData>({
   addTransaction: () => { throw new Error('Not implemented') },
   deleteTransaction: async () => { throw new Error('Not implemented') },
   updateUserPassword: async () => { throw new Error('Not implemented') },
+  updateUserProfile: async () => { throw new Error('Not implemented') },
   isClient: false,
 });
 
@@ -908,6 +909,16 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
+    const updateUserProfile = async (userId: string, profileData: { name: string; email: string }) => {
+        const userRef = doc(db, 'users', userId);
+        await setDoc(userRef, profileData, { merge: true });
+        
+        setUsers(prev => prev.map(u => u.id === userId ? { ...u, ...profileData } : u));
+        if (currentUser?.id === userId) {
+            setCurrentUser(prev => prev ? { ...prev, ...profileData } : null);
+        }
+    };
+
     const handleSetCurrentUser = (user: User | null, rememberMe: boolean = false) => {
         setCurrentUser(user);
     }
@@ -970,6 +981,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         addTransaction,
         deleteTransaction,
         updateUserPassword,
+        updateUserProfile,
         isClient
     };
 

@@ -325,5 +325,6 @@ export type AppData = {
   addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
   deleteTransaction: (transactionId: string) => Promise<void>;
   updateUserPassword: (userId: string, newPassword: string) => Promise<void>;
+  updateUserProfile: (userId: string, profileData: { name: string; email: string }) => Promise<void>;
   isClient: boolean;
 };

@@ -4,7 +4,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound, Package, BookUser, ClipboardCheck } from 'lucide-react';
+import { HardHat, Leaf, LayoutDashboard, Check, Loader2, PackageSearch, Menu, Building, LogOut, LineChart, Map, KeyRound, Package, BookUser, ClipboardCheck, User as UserIcon } from 'lucide-react';
 import React, { useEffect, useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useForm } from 'react-hook-form';
@@ -71,17 +71,28 @@ const PasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+const ProfileSchema = z.object({
+  name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
+  email: z.string().email("Por favor, ingrese un correo válido."),
+});
+
 
 function UserMenu() {
-  const { currentUser, setCurrentUser, updateUserPassword } = React.useContext(AppDataContext);
+  const { currentUser, setCurrentUser, updateUserPassword, updateUserProfile } = React.useContext(AppDataContext);
   const router = useRouter();
   const { toast } = useToast();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const form = useForm<z.infer<typeof PasswordSchema>>({
+  const passwordForm = useForm<z.infer<typeof PasswordSchema>>({
     resolver: zodResolver(PasswordSchema),
     defaultValues: { newPassword: '', confirmPassword: '' },
+  });
+
+  const profileForm = useForm<z.infer<typeof ProfileSchema>>({
+    resolver: zodResolver(ProfileSchema),
+    defaultValues: { name: currentUser?.name || '', email: currentUser?.email || '' },
   });
   
   if(!currentUser) return null;
@@ -102,7 +113,7 @@ function UserMenu() {
                 description: "Su contraseña ha sido cambiada exitosamente.",
             });
             setIsPasswordDialogOpen(false);
-            form.reset();
+            passwordForm.reset();
         } catch (error) {
             toast({
                 title: "Error",
@@ -112,9 +123,35 @@ function UserMenu() {
         }
     });
   }
+
+  const onProfileSubmit = (values: z.infer<typeof ProfileSchema>) => {
+    if(!currentUser) return;
+    startTransition(async () => {
+        try {
+            await updateUserProfile(currentUser.id, values);
+            toast({
+                title: "Perfil Actualizado",
+                description: "Su nombre y correo electrónico han sido actualizados.",
+            });
+            setIsProfileDialogOpen(false);
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "No se pudo actualizar el perfil.",
+                variant: "destructive",
+            });
+        }
+    });
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+        profileForm.reset({ name: currentUser.name, email: currentUser.email });
+    }
+  }, [currentUser, profileForm]);
   
   return (
-      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+      <>
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="justify-start gap-2 w-full p-2 h-12">
@@ -129,67 +166,92 @@ function UserMenu() {
             </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent side="right" align="start" className="w-56">
-            <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => setIsPasswordDialogOpen(true)}>
-                <KeyRound className="mr-2 h-4 w-4" />
-                <span>Cambiar Contraseña</span>
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar Sesión</span>
-            </DropdownMenuItem>
+                <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setIsProfileDialogOpen(true)}>
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <span>Editar Perfil</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsPasswordDialogOpen(true)}>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    <span>Cambiar Contraseña</span>
+                </DropdownMenuItem>
+                
+                <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Cerrar Sesión</span>
+                </DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
 
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Cambiar Contraseña</DialogTitle>
-                <DialogDescription>
-                    Ingrese una nueva contraseña para su cuenta.
-                </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onPasswordSubmit)} className="space-y-4">
-                     <FormField
-                        control={form.control}
-                        name="newPassword"
-                        render={({ field }) => (
+        <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar Perfil</DialogTitle>
+                    <DialogDescription>
+                        Actualice su nombre y dirección de correo electrónico.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...profileForm}>
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
+                        <FormField control={profileForm.control} name="name" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Nueva Contraseña</FormLabel>
-                                <FormControl>
-                                    <Input type="password" {...field} />
-                                </FormControl>
+                                <FormLabel>Nombre</FormLabel>
+                                <FormControl><Input {...field} disabled={isPending} /></FormControl>
                                 <FormMessage />
                             </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="confirmPassword"
-                        render={({ field }) => (
+                        )} />
+                        <FormField control={profileForm.control} name="email" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Confirmar Nueva Contraseña</FormLabel>
-                                <FormControl>
-                                    <Input type="password" {...field} />
-                                </FormControl>
+                                <FormLabel>Correo Electrónico</FormLabel>
+                                <FormControl><Input type="email" {...field} disabled={isPending} /></FormControl>
                                 <FormMessage />
                             </FormItem>
-                        )}
-                    />
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancelar</Button>
-                        </DialogClose>
-                        <Button type="submit" disabled={isPending}>
-                            {isPending ? "Guardando..." : "Guardar Contraseña"}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </Form>
-        </DialogContent>
-      </Dialog>
+                        )} />
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
+                            <Button type="submit" disabled={isPending}>{isPending ? "Guardando..." : "Guardar Cambios"}</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+
+        <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Cambiar Contraseña</DialogTitle>
+                    <DialogDescription>
+                        Ingrese una nueva contraseña para su cuenta.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...passwordForm}>
+                    <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
+                         <FormField control={passwordForm.control} name="newPassword" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Nueva Contraseña</FormLabel>
+                                    <FormControl><Input type="password" {...field} disabled={isPending} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField control={passwordForm.control} name="confirmPassword" render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Confirmar Nueva Contraseña</FormLabel>
+                                    <FormControl><Input type="password" {...field} disabled={isPending} /></FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <DialogFooter>
+                            <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
+                            <Button type="submit" disabled={isPending}>{isPending ? "Guardando..." : "Guardar Contraseña"}</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+      </>
   )
 }
 
