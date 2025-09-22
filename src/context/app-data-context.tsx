@@ -684,11 +684,22 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
     const addTask = (task: Omit<Task, 'id'>) => {
         const tempId = `task_${Date.now()}`;
-        setTasks(prev => [{ id: tempId, ...task }, ...prev]);
+        const newTask = { id: tempId, ...task };
+        setTasks(prev => [newTask, ...prev]);
 
-        addDoc(collection(db, 'tasks'), task).then(ref => {
-            setTasks(prev => prev.map(t => t.id === tempId ? { ...t, id: ref.id } : t));
-        }).catch(error => {
+        addDoc(collection(db, 'tasks'), task)
+        .then(ref => {
+            setTasks(prev => prev.map(t => (t.id === tempId ? { ...t, id: ref.id } : t)));
+            const assignedUser = users.find(u => u.id === task.assignedTo.id);
+            if (assignedUser) {
+                fetch('/api/send-task-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ task, user: assignedUser }),
+                }).catch(err => console.error("Failed to send task email:", err));
+            }
+        })
+        .catch(error => {
             console.error("Failed to add task:", error);
             setTasks(prev => prev.filter(t => t.id !== tempId));
             toast({ title: "Error", description: "No se pudo agregar la tarea.", variant: "destructive"});
@@ -856,7 +867,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
         const tempId = `transaction_${Date.now()}`;
         
-        // Ensure pricePerUnit is not undefined
         if (transaction.pricePerUnit === undefined) {
             delete (transaction as Partial<Transaction>).pricePerUnit;
         }
@@ -969,4 +979,3 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
-
