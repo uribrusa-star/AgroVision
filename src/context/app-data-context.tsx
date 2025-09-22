@@ -695,7 +695,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                 fetch('/api/send-task-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ task, user: assignedUser }),
+                    body: JSON.stringify({ task: { ...task, id: ref.id }, user: assignedUser }),
                 }).catch(err => console.error("Failed to send task email:", err));
             }
         })
