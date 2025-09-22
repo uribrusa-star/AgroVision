@@ -45,7 +45,7 @@ import {
     DialogClose,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 
 
@@ -73,7 +73,8 @@ const PasswordSchema = z.object({
 
 const ProfileSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres."),
-  email: z.string().email("Por favor, ingrese un correo válido."),
+  email: z.string().email("Por favor, ingrese un correo válido.").optional(),
+  notificationEmail: z.string().email("Por favor, ingrese un correo de notificación válido.").or(z.literal("")).optional(),
 });
 
 
@@ -92,7 +93,7 @@ function UserMenu() {
 
   const profileForm = useForm<z.infer<typeof ProfileSchema>>({
     resolver: zodResolver(ProfileSchema),
-    defaultValues: { name: currentUser?.name || '', email: currentUser?.email || '' },
+    defaultValues: { name: currentUser?.name || '', email: currentUser?.email || '', notificationEmail: currentUser?.notificationEmail || '' },
   });
   
   if(!currentUser) return null;
@@ -129,10 +130,10 @@ function UserMenu() {
     if(!currentUser) return;
     startTransition(async () => {
         try {
-            await updateUserProfile(currentUser.id, values);
+            await updateUserProfile(currentUser.id, { name: values.name, notificationEmail: values.notificationEmail });
             toast({
                 title: "Perfil Actualizado",
-                description: "Su nombre y correo electrónico han sido actualizados.",
+                description: "Su nombre y correo de notificaciones han sido actualizados.",
             });
             setIsProfileDialogOpen(false);
         } catch (error) {
@@ -147,7 +148,7 @@ function UserMenu() {
 
   useEffect(() => {
     if (currentUser) {
-        profileForm.reset({ name: currentUser.name, email: currentUser.email });
+        profileForm.reset({ name: currentUser.name, email: currentUser.email, notificationEmail: currentUser.notificationEmail || '' });
     }
   }, [currentUser, profileForm, isProfileDialogOpen]);
   
@@ -190,7 +191,7 @@ function UserMenu() {
                 <DialogHeader>
                     <DialogTitle>Editar Perfil</DialogTitle>
                     <DialogDescription>
-                        Actualice su nombre y dirección de correo electrónico.
+                        Actualice su nombre y configure un correo electrónico para recibir notificaciones.
                     </DialogDescription>
                 </DialogHeader>
                 <Form {...profileForm}>
@@ -204,8 +205,21 @@ function UserMenu() {
                         )} />
                         <FormField control={profileForm.control} name="email" render={({ field }) => (
                             <FormItem>
-                                <FormLabel>Correo Electrónico</FormLabel>
-                                <FormControl><Input type="email" {...field} disabled={isPending} /></FormControl>
+                                <FormLabel>Correo de Inicio de Sesión</FormLabel>
+                                <FormControl><Input type="email" {...field} disabled={true} /></FormControl>
+                                <FormDescription>
+                                  Este correo es su nombre de usuario y no puede ser modificado.
+                                </FormDescription>
+                                <FormMessage />
+                            </FormItem>
+                        )} />
+                         <FormField control={profileForm.control} name="notificationEmail" render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Correo para Notificaciones</FormLabel>
+                                <FormControl><Input type="email" {...field} placeholder="ej. alertas@miempresa.com" disabled={isPending} /></FormControl>
+                                 <FormDescription>
+                                  Recibirá alertas de tareas y otras notificaciones en esta dirección. Si lo deja en blanco, se usará su correo de inicio de sesión.
+                                </FormDescription>
                                 <FormMessage />
                             </FormItem>
                         )} />

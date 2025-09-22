@@ -11,6 +11,8 @@ export async function POST(request: Request) {
     if (!task || !user || !user.email) {
       return NextResponse.json({ error: 'Faltan datos de la tarea o del usuario.' }, { status: 400 });
     }
+    
+    const notificationEmail = user.notificationEmail || user.email;
 
     const subject = `Nueva Tarea Asignada en AgroVision: ${task.title}`;
     const text = `Hola ${user.name},\n\nSe te ha asignado una nueva tarea en AgroVision:\n\n- Título: ${task.title}\n- Descripción: ${task.description}\n- Prioridad: ${task.priority}\n- Creada por: ${task.createdBy.name}\n\nPuedes ver más detalles en la aplicación.\n\nSaludos,\nEl equipo de AgroVision`;
@@ -44,7 +46,7 @@ export async function POST(request: Request) {
       </div>
     `;
 
-    await sendEmail({ to: user.email, subject, text, html });
+    await sendEmail({ to: notificationEmail, subject, text, html });
 
     return NextResponse.json({ message: 'Correo enviado exitosamente.' });
 
