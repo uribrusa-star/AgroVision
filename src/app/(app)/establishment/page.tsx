@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useContext, useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
@@ -14,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Checkbox } from "@/components/ui/checkbox";
 import { Droplet, MapPin, Milestone, Mountain, Sprout, Wind, TrendingUp, Sun, Ruler, CheckCircle, Pencil, User, Briefcase, Map } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppDataContext } from "@/context/app-data-context";
+import { AppDataContext } from "@/context/app-data-context.tsx";
 import type { EstablishmentData, UserRole } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";

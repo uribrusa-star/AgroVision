@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext, useState, useTransition } from 'react';
@@ -6,7 +7,7 @@ import { z } from 'zod';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { recommendApplications } from '@/ai/flows/recommend-applications';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';

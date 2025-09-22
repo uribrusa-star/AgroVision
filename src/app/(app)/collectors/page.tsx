@@ -54,7 +54,7 @@ export default function CollectorsPage() {
   
   const handleDelete = (collectorId: string) => {
      startTransition(async () => {
-        await deleteCollector(collectorId);
+        deleteCollector(collectorId);
         toast({ title: "Recolector Eliminado", description: "El recolector y sus datos asociados han sido eliminados." });
     });
   };
@@ -67,7 +67,7 @@ export default function CollectorsPage() {
     }
     
     startTransition(async () => {
-        await addCollector({
+        addCollector({
           name: newName,
           avatar: `${Math.floor(Math.random() * 1000)}`,
           totalHarvested: 0,

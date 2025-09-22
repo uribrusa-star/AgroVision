@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext, useState } from 'react';
@@ -33,7 +34,8 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
                 }));
                 
                 const properties = feature.properties || {};
-                const polygonId = properties.name || Object.keys(properties).find(k => k.startsWith('L')) || `polygon-${index}`;
+                const polygonId = Object.keys(properties).find(k => k.startsWith('L')) || `polygon-${index}`;
+
 
                 return (
                     <Polygon
@@ -57,7 +59,7 @@ const MapComponent = ({ center, geoJsonData }: MapProps) => {
 
         const activeFeature = geoJsonData.features.find((feature: any) => {
              const properties = feature.properties || {};
-             const polygonId = properties.name || Object.keys(properties).find(k => k.startsWith('L'));
+             const polygonId = Object.keys(properties).find(k => k.startsWith('L'));
              return polygonId === activeInfoWindow;
         });
 

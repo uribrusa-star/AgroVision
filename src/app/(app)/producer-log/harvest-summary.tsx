@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { AppDataContext } from '@/context/app-data-context';
+import { AppDataContext } from '@/context/app-data-context.tsx';
 import { summarizeHarvestData } from '@/ai/flows/summarize-harvest-data';
 import { useToast } from '@/hooks/use-toast';
 import { MonthlyHarvestChart } from '@/app/(app)/monthly-harvest-chart';
