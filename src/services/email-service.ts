@@ -18,6 +18,9 @@ if (!emailUser || !emailPass) {
     );
 }
 
+// Configuración para usar el servidor SMTP de Gmail.
+// Esto es diferente de usar la API de Gmail, que es más compleja y requiere OAuth2.
+// Para este método, solo se necesita una "Contraseña de aplicación" generada desde la cuenta de Google.
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
