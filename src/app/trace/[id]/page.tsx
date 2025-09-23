@@ -45,7 +45,8 @@ export default function TracePage() {
             fetch(`/api/trace?id=${id}`)
                 .then(res => {
                     if (!res.ok) {
-                        throw new Error(`Error ${res.status}: ${res.statusText}`);
+                         // This will be caught by the catch block
+                        return res.json().then(err => { throw new Error(err.error || `Error ${res.status}`) });
                     }
                     return res.json();
                 })
@@ -58,7 +59,7 @@ export default function TracePage() {
                 })
                 .catch(err => {
                     console.error("Traceability fetch error:", err);
-                    setError("No se pudo cargar la información de trazabilidad. El código puede ser inválido.");
+                    setError(err.message || "No se pudo cargar la información de trazabilidad. El código puede ser inválido.");
                 })
                 .finally(() => setLoading(false));
         }
