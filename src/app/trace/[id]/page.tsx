@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -8,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Calendar, Sprout, User, CheckCircle, Info, Truck, Package, Leaf, TestTube2, Droplet, AlertCircle, Home } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 
 type TraceabilityData = {
@@ -45,7 +44,7 @@ export default function TracePage() {
             fetch(`/api/trace?id=${id}`)
                 .then(res => {
                     if (!res.ok) {
-                         // This will be caught by the catch block
+                        // This will be caught by the catch block
                         return res.json().then(err => { throw new Error(err.error || `Error ${res.status}`) });
                     }
                     return res.json();
@@ -99,7 +98,24 @@ export default function TracePage() {
     }
 
     if (!data) {
-        return null;
+        return (
+             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 p-4">
+                <Card className="w-full max-w-lg">
+                    <CardHeader>
+                        <CardTitle className="flex items-center justify-center gap-2">
+                            <AlertCircle className="h-8 w-8" />
+                            No Encontrado
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-center">
+                        <p>No se encontró información para el código de trazabilidad proporcionado.</p>
+                         <Button asChild variant="link" className="mt-4">
+                            <Link href="/">Volver a la página principal</Link>
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+        );
     }
 
     return (
