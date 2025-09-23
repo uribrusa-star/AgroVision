@@ -57,7 +57,7 @@ export default function TracePage() {
                     }
                 })
                 .catch(err => {
-                    console.error(err);
+                    console.error("Traceability fetch error:", err);
                     setError("No se pudo cargar la información de trazabilidad. El código puede ser inválido.");
                 })
                 .finally(() => setLoading(false));
