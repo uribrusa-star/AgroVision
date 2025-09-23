@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useMemo, useTransition, useState, useRef } from 'react';
@@ -6,6 +7,8 @@ import Image from 'next/image';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
 import html2canvas from 'html2canvas';
+import QRCode from "react-qr-code";
+
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +16,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar, HardHat, Info, Trash2, Weight, FileDown } from 'lucide-react';
+import { Calendar, HardHat, Info, Trash2, Weight, FileDown, QrCode } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppDataContext } from '@/context/app-data-context.tsx';
 import { useToast } from '@/hooks/use-toast';
@@ -31,7 +34,10 @@ function ProductionPaymentHistoryComponent() {
   const [isPending, startTransition] = useTransition();
   const [isPdfPending, startPdfTransition] = useTransition();
   const [selectedLog, setSelectedLog] = useState<CollectorPaymentLog | null>(null);
+  const [isLabelOpen, setIsLabelOpen] = useState(false);
   const logoRef = useRef<HTMLDivElement>(null);
+  const labelRef = useRef<HTMLDivElement>(null);
+
 
   if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
@@ -134,6 +140,34 @@ function ProductionPaymentHistoryComponent() {
             toast({ title: 'Error', description: 'No se pudo generar el recibo en PDF.', variant: 'destructive'});
         }
     });
+  }
+
+  const handlePrintLabel = async () => {
+    if (!labelRef.current) return;
+    toast({ title: 'Generando Etiqueta', description: 'Por favor espere...' });
+    const canvas = await html2canvas(labelRef.current, {scale: 3});
+    const dataUrl = canvas.toDataURL('image/png');
+    
+    const printWindow = window.open('', '_blank');
+    if(printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head><title>Etiqueta de Trazabilidad</title></head>
+          <body style="margin:0; padding:0; display:flex; justify-content:center; align-items:center; height:100vh;">
+            <img src="${dataUrl}" style="max-width:100%; max-height:100%;" />
+            <script>
+              window.onload = () => {
+                window.print();
+                window.onafterprint = () => window.close();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } else {
+      toast({ title: 'Error', description: 'No se pudo abrir la ventana de impresión. Verifique los bloqueadores de pop-ups.', variant: 'destructive' });
+    }
   }
 
 
@@ -272,11 +306,60 @@ function ProductionPaymentHistoryComponent() {
                         <FileDown className="h-4 w-4 mr-2" />
                         {isPdfPending ? "Generando..." : "Generar Recibo"}
                     </Button>
+                    <Button variant="outline" onClick={() => setIsLabelOpen(true)} disabled={!canManage}>
+                        <QrCode className="h-4 w-4 mr-2" />
+                        Generar Etiqueta
+                    </Button>
                   </div>
                   <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
               </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Label/QR Dialog */}
+      <Dialog open={isLabelOpen} onOpenChange={setIsLabelOpen}>
+        <DialogContent className="max-w-md">
+            {selectedLog && (
+                <>
+                    <DialogHeader>
+                        <DialogTitle>Etiqueta de Trazabilidad</DialogTitle>
+                        <DialogDescription>
+                            Imprima esta etiqueta y péguela en el cajón o pallet correspondiente.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div ref={labelRef} className="bg-white text-black p-4 rounded-lg">
+                        <div className="flex gap-4 items-center border-b pb-2 mb-2">
+                            <Image src="/logo.png" alt="AgroVision Logo" width={48} height={48} />
+                            <div className="text-left">
+                                <h3 className="font-bold text-lg">{establishmentData?.producer}</h3>
+                                <p className="text-xs">{establishmentData?.location.locality}, {establishmentData?.location.province}</p>
+                            </div>
+                        </div>
+                        <div className="flex gap-4">
+                            <div className="w-full space-y-2">
+                                <p className="text-xs">Lote: <span className="font-bold">{getHarvestForLog(selectedLog)?.batchNumber}</span></p>
+                                <p className="text-xs">Cosecha: <span className="font-bold">{new Date(selectedLog.date).toLocaleDateString('es-AR')}</span></p>
+                                <p className="text-xs">ID Trazabilidad:</p>
+                                <p className="font-mono text-xs break-all">{selectedLog.traceabilityId}</p>
+                            </div>
+                             <div className="w-32 h-32 p-1 bg-white border flex items-center justify-center">
+                                <QRCode 
+                                    value={`${window.location.origin}/trace/${selectedLog.traceabilityId}`} 
+                                    size={120} 
+                                    viewBox={`0 0 120 120`}
+                                />
+                            </div>
+                        </div>
+                         <p className="text-center text-[8px] mt-2">Escanee el QR para ver el origen y la historia de este producto.</p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="secondary" onClick={() => setIsLabelOpen(false)}>Cancelar</Button>
+                        <Button onClick={handlePrintLabel}>Imprimir Etiqueta</Button>
+                    </DialogFooter>
+                </>
+            )}
         </DialogContent>
       </Dialog>
     </>

@@ -41,6 +41,7 @@ export type Harvest = {
     id: string;
     name: string;
   };
+  traceabilityId: string;
 };
 
 export type Batch = {
@@ -154,6 +155,7 @@ export type CollectorPaymentLog = {
   hours: number;
   ratePerKg: number;
   payment: number;
+  traceabilityId: string;
 }
 
 export type PackagingLog = {
@@ -290,7 +292,7 @@ export type AppData = {
   establishmentData: EstablishmentData | null;
   producerLogs: ProducerLog[];
   transactions: Transaction[];
-  addHarvest: (harvest: Omit<Harvest, 'id'>, hoursWorked: number) => Promise<string | undefined>;
+  addHarvest: (harvest: Omit<Harvest, 'id' | 'traceabilityId'>, hoursWorked: number) => Promise<string | undefined>;
   editCollector: (collector: Collector) => Promise<void>;
   deleteCollector: (collectorId: string) => void;
   addAgronomistLog: (log: Omit<AgronomistLog, 'id'>) => void;
@@ -318,7 +320,7 @@ export type AppData = {
   deleteCulturalPracticeLog: (logId: string) => Promise<void>;
   addBatch: (batch: Omit<Batch, 'id' | 'status' | 'preloadedDate'> & { id: string, preloadedDate: string, status: string }) => void;
   deleteBatch: (batchId: string) => void;
-  addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id'>) => void;
+  addCollectorPaymentLog: (log: Omit<CollectorPaymentLog, 'id' | 'traceabilityId'>) => void;
   deleteCollectorPaymentLog: (logId: string) => Promise<void>;
   updateEstablishmentData: (data: Partial<EstablishmentData>) => Promise<void>;
   addProducerLog: (log: Omit<ProducerLog, 'id'>) => void;
