@@ -41,24 +41,20 @@ export default function TracePage() {
 
     useEffect(() => {
         if (id) {
+            setLoading(true);
+            setError(null);
             fetch(`/api/trace?id=${id}`)
-                .then(res => {
+                .then(async res => {
+                    const result = await res.json();
                     if (!res.ok) {
-                        // This will be caught by the catch block
-                        return res.json().then(err => { throw new Error(err.error || `Error ${res.status}`) });
-                    }
-                    return res.json();
-                })
-                .then(result => {
-                    if (result.error) {
-                        setError(result.error);
+                        setError(result.error || `Error: ${res.status}`);
                     } else {
                         setData(result);
                     }
                 })
                 .catch(err => {
-                    console.error("Traceability fetch error:", err);
-                    setError(err.message || "No se pudo cargar la información de trazabilidad. El código puede ser inválido.");
+                    console.error("Network or parsing error:", err);
+                    setError("No se pudo conectar con el servidor para verificar el código.");
                 })
                 .finally(() => setLoading(false));
         }
