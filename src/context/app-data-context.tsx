@@ -238,9 +238,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
        }
     }, [fetchAllData, currentUser]);
     
-    const addHarvest = async (harvestData: Omit<Harvest, 'id' | 'traceabilityId'>, hoursWorked: number): Promise<string | undefined> => {
-        const collectorDoc = collectors.find(c => c.id === harvestData.collector.id);
-        if (!collectorDoc) {
+    const addHarvest = async (harvestData: Omit<Harvest, 'id' | 'traceabilityId'>, hoursWorked: number, ratePerKg: number): Promise<string | undefined> => {
+        const collector = collectors.find(c => c.id === harvestData.collector.id);
+        if (!collector) {
             toast({ title: "Error", description: "Recolector no encontrado.", variant: "destructive"});
             return undefined;
         }
@@ -248,10 +248,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         try {
             const batch = writeBatch(db);
             
-            // Generate traceability ID
             const date = new Date(harvestData.date);
             const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-            const sequentialNumber = (harvests.filter(h => h.date.startsWith(harvestData.date.substring(0, 10))).length + 1).toString().padStart(3, '0');
+            
+            // Correctly filter harvests for the same day to get the sequential number
+            const todayStart = new Date(date.setHours(0, 0, 0, 0)).toISOString();
+            const todayEnd = new Date(date.setHours(23, 59, 59, 999)).toISOString();
+            const harvestsToday = harvests.filter(h => h.date >= todayStart && h.date <= todayEnd);
+            const sequentialNumber = (harvestsToday.length + 1).toString().padStart(3, '0');
             const traceabilityId = `AGRO-${dateString}-${harvestData.batchNumber}-${sequentialNumber}`;
 
             const harvestWithTraceability: Omit<Harvest, 'id'> = {
@@ -263,8 +267,8 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             batch.set(newHarvestRef, harvestWithTraceability);
 
             const collectorRef = doc(db, 'collectors', harvestData.collector.id);
-            const newTotalHarvested = collectorDoc.totalHarvested + harvestData.kilograms;
-            const newHoursWorked = collectorDoc.hoursWorked + hoursWorked;
+            const newTotalHarvested = collector.totalHarvested + harvestData.kilograms;
+            const newHoursWorked = collector.hoursWorked + hoursWorked;
             const updatedCollectorData = {
                 totalHarvested: newTotalHarvested,
                 hoursWorked: newHoursWorked,
@@ -272,13 +276,29 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             };
             batch.update(collectorRef, updatedCollectorData);
             
+            // Create and set the payment log in the same batch
+            const newPaymentLogRef = doc(collection(db, 'collectorPaymentLogs'));
+            const calculatedPayment = harvestData.kilograms * ratePerKg;
+            const paymentLog: Omit<CollectorPaymentLog, 'id'> = {
+              harvestId: newHarvestRef.id, 
+              date: harvestData.date,
+              collectorId: harvestData.collector.id,
+              collectorName: collector.name,
+              kilograms: harvestData.kilograms,
+              hours: hoursWorked,
+              ratePerKg: ratePerKg,
+              payment: calculatedPayment,
+              traceabilityId: traceabilityId, // Ensure traceabilityId is included
+            };
+            batch.set(newPaymentLogRef, paymentLog);
+
             await batch.commit();
             await fetchAllData();
             return newHarvestRef.id;
 
         } catch(error) {
-            console.error("Failed to add harvest:", error);
-            toast({ title: "Error", description: "No se pudo guardar la cosecha.", variant: "destructive"});
+            console.error("Failed to add harvest and payment:", error);
+            toast({ title: "Error", description: "No se pudo guardar la cosecha y el pago.", variant: "destructive"});
             return undefined;
         }
     };
@@ -794,25 +814,10 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const addCollectorPaymentLog = (log: Omit<CollectorPaymentLog, 'id' | 'traceabilityId'>) => {
-        const harvest = harvests.find(h => h.id === log.harvestId);
-        if (!harvest) {
-            toast({ title: "Error", description: "No se encontró la cosecha asociada para generar el código de trazabilidad.", variant: "destructive"});
-            return;
-        }
-
-        const logWithTraceability = { ...log, traceabilityId: harvest.traceabilityId };
-        
-        const tempId = `paymentlog_${Date.now()}`;
-        setCollectorPaymentLogs(prev => [{ id: tempId, ...logWithTraceability }, ...prev]);
-        
-        addDoc(collection(db, 'collectorPaymentLogs'), logWithTraceability).then(ref => {
-            setCollectorPaymentLogs(prev => prev.map(l => l.id === tempId ? { ...l, id: ref.id } : l));
-        }).catch(error => {
-            console.error("Failed to add payment log:", error);
-            setCollectorPaymentLogs(prev => prev.filter(l => l.id !== tempId));
-            toast({ title: "Error", description: "No se pudo guardar el pago.", variant: "destructive"});
-        });
+    const addCollectorPaymentLog = (log: Omit<CollectorPaymentLog, 'id'>) => {
+        // This function is now deprecated in favor of the logic inside addHarvest.
+        // It's kept for type safety but should not be called directly.
+        console.warn("addCollectorPaymentLog is deprecated and should not be called directly.");
     };
 
     const deleteCollectorPaymentLog = (logId: string) => {

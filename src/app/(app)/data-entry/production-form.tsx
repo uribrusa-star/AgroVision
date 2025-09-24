@@ -38,7 +38,7 @@ type ProductionFormValues = z.infer<typeof ProductionSchema>;
 
 export function ProductionForm() {
   const { toast } = useToast();
-  const { collectors, batches, addHarvest, addCollectorPaymentLog, harvests, currentUser } = useContext(AppDataContext);
+  const { collectors, batches, addHarvest, harvests, currentUser } = useContext(AppDataContext);
   const [isPending, startTransition] = useTransition();
   const [validationAlert, setValidationAlert] = useState<{ open: boolean; reason: string; data: ProductionFormValues | null }>({ open: false, reason: '', data: null });
   
@@ -67,8 +67,8 @@ export function ProductionForm() {
       return;
     }
     
-    startTransition(() => {
-      addHarvest({
+    startTransition(async () => {
+      await addHarvest({
           date: values.date.toISOString(),
           batchNumber: values.batchId,
           kilograms: values.kilosPerBatch,
@@ -76,36 +76,18 @@ export function ProductionForm() {
             id: values.collectorId,
             name: collector.name,
           }
-      }, values.hoursWorked).then(newHarvestId => {
-          if(!newHarvestId) return;
-          
-          const calculatedPayment = values.kilosPerBatch * values.ratePerKg;
+      }, values.hoursWorked, values.ratePerKg);
+      
+      toast({
+          title: '¡Éxito!',
+          description: `Cosecha para el lote ${values.batchId} con ${values.kilosPerBatch}kg registrada.`,
+      });
 
-          addCollectorPaymentLog({
-              harvestId: newHarvestId, 
-              date: values.date.toISOString(),
-              collectorId: values.collectorId,
-              collectorName: collector.name,
-              kilograms: values.kilosPerBatch,
-              hours: values.hoursWorked,
-              ratePerKg: values.ratePerKg,
-              payment: calculatedPayment,
-          });
-
-          toast({
-              title: '¡Éxito!',
-              description: `Cosecha para el lote ${values.batchId} con ${values.kilosPerBatch}kg registrada.`,
-          });
-
-          form.reset({
-              ...form.getValues(),
-              batchId: '',
-              kilosPerBatch: 0,
-              collectorId: '',
-          });
-      }).catch(error => {
-        // Optimistic UI will handle errors, but a fallback can be useful for debugging.
-        console.error("Error saving harvest data:", error);
+      form.reset({
+          ...form.getValues(),
+          batchId: '',
+          kilosPerBatch: 0,
+          collectorId: '',
       });
     });
   }
