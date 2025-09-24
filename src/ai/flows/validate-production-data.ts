@@ -41,7 +41,9 @@ const ValidateProductionDataOutputSchema = z.object({
     ),
   reason: z
     .string()
-    .describe('The reason why the production data is considered invalid, if applicable. Must be in Spanish.')
+    .describe(
+      'The reason why the production data is considered invalid, if applicable. Must be in Spanish.'
+    )
     .optional(),
 });
 export type ValidateProductionDataOutput = z.infer<
