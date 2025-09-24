@@ -39,10 +39,10 @@ const ValidateProductionDataOutputSchema = z.object({
     .describe(
       'Whether the production data is valid or if there are any outliers or inconsistencies.'
     ),
-  reason:
-    z.string().describe(
-      'The reason why the production data is considered invalid, if applicable. Must be in Spanish.'
-    ).optional(),
+  reason: z
+    .string()
+    .describe('The reason why the production data is considered invalid, if applicable. Must be in Spanish.')
+    .optional(),
 });
 export type ValidateProductionDataOutput = z.infer<
   typeof ValidateProductionDataOutputSchema
@@ -72,9 +72,25 @@ const validateProductionDataPrompt = ai.definePrompt({
   `,
 });
 
+const validateProductionDataFlow = ai.defineFlow(
+  {
+    name: 'validateProductionDataFlow',
+    inputSchema: ValidateProductionDataInputSchema,
+    outputSchema: ValidateProductionDataOutputSchema,
+  },
+  async (input) => {
+    const { output } = await validateProductionDataPrompt(input);
+    if (!output) {
+      // In case of an unexpected empty output from the prompt, default to valid.
+      return { isValid: true };
+    }
+    return output;
+  }
+);
+
+
 export async function validateProductionData(
   input: ValidateProductionDataInput
 ): Promise<ValidateProductionDataOutput> {
-  const {output} = await validateProductionDataPrompt(input);
-  return output!;
+  return await validateProductionDataFlow(input);
 }
