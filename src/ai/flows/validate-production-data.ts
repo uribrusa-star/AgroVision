@@ -53,15 +53,12 @@ export type ValidateProductionDataOutput = z.infer<
 export async function validateProductionData(
   input: ValidateProductionDataInput
 ): Promise<ValidateProductionDataOutput> {
-  return validateProductionDataFlow(input);
-}
-
-const validateProductionDataPrompt = ai.definePrompt({
-  name: 'validateProductionDataPrompt',
-  model: 'gemini-pro',
-  input: {schema: ValidateProductionDataInputSchema},
-  output: {schema: ValidateProductionDataOutputSchema},
-  prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.
+  const prompt = ai.definePrompt({
+    name: 'validateProductionDataPrompt',
+    model: 'gemini-pro',
+    input: {schema: ValidateProductionDataInputSchema},
+    output: {schema: ValidateProductionDataOutputSchema},
+    prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.
 
     Consider factors like reasonable yield amounts compared to the farmer's historical average, consistency with historical data, and any potential anomalies.
 
@@ -79,20 +76,12 @@ const validateProductionDataPrompt = ai.definePrompt({
 
     Given your expertise and access to the historical data, please perform a thorough validation of the provided production data.
     `,
-});
+  });
 
-const validateProductionDataFlow = ai.defineFlow(
-  {
-    name: 'validateProductionDataFlow',
-    inputSchema: ValidateProductionDataInputSchema,
-    outputSchema: ValidateProductionDataOutputSchema,
-  },
-  async input => {
-    const { output } = await validateProductionDataPrompt(input);
-    if (!output) {
-      // In case of an unexpected empty output from the prompt, default to valid.
-      return { isValid: true };
-    }
-    return output;
+  const { output } = await prompt(input);
+  if (!output) {
+    // In case of an unexpected empty output from the prompt, default to valid.
+    return { isValid: true };
   }
-);
+  return output;
+}
