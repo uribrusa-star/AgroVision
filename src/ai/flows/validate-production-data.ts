@@ -50,50 +50,38 @@ export type ValidateProductionDataOutput = z.infer<
   typeof ValidateProductionDataOutputSchema
 >;
 
-const validateProductionDataPrompt = ai.definePrompt({
-  name: 'validateProductionDataPrompt',
-  input: {schema: ValidateProductionDataInputSchema},
-  output: {schema: ValidateProductionDataOutputSchema},
-  model: 'googleai/gemini-1.5-flash-latest',
-  prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.
-
-  Consider factors like reasonable yield amounts compared to the farmer's historical average, consistency with historical data, and any potential anomalies.
-
-  **Important**: The response for the 'reason' field, if the data is invalid, must be in Spanish.
-
-  Respond with a JSON object indicating whether the data is valid and, if not, the reason for the invalidity in Spanish.
-
-  Production Data:
-  Batch ID: {{{batchId}}}
-  Kilos per Batch: {{{kilosPerBatch}}}
-  Timestamp: {{{timestamp}}}
-  Farmer ID: {{{farmerId}}}
-  Average Kilos per Batch: {{{averageKilosPerBatch}}}
-  Historical Data: {{{historicalData}}}
-
-  Given your expertise and access to the historical data, please perform a thorough validation of the provided production data.
-  `,
-});
-
-const validateProductionDataFlow = ai.defineFlow(
-  {
-    name: 'validateProductionDataFlow',
-    inputSchema: ValidateProductionDataInputSchema,
-    outputSchema: ValidateProductionDataOutputSchema,
-  },
-  async (input) => {
-    const { output } = await validateProductionDataPrompt(input);
-    if (!output) {
-      // In case of an unexpected empty output from the prompt, default to valid.
-      return { isValid: true };
-    }
-    return output;
-  }
-);
-
-
 export async function validateProductionData(
   input: ValidateProductionDataInput
 ): Promise<ValidateProductionDataOutput> {
-  return await validateProductionDataFlow(input);
+  const validateProductionDataPrompt = ai.definePrompt({
+    name: 'validateProductionDataPrompt',
+    input: {schema: ValidateProductionDataInputSchema},
+    output: {schema: ValidateProductionDataOutputSchema},
+    model: 'googleai/gemini-1.5-flash-latest',
+    prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.
+
+    Consider factors like reasonable yield amounts compared to the farmer's historical average, consistency with historical data, and any potential anomalies.
+
+    **Important**: The response for the 'reason' field, if the data is invalid, must be in Spanish.
+
+    Respond with a JSON object indicating whether the data is valid and, if not, the reason for the invalidity in Spanish.
+
+    Production Data:
+    Batch ID: {{{batchId}}}
+    Kilos per Batch: {{{kilosPerBatch}}}
+    Timestamp: {{{timestamp}}}
+    Farmer ID: {{{farmerId}}}
+    Average Kilos per Batch: {{{averageKilosPerBatch}}}
+    Historical Data: {{{historicalData}}}
+
+    Given your expertise and access to the historical data, please perform a thorough validation of the provided production data.
+    `,
+  });
+
+  const { output } = await validateProductionDataPrompt(input);
+  if (!output) {
+    // In case of an unexpected empty output from the prompt, default to valid.
+    return { isValid: true };
+  }
+  return output;
 }

@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -44,32 +43,33 @@ export type ValidatePackagingDataOutput = z.infer<
   typeof ValidatePackagingDataOutputSchema
 >;
 
-const validatePackagingDataPrompt = ai.definePrompt({
-  name: 'validatePackagingDataPrompt',
-  input: {schema: ValidatePackagingDataInputSchema},
-  output: {schema: ValidatePackagingDataOutputSchema},
-  prompt: `You are an AI expert in agricultural logistics data validation. Your task is to analyze the given packaging data for strawberries and determine if it is valid, comparing it with historical data for the same packer.
-
-  Consider factors like reasonable packaging amounts for the hours worked, consistency with historical productivity (kg/hour), and any potential anomalies in cost or quantity.
-
-  **Important**: The response for the 'reason' field, if the data is invalid, must be in Spanish.
-
-  Respond with a JSON object indicating whether the data is valid and, if not, the reason for the invalidity in Spanish.
-
-  Packaging Data:
-  Packer ID: {{{packerId}}}
-  Kilos Packaged: {{{kilogramsPackaged}}}
-  Hours Worked: {{{hoursWorked}}}
-  Cost Per Hour: {{{costPerHour}}}
-  Historical Data: {{{historicalPackagingData}}}
-
-  Given your expertise and access to the historical data, please perform a thorough validation of the provided packaging data.
-  `,
-});
-
 export async function validatePackagingData(
   input: ValidatePackagingDataInput
 ): Promise<ValidatePackagingDataOutput> {
+  const validatePackagingDataPrompt = ai.definePrompt({
+    name: 'validatePackagingDataPrompt',
+    input: {schema: ValidatePackagingDataInputSchema},
+    output: {schema: ValidatePackagingDataOutputSchema},
+    model: 'googleai/gemini-1.5-flash-latest',
+    prompt: `You are an AI expert in agricultural logistics data validation. Your task is to analyze the given packaging data for strawberries and determine if it is valid, comparing it with historical data for the same packer.
+
+    Consider factors like reasonable packaging amounts for the hours worked, consistency with historical productivity (kg/hour), and any potential anomalies in cost or quantity.
+
+    **Important**: The response for the 'reason' field, if the data is invalid, must be in Spanish.
+
+    Respond with a JSON object indicating whether the data is valid and, if not, the reason for the invalidity in Spanish.
+
+    Packaging Data:
+    Packer ID: {{{packerId}}}
+    Kilos Packaged: {{{kilogramsPackaged}}}
+    Hours Worked: {{{hoursWorked}}}
+    Cost Per Hour: {{{costPerHour}}}
+    Historical Data: {{{historicalPackagingData}}}
+
+    Given your expertise and access to the historical data, please perform a thorough validation of the provided packaging data.
+    `,
+  });
+
   const {output} = await validatePackagingDataPrompt(input);
   return output!;
 }

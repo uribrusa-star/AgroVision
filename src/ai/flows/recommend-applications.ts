@@ -33,43 +33,43 @@ const RecommendApplicationsOutputSchema = z.object({
 });
 export type RecommendApplicationsOutput = z.infer<typeof RecommendApplicationsOutputSchema>;
 
-const prompt = ai.definePrompt({
-  name: 'recommendApplicationsPrompt',
-  input: {schema: RecommendApplicationsInputSchema},
-  output: {schema: RecommendApplicationsOutputSchema},
-  tools: [getWeatherForecast],
-  model: 'googleai/gemini-1.5-flash-latest',
-  prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, encargado de planificar las aplicaciones y labores para la semana. Tu objetivo es generar recomendaciones proactivas y eficientes.
-
-  **Instrucciones:**
-  1.  **Obtén el pronóstico**: Usa la herramienta 'getWeatherForecast' con la latitud y longitud para obtener el pronóstico del tiempo.
-  2.  **Analiza en silencio los datos proporcionados**: Revisa el estado fenológico ({{{phenologyLogs}}}), las actividades recientes ({{{agronomistLogs}}}), el inventario de insumos ({{{supplies}}}) y el pronóstico del tiempo.
-  3.  **Identifica necesidades y oportunidades**:
-      *   ¿Hay una plaga o enfermedad registrada que necesite tratamiento? Cruza esta información con los fungicidas/insecticidas disponibles en el inventario, revisando su campo 'composition'.
-      *   ¿El estado fenológico (ej. inicio de floración) requiere una fertilización específica? Busca un fertilizante adecuado en el inventario revisando su 'composition'.
-      *   ¿El pronóstico del tiempo (ej. lluvias) aumenta el riesgo de enfermedades como Botrytis? Recomienda una aplicación preventiva si tienes un fungicida apropiado.
-      *   ¿Hay un período prolongado sin una labor cultural importante (ej. deshoje)? Recomiéndala.
-  4.  **Genera Recomendaciones (en español)**:
-      *   Crea una o más recomendaciones detalladas.
-      *   **Recomendación**: Debe ser una acción específica. Ej: "Realizar aplicación preventiva de fungicida para control de Botrytis."
-      *   **Justificación**: Explica por qué. Ej: "Debido a las lluvias pronosticadas y al estado de fructificación, el riesgo de Botrytis es alto."
-      *   **Urgencia**: 'Alta' para problemas inminentes o críticos, 'Media' para oportunidades de optimización, 'Baja' para mantenimiento.
-      *   **Productos Sugeridos**: Lista los nombres de los productos del inventario que sirven para la labor. Si es una labor cultural, deja el arreglo vacío.
-  5.  Genera al menos una recomendación, incluso si es solo de monitoreo o mantenimiento general.
-
-  **Datos para el Análisis:**
-  -   **Ubicación**: Latitud {{{latitude}}}, Longitud {{{longitude}}}
-  -   **Insumos Disponibles**: {{{supplies}}}
-  -   **Actividades Recientes**: {{{agronomistLogs}}}
-  -   **Fenología Reciente**: {{{phenologyLogs}}}
-
-  Genera únicamente la salida JSON con el arreglo de recomendaciones.
-  `,
-});
-
 export async function recommendApplications(
   input: RecommendApplicationsInput
 ): Promise<RecommendApplicationsOutput> {
+  const prompt = ai.definePrompt({
+    name: 'recommendApplicationsPrompt',
+    input: {schema: RecommendApplicationsInputSchema},
+    output: {schema: RecommendApplicationsOutputSchema},
+    model: 'googleai/gemini-1.5-flash-latest',
+    tools: [getWeatherForecast],
+    prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, encargado de planificar las aplicaciones y labores para la semana. Tu objetivo es generar recomendaciones proactivas y eficientes.
+
+    **Instrucciones:**
+    1.  **Obtén el pronóstico**: Usa la herramienta 'getWeatherForecast' con la latitud y longitud para obtener el pronóstico del tiempo.
+    2.  **Analiza en silencio los datos proporcionados**: Revisa el estado fenológico ({{{phenologyLogs}}}), las actividades recientes ({{{agronomistLogs}}}), el inventario de insumos ({{{supplies}}}) y el pronóstico del tiempo.
+    3.  **Identifica necesidades y oportunidades**:
+        *   ¿Hay una plaga o enfermedad registrada que necesite tratamiento? Cruza esta información con los fungicidas/insecticidas disponibles en el inventario, revisando su campo 'composition'.
+        *   ¿El estado fenológico (ej. inicio de floración) requiere una fertilización específica? Busca un fertilizante adecuado en el inventario revisando su 'composition'.
+        *   ¿El pronóstico del tiempo (ej. lluvias) aumenta el riesgo de enfermedades como Botrytis? Recomienda una aplicación preventiva si tienes un fungicida apropiado.
+        *   ¿Hay un período prolongado sin una labor cultural importante (ej. deshoje)? Recomiéndala.
+    4.  **Genera Recomendaciones (en español)**:
+        *   Crea una o más recomendaciones detalladas.
+        *   **Recomendación**: Debe ser una acción específica. Ej: "Realizar aplicación preventiva de fungicida para control de Botrytis."
+        *   **Justificación**: Explica por qué. Ej: "Debido a las lluvias pronosticadas y al estado de fructificación, el riesgo de Botrytis es alto."
+        *   **Urgencia**: 'Alta' para problemas inminentes o críticos, 'Media' para oportunidades de optimización, 'Baja' para mantenimiento.
+        *   **Productos Sugeridos**: Lista los nombres de los productos del inventario que sirven para la labor. Si es una labor cultural, deja el arreglo vacío.
+    5.  Genera al menos una recomendación, incluso si es solo de monitoreo o mantenimiento general.
+
+    **Datos para el Análisis:**
+    -   **Ubicación**: Latitud {{{latitude}}}, Longitud {{{longitude}}}
+    -   **Insumos Disponibles**: {{{supplies}}}
+    -   **Actividades Recientes**: {{{agronomistLogs}}}
+    -   **Fenología Reciente**: {{{phenologyLogs}}}
+
+    Genera únicamente la salida JSON con el arreglo de recomendaciones.
+    `,
+  });
+
   const {output} = await prompt(input);
   return output!;
 }
