@@ -46,9 +46,11 @@ export type ValidatePackagingDataOutput = z.infer<
 export async function validatePackagingData(
   input: ValidatePackagingDataInput
 ): Promise<ValidatePackagingDataOutput> {
-  const prompt = ai.definePrompt({
+  return validatePackagingDataFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'validatePackagingDataPrompt',
-    model: 'gemini-pro',
     input: {schema: ValidatePackagingDataInputSchema},
     output: {schema: ValidatePackagingDataOutputSchema},
     prompt: `You are an AI expert in agricultural logistics data validation. Your task is to analyze the given packaging data for strawberries and determine if it is valid, comparing it with historical data for the same packer.
@@ -61,7 +63,7 @@ export async function validatePackagingData(
 
     Packaging Data:
     Packer ID: {{{packerId}}}
-    Kilos Packaged: {{{kilogramsPackaged}}}
+    Kilos Packaged: {{{kilogramasPackaged}}}
     Hours Worked: {{{hoursWorked}}}
     Cost Per Hour: {{{costPerHour}}}
     Historical Data: {{{historicalPackagingData}}}
@@ -70,9 +72,17 @@ export async function validatePackagingData(
     `,
   });
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error('La validación de datos de embalaje no generó una respuesta.');
+const validatePackagingDataFlow = ai.defineFlow(
+  {
+    name: 'validatePackagingDataFlow',
+    inputSchema: ValidatePackagingDataInputSchema,
+    outputSchema: ValidatePackagingDataOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('La validación de datos de embalaje no generó una respuesta.');
+    }
+    return output;
   }
-  return output;
-}
+);

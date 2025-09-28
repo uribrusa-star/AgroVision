@@ -38,9 +38,11 @@ export type SummarizeAgronomistReportOutput = z.infer<typeof SummarizeAgronomist
 export async function summarizeAgronomistReport(
   input: SummarizeAgronomistReportInput
 ): Promise<SummarizeAgronomistReportOutput> {
-  const prompt = ai.definePrompt({
+  return summarizeAgronomistReportFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'summarizeAgronomistReportPrompt',
-    model: 'gemini-pro',
     input: {schema: SummarizeAgronomistReportInputSchema},
     output: {schema: SummarizeAgronomistReportOutputSchema},
     prompt: `Eres un consultor agrónomo experto en la producción de frutillas. Tu tarea es generar el contenido para un informe técnico en español, basado en las bitácoras proporcionadas. El informe debe ser profesional, técnico y orientado a la acción.
@@ -66,9 +68,17 @@ export async function summarizeAgronomistReport(
     `,
   });
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error('El resumen del informe no generó una respuesta.');
+const summarizeAgronomistReportFlow = ai.defineFlow(
+  {
+    name: 'summarizeAgronomistReportFlow',
+    inputSchema: SummarizeAgronomistReportInputSchema,
+    outputSchema: SummarizeAgronomistReportOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('El resumen del informe no generó una respuesta.');
+    }
+    return output;
   }
-  return output;
-}
+);

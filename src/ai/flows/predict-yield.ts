@@ -38,9 +38,11 @@ export type PredictYieldOutput = z.infer<typeof PredictYieldOutputSchema>;
 export async function predictYield(
   input: PredictYieldInput
 ): Promise<PredictYieldOutput> {
-  const prompt = ai.definePrompt({
+  return predictYieldFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'predictYieldPrompt',
-    model: 'gemini-pro',
     input: {schema: PredictYieldInputSchema},
     output: {schema: PredictYieldOutputSchema},
     tools: [getWeatherForecast],
@@ -72,9 +74,17 @@ export async function predictYield(
     `,
   });
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error('La predicción de rendimiento no generó una respuesta.');
+const predictYieldFlow = ai.defineFlow(
+  {
+    name: 'predictYieldFlow',
+    inputSchema: PredictYieldInputSchema,
+    outputSchema: PredictYieldOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('La predicción de rendimiento no generó una respuesta.');
+    }
+    return output;
   }
-  return output;
-}
+);

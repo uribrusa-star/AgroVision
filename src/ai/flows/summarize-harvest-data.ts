@@ -44,9 +44,11 @@ export type SummarizeHarvestDataOutput = z.infer<typeof SummarizeHarvestDataOutp
 export async function summarizeHarvestData(
   input: SummarizeHarvestDataInput
 ): Promise<SummarizeHarvestDataOutput> {
-  const prompt = ai.definePrompt({
+  return summarizeHarvestDataFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'summarizeHarvestDataPrompt',
-    model: 'gemini-pro',
     input: {schema: SummarizeHarvestDataInputSchema},
     output: {schema: SummarizeHarvestDataOutputSchema},
     prompt: `Eres un consultor agrónomo experto en producción de frutillas en Argentina y analista de datos. Tu tarea es generar el contenido para un informe técnico-productivo en español, basado en los datos proporcionados. El informe debe ser profesional, claro y conciso, utilizando Pesos Argentinos (ARS) para todos los análisis financieros.
@@ -75,9 +77,17 @@ export async function summarizeHarvestData(
     `,
   });
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error('El resumen de cosecha no generó una respuesta.');
+const summarizeHarvestDataFlow = ai.defineFlow(
+  {
+    name: 'summarizeHarvestDataFlow',
+    inputSchema: SummarizeHarvestDataInputSchema,
+    outputSchema: SummarizeHarvestDataOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('El resumen de cosecha no generó una respuesta.');
+    }
+    return output;
   }
-  return output;
-}
+);

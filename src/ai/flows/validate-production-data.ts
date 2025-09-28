@@ -53,9 +53,11 @@ export type ValidateProductionDataOutput = z.infer<
 export async function validateProductionData(
   input: ValidateProductionDataInput
 ): Promise<ValidateProductionDataOutput> {
-  const prompt = ai.definePrompt({
+  return validateProductionDataFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'validateProductionDataPrompt',
-    model: 'gemini-pro',
     input: {schema: ValidateProductionDataInputSchema},
     output: {schema: ValidateProductionDataOutputSchema},
     prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.
@@ -78,10 +80,18 @@ export async function validateProductionData(
     `,
   });
 
-  const { output } = await prompt(input);
-  if (!output) {
-    // In case of an unexpected empty output from the prompt, default to valid.
-    return { isValid: true };
+const validateProductionDataFlow = ai.defineFlow(
+  {
+    name: 'validateProductionDataFlow',
+    inputSchema: ValidateProductionDataInputSchema,
+    outputSchema: ValidateProductionDataOutputSchema,
+  },
+  async input => {
+    const { output } = await prompt(input);
+    if (!output) {
+      // In case of an unexpected empty output from the prompt, default to valid.
+      return { isValid: true };
+    }
+    return output;
   }
-  return output;
-}
+);

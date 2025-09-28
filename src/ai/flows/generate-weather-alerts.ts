@@ -34,9 +34,11 @@ export type GenerateWeatherAlertsOutput = z.infer<typeof GenerateWeatherAlertsOu
 export async function generateWeatherAlerts(
   input: GenerateWeatherAlertsInput
 ): Promise<GenerateWeatherAlertsOutput> {
-  const prompt = ai.definePrompt({
+  return generateWeatherAlertsFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'generateWeatherAlertsPrompt',
-    model: 'gemini-pro',
     input: {schema: GenerateWeatherAlertsInputSchema},
     output: {schema: GenerateWeatherAlertsOutputSchema},
     tools: [getWeatherForecast],
@@ -60,9 +62,17 @@ export async function generateWeatherAlerts(
     `,
   });
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error('La generación de alertas no produjo una respuesta.');
+const generateWeatherAlertsFlow = ai.defineFlow(
+  {
+    name: 'generateWeatherAlertsFlow',
+    inputSchema: GenerateWeatherAlertsInputSchema,
+    outputSchema: GenerateWeatherAlertsOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('La generación de alertas no produjo una respuesta.');
+    }
+    return output;
   }
-  return output;
-}
+);

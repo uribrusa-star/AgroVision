@@ -36,9 +36,11 @@ export type RecommendApplicationsOutput = z.infer<typeof RecommendApplicationsOu
 export async function recommendApplications(
   input: RecommendApplicationsInput
 ): Promise<RecommendApplicationsOutput> {
-  const prompt = ai.definePrompt({
+  return recommendApplicationsFlow(input);
+}
+
+const prompt = ai.definePrompt({
     name: 'recommendApplicationsPrompt',
-    model: 'gemini-pro',
     input: {schema: RecommendApplicationsInputSchema},
     output: {schema: RecommendApplicationsOutputSchema},
     tools: [getWeatherForecast],
@@ -70,9 +72,17 @@ export async function recommendApplications(
     `,
   });
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error('La recomendación de aplicaciones no generó una respuesta.');
+const recommendApplicationsFlow = ai.defineFlow(
+  {
+    name: 'recommendApplicationsFlow',
+    inputSchema: RecommendApplicationsInputSchema,
+    outputSchema: RecommendApplicationsOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    if (!output) {
+      throw new Error('La recomendación de aplicaciones no generó una respuesta.');
+    }
+    return output;
   }
-  return output;
-}
+);
