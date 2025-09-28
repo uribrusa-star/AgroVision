@@ -34,13 +34,15 @@ export type GenerateWeatherAlertsOutput = z.infer<typeof GenerateWeatherAlertsOu
 export async function generateWeatherAlerts(
   input: GenerateWeatherAlertsInput
 ): Promise<GenerateWeatherAlertsOutput> {
-  const prompt = ai.definePrompt({
-    name: 'generateWeatherAlertsPrompt',
-    input: {schema: GenerateWeatherAlertsInputSchema},
-    output: {schema: GenerateWeatherAlertsOutputSchema},
-    model: 'googleai/gemini-1.5-flash-latest',
-    tools: [getWeatherForecast],
-    prompt: `Eres un ingeniero agrónomo experto en frutillas y análisis de riesgos climáticos. Tu tarea es generar alertas y recomendaciones basadas en el pronóstico del tiempo para una ubicación específica.
+  return generateWeatherAlertsFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'generateWeatherAlertsPrompt',
+  input: {schema: GenerateWeatherAlertsInputSchema},
+  output: {schema: GenerateWeatherAlertsOutputSchema},
+  tools: [getWeatherForecast],
+  prompt: `Eres un ingeniero agrónomo experto en frutillas y análisis de riesgos climáticos. Tu tarea es generar alertas y recomendaciones basadas en el pronóstico del tiempo para una ubicación específica.
 
   **Instrucciones Obligatorias:**
 
@@ -58,7 +60,16 @@ export async function generateWeatherAlerts(
 
   Genera únicamente la salida JSON con el arreglo de alertas. No incluyas ningún texto introductorio o explicaciones adicionales.
   `,
-  });
-  const {output} = await prompt(input);
-  return output!;
-}
+});
+
+const generateWeatherAlertsFlow = ai.defineFlow(
+  {
+    name: 'generateWeatherAlertsFlow',
+    inputSchema: GenerateWeatherAlertsInputSchema,
+    outputSchema: GenerateWeatherAlertsOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

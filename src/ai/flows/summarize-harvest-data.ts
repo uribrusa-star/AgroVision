@@ -44,12 +44,14 @@ export type SummarizeHarvestDataOutput = z.infer<typeof SummarizeHarvestDataOutp
 export async function summarizeHarvestData(
   input: SummarizeHarvestDataInput
 ): Promise<SummarizeHarvestDataOutput> {
-  const prompt = ai.definePrompt({
-    name: 'summarizeHarvestDataPrompt',
-    input: {schema: SummarizeHarvestDataInputSchema},
-    output: {schema: SummarizeHarvestDataOutputSchema},
-    model: 'googleai/gemini-1.5-flash-latest',
-    prompt: `Eres un consultor agrónomo experto en producción de frutillas en Argentina y analista de datos. Tu tarea es generar el contenido para un informe técnico-productivo en español, basado en los datos proporcionados. El informe debe ser profesional, claro y conciso, utilizando Pesos Argentinos (ARS) para todos los análisis financieros.
+  return summarizeHarvestDataFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'summarizeHarvestDataPrompt',
+  input: {schema: SummarizeHarvestDataInputSchema},
+  output: {schema: SummarizeHarvestDataOutputSchema},
+  prompt: `Eres un consultor agrónomo experto en producción de frutillas en Argentina y analista de datos. Tu tarea es generar el contenido para un informe técnico-productivo en español, basado en los datos proporcionados. El informe debe ser profesional, claro y conciso, utilizando Pesos Argentinos (ARS) para todos los análisis financieros.
 
     **Instrucciones:**
     1.  **Analiza los datos en silencio**: Revisa la información de producción ({{{productionData}}}), que incluye kg totales, kg/ha y la superficie real cultivada. Revisa también la estructura de costos (en ARS) y la bitácora del agrónomo.
@@ -73,8 +75,16 @@ export async function summarizeHarvestData(
 
     Genera únicamente el contenido para las secciones solicitadas en el formato de salida JSON especificado.
     `,
-  });
+});
 
-  const {output} = await prompt(input);
-  return output!;
-}
+const summarizeHarvestDataFlow = ai.defineFlow(
+  {
+    name: 'summarizeHarvestDataFlow',
+    inputSchema: SummarizeHarvestDataInputSchema,
+    outputSchema: SummarizeHarvestDataOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

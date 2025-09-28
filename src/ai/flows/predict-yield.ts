@@ -38,13 +38,15 @@ export type PredictYieldOutput = z.infer<typeof PredictYieldOutputSchema>;
 export async function predictYield(
   input: PredictYieldInput
 ): Promise<PredictYieldOutput> {
-  const prompt = ai.definePrompt({
-    name: 'predictYieldPrompt',
-    input: {schema: PredictYieldInputSchema},
-    output: {schema: PredictYieldOutputSchema},
-    model: 'googleai/gemini-1.5-flash-latest',
-    tools: [getWeatherForecast],
-    prompt: `Eres un ingeniero agrónomo experto en frutillas con capacidades de análisis de datos y modelado predictivo. Tu tarea es generar una proyección de rendimiento para un lote específico para la próxima semana.
+  return predictYieldFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'predictYieldPrompt',
+  input: {schema: PredictYieldInputSchema},
+  output: {schema: PredictYieldOutputSchema},
+  tools: [getWeatherForecast],
+  prompt: `Eres un ingeniero agrónomo experto en frutillas con capacidades de análisis de datos y modelado predictivo. Tu tarea es generar una proyección de rendimiento para un lote específico para la próxima semana.
 
     **Instrucciones:**
     1.  **Obtén el pronóstico del tiempo**: Usa la herramienta 'getWeatherForecast' con la latitud y longitud proporcionadas para obtener el pronóstico climático para los próximos 7 días.
@@ -70,8 +72,16 @@ export async function predictYield(
 
     Genera únicamente el contenido para la predicción y la confianza en el formato de salida JSON especificado.
     `,
-  });
+});
 
-  const {output} = await prompt(input);
-  return output!;
-}
+const predictYieldFlow = ai.defineFlow(
+  {
+    name: 'predictYieldFlow',
+    inputSchema: PredictYieldInputSchema,
+    outputSchema: PredictYieldOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

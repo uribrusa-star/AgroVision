@@ -38,12 +38,14 @@ export type SummarizeAgronomistReportOutput = z.infer<typeof SummarizeAgronomist
 export async function summarizeAgronomistReport(
   input: SummarizeAgronomistReportInput
 ): Promise<SummarizeAgronomistReportOutput> {
-  const prompt = ai.definePrompt({
-    name: 'summarizeAgronomistReportPrompt',
-    input: {schema: SummarizeAgronomistReportInputSchema},
-    output: {schema: SummarizeAgronomistReportOutputSchema},
-    model: 'googleai/gemini-1.5-flash-latest',
-    prompt: `Eres un consultor agrónomo experto en la producción de frutillas. Tu tarea es generar el contenido para un informe técnico en español, basado en las bitácoras proporcionadas. El informe debe ser profesional, técnico y orientado a la acción.
+  return summarizeAgronomistReportFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'summarizeAgronomistReportPrompt',
+  input: {schema: SummarizeAgronomistReportInputSchema},
+  output: {schema: SummarizeAgronomistReportOutputSchema},
+  prompt: `Eres un consultor agrónomo experto en la producción de frutillas. Tu tarea es generar el contenido para un informe técnico en español, basado en las bitácoras proporcionadas. El informe debe ser profesional, técnico y orientado a la acción.
 
     **Instrucciones:**
     1.  **Analiza los datos en silencio**: Revisa toda la información de la bitácora de actividades ({{{agronomistLogs}}}) y la bitácora de fenología ({{{phenologyLogs}}}).
@@ -64,8 +66,16 @@ export async function summarizeAgronomistReport(
 
     Genera únicamente el contenido para las secciones solicitadas en el formato de salida JSON especificado.
     `,
-  });
+});
 
-  const {output} = await prompt(input);
-  return output!;
-}
+const summarizeAgronomistReportFlow = ai.defineFlow(
+  {
+    name: 'summarizeAgronomistReportFlow',
+    inputSchema: SummarizeAgronomistReportInputSchema,
+    outputSchema: SummarizeAgronomistReportOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

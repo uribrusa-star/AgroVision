@@ -36,13 +36,15 @@ export type RecommendApplicationsOutput = z.infer<typeof RecommendApplicationsOu
 export async function recommendApplications(
   input: RecommendApplicationsInput
 ): Promise<RecommendApplicationsOutput> {
-  const prompt = ai.definePrompt({
-    name: 'recommendApplicationsPrompt',
-    input: {schema: RecommendApplicationsInputSchema},
-    output: {schema: RecommendApplicationsOutputSchema},
-    model: 'googleai/gemini-1.5-flash-latest',
-    tools: [getWeatherForecast],
-    prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, encargado de planificar las aplicaciones y labores para la semana. Tu objetivo es generar recomendaciones proactivas y eficientes.
+  return recommendApplicationsFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'recommendApplicationsPrompt',
+  input: {schema: RecommendApplicationsInputSchema},
+  output: {schema: RecommendApplicationsOutputSchema},
+  tools: [getWeatherForecast],
+  prompt: `Eres un ingeniero agrónomo experto en el cultivo de frutillas, encargado de planificar las aplicaciones y labores para la semana. Tu objetivo es generar recomendaciones proactivas y eficientes.
 
     **Instrucciones:**
     1.  **Obtén el pronóstico**: Usa la herramienta 'getWeatherForecast' con la latitud y longitud para obtener el pronóstico del tiempo.
@@ -68,8 +70,16 @@ export async function recommendApplications(
 
     Genera únicamente la salida JSON con el arreglo de recomendaciones.
     `,
-  });
+});
 
-  const {output} = await prompt(input);
-  return output!;
-}
+const recommendApplicationsFlow = ai.defineFlow(
+  {
+    name: 'recommendApplicationsFlow',
+    inputSchema: RecommendApplicationsInputSchema,
+    outputSchema: RecommendApplicationsOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);

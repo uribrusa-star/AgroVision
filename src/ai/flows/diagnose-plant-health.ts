@@ -34,12 +34,14 @@ const DiagnosePlantOutputSchema = z.object({
 export type DiagnosePlantOutput = z.infer<typeof DiagnosePlantOutputSchema>;
 
 export async function diagnosePlant(input: DiagnosePlantInput): Promise<DiagnosePlantOutput> {
-  const prompt = ai.definePrompt({
-    name: 'diagnosePlantPrompt',
-    input: {schema: DiagnosePlantInputSchema},
-    output: {schema: DiagnosePlantOutputSchema},
-    model: 'googleai/gemini-1.5-flash-latest',
-    prompt: `Eres un Ingeniero Agrónomo experto en fitopatología del cultivo de frutilla. Tu tarea es analizar una imagen y una descripción para diagnosticar problemas sanitarios.
+  return diagnosePlantFlow(input);
+}
+
+const prompt = ai.definePrompt({
+  name: 'diagnosePlantPrompt',
+  input: {schema: DiagnosePlantInputSchema},
+  output: {schema: DiagnosePlantOutputSchema},
+  prompt: `Eres un Ingeniero Agrónomo experto en fitopatología del cultivo de frutilla. Tu tarea es analizar una imagen y una descripción para diagnosticar problemas sanitarios.
 
   **Base de Conocimiento de Plagas y Enfermedades Frecuentes en Frutilla:**
   - **Enfermedades:** Botrytis (Moho Gris), Oídio (Cenicilla), Viruela, Antracnosis.
@@ -55,8 +57,16 @@ export async function diagnosePlant(input: DiagnosePlantInput): Promise<Diagnose
 
   Genera únicamente la salida JSON.
   `,
-  });
+});
 
-  const {output} = await prompt(input);
-  return output!;
-}
+const diagnosePlantFlow = ai.defineFlow(
+  {
+    name: 'diagnosePlantFlow',
+    inputSchema: DiagnosePlantInputSchema,
+    outputSchema: DiagnosePlantOutputSchema,
+  },
+  async input => {
+    const {output} = await prompt(input);
+    return output!;
+  }
+);
