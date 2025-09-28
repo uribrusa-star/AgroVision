@@ -58,6 +58,7 @@ export async function validateProductionData(
 
 const validateProductionDataPrompt = ai.definePrompt({
   name: 'validateProductionDataPrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: ValidateProductionDataInputSchema},
   output: {schema: ValidateProductionDataOutputSchema},
   prompt: `You are an AI expert in agricultural data validation. Your task is to analyze the given production data for strawberries and determine if it is valid, comparing it with historical data.

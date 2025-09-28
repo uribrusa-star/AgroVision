@@ -43,6 +43,7 @@ export async function predictYield(
 
 const prompt = ai.definePrompt({
   name: 'predictYieldPrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: PredictYieldInputSchema},
   output: {schema: PredictYieldOutputSchema},
   tools: [getWeatherForecast],

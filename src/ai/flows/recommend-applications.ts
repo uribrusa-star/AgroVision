@@ -41,6 +41,7 @@ export async function recommendApplications(
 
 const prompt = ai.definePrompt({
   name: 'recommendApplicationsPrompt',
+  model: 'googleai/gemini-1.5-flash-latest',
   input: {schema: RecommendApplicationsInputSchema},
   output: {schema: RecommendApplicationsOutputSchema},
   tools: [getWeatherForecast],
