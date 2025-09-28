@@ -14,7 +14,6 @@ import { PhenologyHistory } from './phenology-history';
 import { HealthLogForm } from './health-log-form';
 import { EnvironmentalLogForm } from './environmental-log-form';
 import { IrrigationLogForm } from './irrigation-log-form';
-import { AgronomistReport } from './agronomist-report';
 import { NotesHistory } from '../producer-log/notes-history';
 import { ActivityOmissionLogForm } from './activity-omission-log-form';
 import { Supplies } from './supplies';
@@ -83,7 +82,6 @@ export default function EngineerLogPage() {
         {/* Columna Izquierda: Visualización y Análisis */}
         <div className="space-y-8">
             {canManageApplications && <ApplicationRecommendation />}
-            {canManageApplications && <AgronomistReport />}
             <PhenologyHistory />
             <ApplicationHistory />
             <NotesHistory />
