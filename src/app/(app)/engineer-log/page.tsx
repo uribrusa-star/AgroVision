@@ -18,6 +18,7 @@ import { NotesHistory } from '../producer-log/notes-history';
 import { ActivityOmissionLogForm } from './activity-omission-log-form';
 import { Supplies } from './supplies';
 import { ApplicationRecommendation } from './application-recommendation';
+import { AgronomistReportGenerator } from './agronomist-report-generator';
 
 
 export default function EngineerLogPage() {
@@ -82,6 +83,7 @@ export default function EngineerLogPage() {
         {/* Columna Izquierda: Visualización y Análisis */}
         <div className="space-y-8">
             {canManageApplications && <ApplicationRecommendation />}
+            {canManageApplications && <AgronomistReportGenerator />}
             <PhenologyHistory />
             <ApplicationHistory />
             <NotesHistory />
