@@ -51,7 +51,7 @@ export async function validatePackagingData(
 
 const validatePackagingDataPrompt = ai.definePrompt({
   name: 'validatePackagingDataPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-pro',
   input: {schema: ValidatePackagingDataInputSchema},
   output: {schema: ValidatePackagingDataOutputSchema},
   prompt: `You are an AI expert in agricultural logistics data validation. Your task is to analyze the given packaging data for strawberries and determine if it is valid, comparing it with historical data for the same packer.

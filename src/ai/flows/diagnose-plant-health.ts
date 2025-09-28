@@ -39,7 +39,7 @@ export async function diagnosePlant(input: DiagnosePlantInput): Promise<Diagnose
 
 const prompt = ai.definePrompt({
   name: 'diagnosePlantPrompt',
-  model: 'googleai/gemini-pro-vision',
+  model: 'gemini-pro-vision',
   input: {schema: DiagnosePlantInputSchema},
   output: {schema: DiagnosePlantOutputSchema},
   prompt: `Eres un Ingeniero Agrónomo experto en fitopatología del cultivo de frutilla. Tu tarea es analizar una imagen y una descripción para diagnosticar problemas sanitarios.

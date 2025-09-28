@@ -39,7 +39,7 @@ export async function generateWeatherAlerts(
 
 const prompt = ai.definePrompt({
   name: 'generateWeatherAlertsPrompt',
-  model: 'googleai/gemini-1.5-flash-latest',
+  model: 'gemini-pro',
   input: {schema: GenerateWeatherAlertsInputSchema},
   output: {schema: GenerateWeatherAlertsOutputSchema},
   tools: [getWeatherForecast],
