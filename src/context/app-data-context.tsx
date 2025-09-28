@@ -248,12 +248,13 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         try {
             const batch = writeBatch(db);
             
-            const date = new Date(harvestData.date);
-            const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+            const harvestDate = new Date(harvestData.date);
+            const dateString = `${harvestDate.getFullYear()}${(harvestDate.getMonth() + 1).toString().padStart(2, '0')}${harvestDate.getDate().toString().padStart(2, '0')}`;
             
             // Correctly filter harvests for the same day to get the sequential number
-            const todayStart = new Date(date.setHours(0, 0, 0, 0)).toISOString();
-            const todayEnd = new Date(date.setHours(23, 59, 59, 999)).toISOString();
+            const todayStart = new Date(harvestDate.getFullYear(), harvestDate.getMonth(), harvestDate.getDate()).toISOString();
+            const todayEnd = new Date(harvestDate.getFullYear(), harvestDate.getMonth(), harvestDate.getDate(), 23, 59, 59, 999).toISOString();
+
             const harvestsToday = harvests.filter(h => h.date >= todayStart && h.date <= todayEnd);
             const sequentialNumber = (harvestsToday.length + 1).toString().padStart(3, '0');
             const traceabilityId = `AGRO-${dateString}-${harvestData.batchNumber}-${sequentialNumber}`;
