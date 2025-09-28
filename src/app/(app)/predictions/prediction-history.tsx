@@ -96,7 +96,7 @@ export function PredictionHistory() {
             </Card>
 
             <Dialog open={!!selectedLog} onOpenChange={(isOpen) => !isOpen && setSelectedLog(null)}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                     {selectedLog && (
                        <AlertDialog>
                             <DialogHeader>
@@ -109,7 +109,7 @@ export function PredictionHistory() {
                                 </DialogDescription>
                             </DialogHeader>
 
-                            <div className="grid gap-4 py-4">
+                            <div className="grid gap-4 py-4 max-h-[80vh] overflow-y-auto pr-4">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                     <Calendar className="h-4 w-4" />
                                     <span>{new Date(selectedLog.date).toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' })}</span>
