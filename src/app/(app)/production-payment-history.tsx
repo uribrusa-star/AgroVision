@@ -280,11 +280,11 @@ function ProductionPaymentHistoryComponent() {
 
                <DialogFooter className="flex-col sm:flex-row sm:justify-between w-full pt-2">
                     <div className="flex flex-col sm:flex-row gap-2">
-                        <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage} className="w-full sm:w-auto">
+                        <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage} className="w-full sm:w-auto border-primary/30">
                             <FileDown className="h-4 w-4 mr-2" />
                             {isPdfPending ? "Generando..." : "Generar Recibo"}
                         </Button>
-                        <Button variant="outline" onClick={() => setIsLabelOpen(true)} disabled={!canManage} className="w-full sm:w-auto">
+                        <Button variant="outline" onClick={() => setIsLabelOpen(true)} disabled={!canManage} className="w-full sm:w-auto border-primary/30">
                             <QrCode className="h-4 w-4 mr-2" />
                             Generar Etiqueta
                         </Button>

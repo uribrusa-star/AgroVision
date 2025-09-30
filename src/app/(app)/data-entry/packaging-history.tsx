@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useContext, useMemo, useState, useTransition, useRef } from 'react';
@@ -247,7 +248,7 @@ function PackagingHistoryComponent() {
                             </AlertDialogContent>
                         </AlertDialog>
                     )}
-                    <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage}>
+                    <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage} className="border-primary/30">
                         <FileDown className="h-4 w-4 mr-2" />
                         {isPdfPending ? "Generando..." : "Generar Recibo"}
                     </Button>
