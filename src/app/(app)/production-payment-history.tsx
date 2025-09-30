@@ -289,7 +289,7 @@ function ProductionPaymentHistoryComponent() {
                             Generar Etiqueta
                         </Button>
                     </div>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2 justify-end mt-4 sm:mt-0">
                       {canManage && (
                           <AlertDialog>
                               <AlertDialogTrigger asChild>
@@ -369,3 +369,5 @@ function ProductionPaymentHistoryComponent() {
 }
 
 export const ProductionPaymentHistory = React.memo(ProductionPaymentHistoryComponent);
+
+    
