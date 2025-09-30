@@ -29,9 +29,10 @@ const CollectorSchema = z.object({
 });
 
 export default function CollectorsPage() {
-  const { loading, collectors, harvests, addCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
+  const { loading, collectors, harvests, addCollector, editCollector, deleteCollector, currentUser } = React.useContext(AppDataContext);
   const [selectedCollector, setSelectedCollector] = useState<Collector | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -46,6 +47,12 @@ export default function CollectorsPage() {
       form.reset({ name: '' });
     }
   }, [isAddDialogOpen, form]);
+
+  useEffect(() => {
+    if (isEditDialogOpen && selectedCollector) {
+      form.reset({ name: selectedCollector.name });
+    }
+  }, [isEditDialogOpen, selectedCollector, form]);
 
 
   const getCollectorHistory = (collectorId: string) => {
@@ -81,8 +88,26 @@ export default function CollectorsPage() {
     });
   };
 
+  const onEditSubmit = (values: z.infer<typeof CollectorSchema>) => {
+    if (!selectedCollector) return;
+
+    const newName = values.name.trim();
+    if (collectors.some(c => c.id !== selectedCollector.id && c.name.toLowerCase() === newName.toLowerCase())) {
+      form.setError('name', { type: 'manual', message: 'Ya existe otro recolector con este nombre.' });
+      return;
+    }
+
+    startTransition(async () => {
+      await editCollector({ ...selectedCollector, name: newName });
+      toast({ title: "Recolector Actualizado", description: `El nombre se ha cambiado a ${newName}.` });
+      setIsEditDialogOpen(false);
+      setSelectedCollector(null);
+    });
+  };
+
   if (!currentUser) return null; // Guard clause
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
+  const canEditName = currentUser.role === 'Productor';
 
   return (
     <>
@@ -203,6 +228,7 @@ export default function CollectorsPage() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DropdownMenuItem onSelect={() => { setSelectedCollector(collector); setIsHistoryOpen(true); }}>Ver Historial</DropdownMenuItem>
+                                {canEditName && <DropdownMenuItem onSelect={() => { setSelectedCollector(collector); setIsEditDialogOpen(true); }}>Editar Nombre</DropdownMenuItem>}
                                 <AlertDialogTrigger asChild>
                                 <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                 </AlertDialogTrigger>
@@ -280,8 +306,44 @@ export default function CollectorsPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Editar Nombre del Recolector</DialogTitle>
+                <DialogDescription>
+                    Actualice el nombre para '{selectedCollector?.name}'. Este cambio se reflejará en todos los registros.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nuevo Nombre</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="Ej. Juan Pérez" disabled={isPending} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancelar</Button>
+                        </DialogClose>
+                        <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Nombre'}</Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
+    
 
     

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -50,6 +49,7 @@ export const AppDataContext = React.createContext<AppData>({
   updateTaskStatus: () => { throw new Error('Not implemented') },
   deleteTask: () => { throw new Error('Not implemented') },
   addCollector: () => { throw new Error('Not implemented') },
+  editPacker: async () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
   deletePacker: () => { throw new Error('Not implemented') },
   addPackagingLog: () => { throw new Error('Not implemented') },
@@ -384,6 +384,29 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
           console.error("Failed to add packer:", error);
           setPackers(prev => prev.filter(p => p.id !== tempId));
           toast({ title: "Error", description: "No se pudo agregar al embalador.", variant: "destructive"});
+      }
+    };
+    
+    const editPacker = async (updatedPacker: Packer) => {
+      try {
+        const batch = writeBatch(db);
+
+        const packerRef = doc(db, 'packers', updatedPacker.id);
+        const { id, ...packerData } = updatedPacker;
+        batch.set(packerRef, packerData, { merge: true });
+
+        const logsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', updatedPacker.id));
+        const logsSnapshot = await getDocs(logsQuery);
+        logsSnapshot.forEach(doc => {
+            batch.update(doc.ref, { packerName: updatedPacker.name });
+        });
+        
+        await batch.commit();
+        await fetchAllData();
+      } catch (error) {
+        console.error("Failed to edit packer and related documents:", error);
+        toast({ title: "Error", description: "No se pudo actualizar el nombre del embalador en todos los registros.", variant: "destructive"});
+        await fetchAllData();
       }
     };
 
@@ -1020,6 +1043,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         deleteTask,
         addCollector,
         addPacker,
+        editPacker,
         deletePacker,
         addPackagingLog,
         deletePackagingLog,
@@ -1045,3 +1069,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         </AppDataContext.Provider>
     );
 };
+
+
+    

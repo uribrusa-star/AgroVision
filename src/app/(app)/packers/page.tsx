@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { MoreHorizontal } from 'lucide-react';
@@ -29,9 +28,10 @@ const PackerSchema = z.object({
 });
 
 export default function PackersPage() {
-  const { loading, packers, packagingLogs, addPacker, deletePacker, currentUser } = React.useContext(AppDataContext);
+  const { loading, packers, packagingLogs, addPacker, editPacker, deletePacker, currentUser } = React.useContext(AppDataContext);
   const [selectedPacker, setSelectedPacker] = useState<Packer | null>(null);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const { toast } = useToast();
@@ -46,6 +46,13 @@ export default function PackersPage() {
       form.reset({ name: '' });
     }
   }, [isAddDialogOpen, form]);
+
+  useEffect(() => {
+    if (isEditDialogOpen && selectedPacker) {
+      form.reset({ name: selectedPacker.name });
+    }
+  }, [isEditDialogOpen, selectedPacker, form]);
+
 
   const getPackerHistory = (packerId: string) => {
     return packagingLogs.filter(log => log.packerId === packerId);
@@ -79,9 +86,27 @@ export default function PackersPage() {
         form.reset({ name: '' });
     });
   };
+  
+  const onEditSubmit = (values: z.infer<typeof PackerSchema>) => {
+    if (!selectedPacker) return;
+
+    const newName = values.name.trim();
+    if (packers.some(p => p.id !== selectedPacker.id && p.name.toLowerCase() === newName.toLowerCase())) {
+      form.setError('name', { type: 'manual', message: 'Ya existe otro embalador con este nombre.' });
+      return;
+    }
+
+    startTransition(async () => {
+      await editPacker({ ...selectedPacker, name: newName });
+      toast({ title: "Embalador Actualizado", description: `El nombre se ha cambiado a ${newName}.` });
+      setIsEditDialogOpen(false);
+      setSelectedPacker(null);
+    });
+  };
 
   if (!currentUser) return null;
   const canManage = currentUser.role === 'Productor' || currentUser.role === 'Encargado';
+  const canEditName = currentUser.role === 'Productor';
 
   return (
     <>
@@ -99,8 +124,6 @@ export default function PackersPage() {
                         <DialogTitle>Agregar Nuevo Embalador</DialogTitle>
                         <DialogDescription>
                             Complete los detalles para agregar un nuevo embalador.
-                            <br/>
-                            <strong className="text-destructive">Importante:</strong> El nombre no podrá ser modificado una vez creado.
                         </DialogDescription>
                     </DialogHeader>
                     <Form {...form}>
@@ -192,6 +215,7 @@ export default function PackersPage() {
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                     <DropdownMenuItem onSelect={() => { setSelectedPacker(packer); setIsHistoryOpen(true); }}>Ver Historial</DropdownMenuItem>
+                                    {canEditName && <DropdownMenuItem onSelect={() => { setSelectedPacker(packer); setIsEditDialogOpen(true); }}>Editar Nombre</DropdownMenuItem>}
                                     <AlertDialogTrigger asChild>
                                         <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
                                     </AlertDialogTrigger>
@@ -210,7 +234,6 @@ export default function PackersPage() {
                                         <AlertDialogAction onClick={() => handleDelete(packer.id)}>Continuar</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
-
                             </AlertDialog>
                         </TableCell>
                     )}
@@ -271,8 +294,44 @@ export default function PackersPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Editar Nombre del Embalador</DialogTitle>
+                <DialogDescription>
+                    Actualice el nombre para '{selectedPacker?.name}'. Este cambio se reflejará en todos los registros.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onEditSubmit)} className="space-y-4">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Nuevo Nombre</FormLabel>
+                                <FormControl>
+                                    <Input {...field} placeholder="Ej. María López" disabled={isPending} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <DialogFooter>
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary">Cancelar</Button>
+                        </DialogClose>
+                        <Button type="submit" disabled={isPending}>{isPending ? 'Guardando...' : 'Guardar Nombre'}</Button>
+                    </DialogFooter>
+                </form>
+            </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
+
+    
 
     

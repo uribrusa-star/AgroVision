@@ -312,6 +312,7 @@ export type AppData = {
   updateTaskStatus: (taskId: string, status: TaskStatus) => void;
   deleteTask: (taskId: string) => void;
   addCollector: (collector: Omit<Collector, 'id'>) => void;
+  editPacker: (packer: Packer) => Promise<void>;
   addPacker: (packer: Omit<Packer, 'id'>) => Promise<void>;
   deletePacker: (packerId: string) => void;
   addPackagingLog: (log: Omit<PackagingLog, 'id'>) => void;
@@ -331,3 +332,6 @@ export type AppData = {
   updateUserProfile: (userId: string, profileData: { name: string; notificationEmail?: string }) => Promise<void>;
   isClient: boolean;
 };
+
+
+    
