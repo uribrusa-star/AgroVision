@@ -22,23 +22,23 @@ const costChartConfig = {
   },
    'Mano de Obra': {
     label: "Mano de Obra",
-    color: "hsl(var(--chart-5))",
+    color: "hsl(var(--chart-3))",
   },
   'Insumos': {
     label: "Insumos",
-    color: "hsl(var(--chart-3))",
+    color: "hsl(var(--chart-4))",
   },
   'Riego': {
     label: "Riego",
-    color: "hsl(var(--chart-4))",
+    color: "hsl(var(--chart-5))",
   },
    'Mantenimiento': {
     label: "Mantenimiento",
-    color: "hsl(var(--chart-5))",
+    color: "hsl(var(--chart-1))",
   },
   'Servicios': {
     label: "Servicios",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-2))",
   },
   'Otro': {
       label: "Otro",
