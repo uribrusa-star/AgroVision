@@ -20,6 +20,7 @@ import {
   SidebarTrigger,
   SidebarFooter,
   SidebarMenuBadge,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { StrawberryIcon, NotebookPen } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -78,6 +79,7 @@ const ProfileSchema = z.object({
 
 function UserMenu() {
   const { currentUser, setCurrentUser, updateUserPassword, updateUserProfile } = React.useContext(AppDataContext);
+  const { isMobile } = useSidebar();
   const router = useRouter();
   const { toast } = useToast();
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -165,7 +167,7 @@ function UserMenu() {
                 </div>
             </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start" className="w-56">
+            <DropdownMenuContent side={isMobile ? "top" : "right"} align={isMobile ? "center" : "start"} className="w-56">
                 <DropdownMenuLabel>Mi Perfil</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onSelect={() => setIsProfileDialogOpen(true)}>
@@ -336,9 +338,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
             </SidebarFooter>
           </Sidebar>
           <div className="flex-1 flex flex-col">
-            <header className="flex h-16 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
+            <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
                 <SidebarTrigger>
-                  <Menu className="h-10 w-10" />
+                  <Menu className="h-6 w-6" />
                   <span className="sr-only">Toggle Menu</span>
                 </SidebarTrigger>
                 <div className="h-14 w-14 flex items-center gap-2">
