@@ -317,7 +317,7 @@ export default function MapPage() {
         title="Mapa del Establecimiento"
         description="Visualice la finca, sus lotes y genere alertas climáticas con IA."
       />
-      <div className="grid grid-cols-1 gap-6 mt-6">
+      <div className="space-y-6 mt-6">
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -366,9 +366,7 @@ export default function MapPage() {
                 </div>
             </CardContent>
         </Card>
-        <div className="col-span-1">
-          <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
-        </div>
+        <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
       </div>
     </>
   );
