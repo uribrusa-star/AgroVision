@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { ReactNode, useState, useCallback, useEffect } from 'react';
@@ -799,10 +800,24 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
     const updateTaskStatus = (taskId: string, status: TaskStatus) => {
         const originalTasks = tasks;
+        const taskToUpdate = tasks.find(t => t.id === taskId);
         setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status } : t));
         
         const taskRef = doc(db, 'tasks', taskId);
-        setDoc(taskRef, { status }, { merge: true }).catch(error => {
+        setDoc(taskRef, { status }, { merge: true })
+        .then(() => {
+            if (status === 'completed' && taskToUpdate) {
+                const creator = users.find(u => u.id === taskToUpdate.createdBy.id);
+                if(creator) {
+                     fetch('/api/send-task-completed-email', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ task: taskToUpdate, creator: creator }),
+                    }).catch(err => console.error("Failed to send task completion email:", err));
+                }
+            }
+        })
+        .catch(error => {
             console.error("Failed to update task status:", error);
             setTasks(originalTasks);
             toast({ title: "Error", description: "No se pudo actualizar el estado de la tarea.", variant: "destructive"});
