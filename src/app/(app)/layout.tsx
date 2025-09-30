@@ -302,7 +302,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
       <SidebarProvider>
-        <div className="flex min-h-screen">
+        <div className="flex h-screen">
           <Sidebar collapsible='offcanvas'>
             <SidebarHeader className="p-4">
               <div className="flex items-center gap-2">
