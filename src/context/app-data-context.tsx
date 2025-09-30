@@ -324,6 +324,12 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             batch.update(doc.ref, { collectorName: updatedCollector.name });
         });
         
+        const culturalPracticesQuery = query(collection(db, 'culturalPracticeLogs'), where('personnelId', '==', updatedCollector.id));
+        const culturalPracticesSnapshot = await getDocs(culturalPracticesQuery);
+        culturalPracticesSnapshot.forEach(doc => {
+            batch.update(doc.ref, { personnelName: updatedCollector.name });
+        });
+        
         await batch.commit();
         await fetchAllData();
       } catch (error) {
