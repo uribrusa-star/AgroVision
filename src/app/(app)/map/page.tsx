@@ -366,9 +366,7 @@ export default function MapPage() {
                 </div>
             </CardContent>
         </Card>
-        <div>
-            <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
-        </div>
+        <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
       </div>
     </>
   );
