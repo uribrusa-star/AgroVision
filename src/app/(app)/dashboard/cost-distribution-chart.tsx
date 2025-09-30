@@ -34,11 +34,11 @@ const costChartConfig = {
   },
    'Mantenimiento': {
     label: "Mantenimiento",
-    color: "hsl(var(--chart-1))",
+    color: "hsl(var(--chart-1) / 0.7)",
   },
   'Servicios': {
     label: "Servicios",
-    color: "hsl(var(--chart-2))",
+    color: "hsl(var(--chart-2) / 0.6)",
   },
   'Otro': {
       label: "Otro",
