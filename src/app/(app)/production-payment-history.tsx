@@ -278,40 +278,42 @@ function ProductionPaymentHistoryComponent() {
                   </Card>
               </div>
 
-               <DialogFooter className="flex-row justify-between w-full pt-2">
-                  <div className="flex gap-2">
-                    {canManage && (
-                        <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="icon" disabled={isPending}>
-                                    <Trash2 className="h-4 w-4" />
-                                    <span className="sr-only">Eliminar</span>
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y el pago asociado, y reajustará las estadísticas del recolector.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    )}
-                    <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage}>
-                        <FileDown className="h-4 w-4 mr-2" />
-                        {isPdfPending ? "Generando..." : "Generar Recibo"}
-                    </Button>
-                    <Button variant="outline" onClick={() => setIsLabelOpen(true)} disabled={!canManage}>
-                        <QrCode className="h-4 w-4 mr-2" />
-                        Generar Etiqueta
-                    </Button>
-                  </div>
-                  <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
+               <DialogFooter className="flex-col sm:flex-row sm:justify-between w-full pt-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" onClick={handleGenerateReceipt} disabled={isPdfPending || !canManage} className="w-full sm:w-auto">
+                            <FileDown className="h-4 w-4 mr-2" />
+                            {isPdfPending ? "Generando..." : "Generar Recibo"}
+                        </Button>
+                        <Button variant="outline" onClick={() => setIsLabelOpen(true)} disabled={!canManage} className="w-full sm:w-auto">
+                            <QrCode className="h-4 w-4 mr-2" />
+                            Generar Etiqueta
+                        </Button>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      {canManage && (
+                          <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                  <Button variant="destructive" size="icon" disabled={isPending}>
+                                      <Trash2 className="h-4 w-4" />
+                                      <span className="sr-only">Eliminar</span>
+                                  </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                      <AlertDialogTitle>¿Está absolutamente seguro?</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                          Esta acción no se puede deshacer. Esto eliminará permanentemente el registro de producción y el pago asociado, y reajustará las estadísticas del recolector.
+                                      </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => handleDelete(selectedLog.id)}>Continuar y Eliminar</AlertDialogAction>
+                                  </AlertDialogFooter>
+                              </AlertDialogContent>
+                          </AlertDialog>
+                      )}
+                      <Button onClick={() => setSelectedLog(null)} variant="secondary">Cerrar</Button>
+                    </div>
               </DialogFooter>
             </>
           )}
