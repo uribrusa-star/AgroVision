@@ -93,12 +93,12 @@ export default function EngineerLogPage() {
         <div className="space-y-8">
           {canManageApplications && (
             <>
-              <HealthLogForm />
+              <Supplies />
               <IrrigationLogForm />
+              <HealthLogForm />
               <PhenologyLogForm />
               <EnvironmentalLogForm />
               <ActivityOmissionLogForm />
-              <Supplies />
             </>
           )}
           {!canManageApplications && (
