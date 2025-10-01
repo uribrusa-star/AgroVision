@@ -302,7 +302,16 @@ export function Supplies() {
                 const isLowStock = supply.stock !== undefined && supply.lowStockThreshold !== undefined && supply.stock < supply.lowStockThreshold;
                 return (
                     <TableRow key={supply.id}>
-                        <TableCell className="font-medium cursor-pointer" onClick={() => handleViewDetails(supply)}>{supply.name}</TableCell>
+                        <TableCell className="font-medium cursor-pointer" onClick={() => handleViewDetails(supply)}>
+                           <div>
+                                {supply.name}
+                                {supply.photoUrl && (
+                                    <div className="mt-2 relative w-16 h-16 rounded-md overflow-hidden bg-muted">
+                                        <Image src={supply.photoUrl} alt={supply.name} fill className="object-cover" />
+                                    </div>
+                                )}
+                            </div>
+                        </TableCell>
                         <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => handleViewDetails(supply)}>{supply.info.activeIngredient}</TableCell>
                         <TableCell className={cn("font-semibold cursor-pointer", isLowStock && "text-destructive font-bold")} onClick={() => handleViewDetails(supply)}>
                             {supply.stock !== undefined ? supply.stock.toFixed(2) : 'N/A'}
