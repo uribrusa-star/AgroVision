@@ -12,4 +12,5 @@ import '@/ai/flows/recommend-applications.ts';
 import '@/ai/flows/diagnose-plant-health.ts';
 import '@/ai/flows/summarize-agronomist-report.ts';
 import '@/app/api/send-task-completed-email/route.ts';
+import '@/app/api/send-low-stock-alert/route.ts';
 

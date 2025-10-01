@@ -549,8 +549,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             const batch = writeBatch(db);
             const newLogRef = doc(collection(db, 'agronomistLogs'));
             batch.set(newLogRef, log);
-            
-            let lowStockAlertTriggered = false;
 
             if ((log.type === 'Fertilización' || log.type === 'Fumigación') && log.product && log.quantityUsed) {
                 const supplyToUpdate = supplies.find(s => s.name === log.product);
@@ -561,20 +559,15 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     batch.update(supplyRef, { stock: newStock });
 
                     if (supplyToUpdate.lowStockThreshold !== undefined && newStock < supplyToUpdate.lowStockThreshold && oldStock >= supplyToUpdate.lowStockThreshold) {
-                       lowStockAlertTriggered = true;
-                       const producerUser = users.find(u => u.role === 'Productor');
-                       if (producerUser && currentUser) {
-                           const newTask: Omit<Task, 'id'> = {
-                                title: `Stock bajo: ${supplyToUpdate.name}`,
-                                description: `El stock de '${supplyToUpdate.name}' ha caído a ${newStock.toFixed(1)} kg/L, por debajo del umbral de ${supplyToUpdate.lowStockThreshold} kg/L. Se recomienda reponer.`,
-                                assignedTo: { id: producerUser.id, name: producerUser.name },
-                                createdBy: { id: currentUser.id, name: currentUser.name },
-                                status: 'pending',
-                                priority: 'media',
-                                createdAt: new Date().toISOString(),
-                           };
-                           const newTaskRef = doc(collection(db, 'tasks'));
-                           batch.set(newTaskRef, newTask);
+                       const engineerUser = users.find(u => u.role === 'Ingeniero Agronomo');
+                       if (engineerUser) {
+                            fetch('/api/send-low-stock-alert', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ supply: supplyToUpdate, user: engineerUser, newStock: newStock }),
+                            }).then(() => {
+                                toast({ title: "Alerta de Stock Bajo Enviada", description: `Se ha notificado al ingeniero sobre el bajo stock de ${supplyToUpdate.name}.` });
+                            }).catch(err => console.error("Failed to send low stock alert email:", err));
                        }
                     }
                 }
@@ -582,9 +575,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     
             await batch.commit();
             await fetchAllData();
-            if (lowStockAlertTriggered) {
-                toast({ title: "Alerta de Stock Bajo", description: `Se ha creado una tarea para reponer ${log.product}.` });
-            }
         }
     
         runAdd().catch(error => {
@@ -625,14 +615,6 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
                     batch.update(supplyRef, { stock: restoredStock });
 
                     setSupplies(prev => prev.map(s => s.id === supplyToUpdate.id ? { ...s, stock: restoredStock } : s));
-
-                    if (supplyToUpdate.lowStockThreshold !== undefined && supplyToUpdate.stock < supplyToUpdate.lowStockThreshold && restoredStock >= supplyToUpdate.lowStockThreshold) {
-                        const relatedTask = tasks.find(t => t.title === `Stock bajo: ${supplyToUpdate.name}` && t.status === 'pending');
-                        if (relatedTask) {
-                            batch.delete(doc(db, 'tasks', relatedTask.id));
-                            setTasks(prev => prev.filter(t => t.id !== relatedTask.id));
-                        }
-                    }
                 }
             }
             await batch.commit();
