@@ -1,11 +1,10 @@
-
 'use client';
 import React, { useContext, useMemo, useState, useTransition, useEffect } from "react";
 import dynamic from "next/dynamic";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone, Save } from 'lucide-react';
+import { AlertCircle, BrainCircuit, Map as MapIcon, Sparkles, Milestone, Save, Weight, Sprout, Notebook } from 'lucide-react';
 
 import { PageHeader } from "@/components/page-header";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -19,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import type { AgronomistLog } from "@/lib/types";
+import type { AgronomistLog, PhenologyLog } from "@/lib/types";
 
 const MapComponent = dynamic(() => import('@/components/map'), { ssr: false });
 
@@ -257,9 +256,70 @@ const AIAlertsPanel = ({
     )
 }
 
+const LotDetailCard = ({ batchId }: { batchId: string }) => {
+    const { harvests, agronomistLogs, phenologyLogs } = useContext(AppDataContext);
+
+    const lotData = useMemo(() => {
+        const lotHarvests = harvests.filter(h => h.batchNumber === batchId);
+        const totalKilos = lotHarvests.reduce((sum, h) => sum + h.kilograms, 0);
+
+        const allLogsForLot: (AgronomistLog | PhenologyLog)[] = [
+            ...agronomistLogs.filter(l => l.batchId === batchId),
+            ...phenologyLogs.filter(p => p.batchId === batchId),
+        ].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        const lastActivity = allLogsForLot[0];
+        
+        const lastPhenologyLog = phenologyLogs
+            .filter(p => p.batchId === batchId)
+            .sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+
+        return {
+            totalKilos,
+            lastPhenologyState: lastPhenologyLog?.developmentState,
+            lastActivity: lastActivity ? {
+                date: new Date(lastActivity.date).toLocaleDateString('es-ES'),
+                description: 'type' in lastActivity ? lastActivity.type : lastActivity.developmentState
+            } : null,
+        }
+    }, [batchId, harvests, agronomistLogs, phenologyLogs]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Lote: {batchId}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Weight className="h-4 w-4" />
+                        <span>Producción Total</span>
+                    </div>
+                    <span className="font-bold">{lotData.totalKilos.toLocaleString('es-ES')} kg</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Sprout className="h-4 w-4" />
+                        <span>Estado Fenológico</span>
+                    </div>
+                    <span className="font-semibold">{lotData.lastPhenologyState || 'N/A'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Notebook className="h-4 w-4" />
+                        <span>Última Actividad</span>
+                    </div>
+                    <span className="font-semibold text-right">
+                        {lotData.lastActivity ? `${lotData.lastActivity.description} (${lotData.lastActivity.date})` : 'N/A'}
+                    </span>
+                </div>
+            </CardContent>
+        </Card>
+    )
+}
 
 export default function MapPage() {
-  const { establishmentData } = useContext(AppDataContext);
+  const { establishmentData, batches } = useContext(AppDataContext);
   
   const parsedGeoJson = useMemo(() => {
       try {
@@ -329,7 +389,7 @@ export default function MapPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="h-[500px] w-full rounded-md overflow-hidden z-0 bg-muted">
+                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted">
                    <MapComponent center={mapCenter} geoJsonData={parsedGeoJson} />
                 </div>
             </CardContent>
@@ -344,7 +404,7 @@ export default function MapPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="h-[500px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
+                <div className="h-[400px] w-full rounded-md overflow-hidden z-0 bg-muted relative">
                    <WindyMapEmbed lat={windyCoords.lat} lng={windyCoords.lng} />
                    <TooltipProvider>
                     <Tooltip>
@@ -368,6 +428,20 @@ export default function MapPage() {
         </Card>
         <div className="lg:col-span-2">
             <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
+        </div>
+
+        <div className="lg:col-span-2 mt-8">
+            <h2 className="text-2xl font-bold mb-4">Detalles de Lotes</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {batches.map(batch => (
+                    <LotDetailCard key={batch.id} batchId={batch.id} />
+                ))}
+                {batches.length === 0 && (
+                    <p className="text-muted-foreground md:col-span-2 lg:col-span-3 text-center">
+                        No hay lotes registrados. Agréguelos en la página de Entrada de Datos.
+                    </p>
+                )}
+            </div>
         </div>
       </div>
     </>
