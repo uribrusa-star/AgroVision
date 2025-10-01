@@ -340,7 +340,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           <div className="flex-1 flex flex-col">
             <header className="flex h-14 items-center gap-4 border-b bg-card/80 backdrop-blur-sm px-6 sticky top-0 z-30 md:hidden">
                 <SidebarTrigger>
-                  <Menu className="h-6 w-6" />
+                  <Menu className="h-10 w-10" />
                   <span className="sr-only">Toggle Menu</span>
                 </SidebarTrigger>
                 <div className="h-14 w-14 flex items-center gap-2">
