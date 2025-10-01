@@ -286,18 +286,18 @@ const LotDetailCard = ({ batchId }: { batchId: string }) => {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Lote: {batchId}</CardTitle>
+            <CardHeader className="pb-2">
+                <CardTitle className="text-base font-semibold">Lote: {batchId}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-b pb-2">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Weight className="h-4 w-4" />
                         <span>Producción Total</span>
                     </div>
                     <span className="font-bold">{lotData.totalKilos.toLocaleString('es-ES')} kg</span>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between border-b pb-2">
                     <div className="flex items-center gap-2 text-muted-foreground">
                         <Sprout className="h-4 w-4" />
                         <span>Estado Fenológico</span>
@@ -426,10 +426,7 @@ export default function MapPage() {
                 </div>
             </CardContent>
         </Card>
-        <div className="lg:col-span-2">
-            <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
-        </div>
-
+        
         <div className="lg:col-span-2 mt-8">
             <h2 className="text-2xl font-bold mb-4">Detalles de Lotes</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -443,6 +440,11 @@ export default function MapPage() {
                 )}
             </div>
         </div>
+
+        <div className="lg:col-span-2 mt-8">
+            <AIAlertsPanel mapCenter={mapCenter} onCoordsChange={setWindyCoords} />
+        </div>
+
       </div>
     </>
   );
