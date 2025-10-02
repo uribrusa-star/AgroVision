@@ -292,17 +292,16 @@ export function Supplies() {
                 <TableHead>Nombre</TableHead>
                 <TableHead className="hidden md:table-cell">Composición</TableHead>
                 <TableHead>Stock (kg/L)</TableHead>
-                {canManage && <TableHead className="text-right">Acciones</TableHead>}
             </TableRow>
         </TableHeader>
         <TableBody>
-            {loading && <tr><TableCell colSpan={canManage ? 4 : 3}><Skeleton className="h-10" /></TableCell></tr>}
-            {!loading && data.length === 0 && <tr><TableCell colSpan={canManage ? 4 : 3} className="text-center text-muted-foreground h-24">No hay insumos en esta categoría.</TableCell></tr>}
+            {loading && <tr><TableCell colSpan={3}><Skeleton className="h-10" /></TableCell></tr>}
+            {!loading && data.length === 0 && <tr><TableCell colSpan={3} className="text-center text-muted-foreground h-24">No hay insumos en esta categoría.</TableCell></tr>}
             {!loading && data.map(supply => {
                 const isLowStock = supply.stock !== undefined && supply.lowStockThreshold !== undefined && supply.stock < supply.lowStockThreshold;
                 return (
-                    <TableRow key={supply.id}>
-                        <TableCell className="font-medium cursor-pointer" onClick={() => handleViewDetails(supply)}>
+                    <TableRow key={supply.id} className="cursor-pointer" onClick={() => handleViewDetails(supply)}>
+                        <TableCell className="font-medium">
                            <div>
                                 {supply.name}
                                 {supply.photoUrl && (
@@ -312,39 +311,10 @@ export function Supplies() {
                                 )}
                             </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell cursor-pointer" onClick={() => handleViewDetails(supply)}>{supply.info.activeIngredient}</TableCell>
-                        <TableCell className={cn("font-semibold cursor-pointer", isLowStock && "text-destructive font-bold")} onClick={() => handleViewDetails(supply)}>
+                        <TableCell className="hidden md:table-cell">{supply.info.activeIngredient}</TableCell>
+                        <TableCell className={cn("font-semibold", isLowStock && "text-destructive font-bold")}>
                             {supply.stock !== undefined ? supply.stock.toFixed(2) : 'N/A'}
                         </TableCell>
-                        {canManage && (
-                            <TableCell className="text-right">
-                                <AlertDialog>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                            <DropdownMenuItem onSelect={() => handleViewDetails(supply)}>Ver Detalles</DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => handleEdit(supply)}>Editar</DropdownMenuItem>
-                                            <AlertDialogTrigger asChild>
-                                                <DropdownMenuItem className="text-destructive" onSelect={(e) => e.preventDefault()}>Eliminar</DropdownMenuItem>
-                                            </AlertDialogTrigger>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                     <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>¿Está seguro de eliminar "{supply.name}"?</AlertDialogTitle>
-                                            <AlertDialogDescription>Esta acción no se puede deshacer. Se eliminará permanentemente del inventario.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteSupply(supply.id)}>Continuar y Eliminar</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </TableCell>
-                        )}
                     </TableRow>
                 );
             })}
