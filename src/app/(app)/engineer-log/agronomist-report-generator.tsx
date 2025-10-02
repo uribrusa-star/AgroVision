@@ -104,8 +104,7 @@ export function AgronomistReportGenerator() {
             if (yPos > pageHeight - 25 - requiredHeight) {
                 doc.addPage();
                 addPageHeader(doc);
-                const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
-                yPos = pageNumber === 2 ? 40 : 15;
+                yPos = 40;
             }
         };
 
@@ -148,12 +147,10 @@ export function AgronomistReportGenerator() {
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 didDrawPage: (data) => {
                     addPageHeader(doc);
-                    const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
-                    data.cursor.y = pageNumber === 2 ? 40 : 15;
+                    yPos = 40;
                 }
             });
-            const finalY = doc.lastAutoTable?.finalY ?? yPos;
-            yPos = Math.max(yPos, finalY) + 15;
+            yPos = doc.lastAutoTable.finalY + 15;
         }
 
         // --- PDF GENERATION ---
