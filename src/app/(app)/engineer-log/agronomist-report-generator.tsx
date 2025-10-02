@@ -62,7 +62,7 @@ export function AgronomistReportGenerator() {
         let logoPngDataUri = '';
 
         if (logoRef.current) {
-            const canvas = await html2canvas(logoRef.current, {backgroundColor: null, scale: 3});
+            const canvas = await html2canvas(logoRef.current, {backgroundColor: null, scale: 4});
             logoPngDataUri = canvas.toDataURL('image/png');
         }
         
@@ -144,7 +144,8 @@ export function AgronomistReportGenerator() {
                     yPos = 40; // Reset yPos for the new page
                 }
             });
-            yPos = doc.lastAutoTable.finalY + 15;
+            const finalY = doc.lastAutoTable?.finalY ?? yPos;
+            yPos = Math.max(yPos, finalY) + 15;
         }
 
         // --- PDF GENERATION ---
