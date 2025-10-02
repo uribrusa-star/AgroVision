@@ -94,8 +94,8 @@ export function AgronomistReportGenerator() {
             docInstance.setTextColor(80);
         };
         
-        const checkAndAddPage = () => {
-            if (yPos > pageHeight - 25) {
+        const checkAndAddPage = (requiredHeight = 10) => {
+            if (yPos > pageHeight - 25 - requiredHeight) {
                 doc.addPage();
                 addPageHeader(doc);
                 yPos = 40;
@@ -116,15 +116,40 @@ export function AgronomistReportGenerator() {
             
             const splitContent = doc.splitTextToSize(content, pageWidth - 30);
             splitContent.forEach((line: string) => {
-                checkAndAddPage();
+                checkAndAddPage(5);
                 doc.text(line, 15, yPos, { align: 'justify' });
                 yPos += 5;
             });
             yPos += 10;
         };
+        
+        const addTable = (title: string, head: any, body: any) => {
+            checkAndAddPage();
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(40);
+            doc.text(title, 15, yPos);
+            yPos += 8;
+            
+            doc.autoTable({
+                head,
+                body,
+                startY: yPos,
+                theme: 'grid',
+                headStyles: { fillColor: [38, 70, 83], textColor: 255, font: 'helvetica', fontStyle: 'bold' },
+                bodyStyles: { textColor: 80, font: 'helvetica' },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                didDrawPage: (data) => {
+                    addPageHeader(doc); // Add header to new pages created by autoTable
+                    yPos = 40; // Reset yPos for the new page
+                }
+            });
+            yPos = doc.lastAutoTable.finalY + 15;
+        }
 
         // --- PDF GENERATION ---
         
+        // --- COVER PAGE ---
         if (logoPngDataUri) {
           doc.addImage(logoPngDataUri, 'PNG', pageWidth / 2 - 15, pageHeight / 3 - 10, 30, 30);
         }
@@ -139,21 +164,63 @@ export function AgronomistReportGenerator() {
         doc.text(`Fecha del Informe: ${new Date().toLocaleDateString('es-ES')}`, pageWidth / 2, pageHeight / 2 + 20, { align: 'center' });
         doc.text(establishmentData.producer, pageWidth / 2, pageHeight / 2 + 30, { align: 'center' });
 
+        // --- Get AI Content ---
+        const recentAgronomistLogs = agronomistLogs.slice(0, 50);
+        const recentPhenologyLogs = phenologyLogs.slice(0, 20);
+
         const aiInput = {
-            agronomistLogs: JSON.stringify(agronomistLogs.slice(0, 50)),
-            phenologyLogs: JSON.stringify(phenologyLogs.slice(0, 20)),
+            agronomistLogs: JSON.stringify(recentAgronomistLogs),
+            phenologyLogs: JSON.stringify(recentPhenologyLogs),
         };
         const aiResult = await summarizeAgronomistReport(aiInput);
 
         doc.addPage();
         addPageHeader(doc);
+
+        addTable("Datos Generales del Establecimiento", 
+            [['Productor', 'Responsable Técnico', 'Ubicación']],
+            [[establishmentData.producer, establishmentData.technicalManager, `${establishmentData.location.locality}, ${establishmentData.location.province}`]]
+        );
         
+        // --- AI SECTIONS ---
         addSection("Análisis Técnico (IA)", aiResult.technicalAnalysis);
         addSection("Conclusiones y Recomendaciones (IA)", aiResult.conclusionsAndRecommendations);
         
+        // --- DATA TABLES ---
+        if (recentAgronomistLogs.length > 0) {
+            checkAndAddPage(20);
+            addTable(
+                "Anexo: Historial de Actividades Agronómicas Recientes",
+                [['Fecha', 'Tipo', 'Lote', 'Producto/Detalle', 'Notas']],
+                recentAgronomistLogs.map(log => [
+                    new Date(log.date).toLocaleDateString('es-ES'),
+                    log.type,
+                    log.batchId || 'General',
+                    log.product || '-',
+                    log.notes.substring(0, 50) + (log.notes.length > 50 ? '...' : '')
+                ])
+            );
+        }
+        
+        if (recentPhenologyLogs.length > 0) {
+            checkAndAddPage(20);
+            addTable(
+                "Anexo: Historial de Fenología Reciente",
+                [['Fecha', 'Estado', 'Lote', 'Flores', 'Frutos', 'Notas']],
+                recentPhenologyLogs.map(log => [
+                    new Date(log.date).toLocaleDateString('es-ES'),
+                    log.developmentState,
+                    log.batchId || 'General',
+                    log.flowerCount ?? '-',
+                    log.fruitCount ?? '-',
+                    log.notes.substring(0, 50) + (log.notes.length > 50 ? '...' : '')
+                ])
+            );
+        }
+        
         addPageFooter(doc);
         
-        doc.save('Informe_Tecnico_Agronomico.pdf');
+        doc.save('Informe_Tecnico_Agronomico_Detallado.pdf');
         
         toast({
             title: '¡Informe Generado!',
