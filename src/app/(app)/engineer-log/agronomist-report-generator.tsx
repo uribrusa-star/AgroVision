@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useContext, useTransition, useMemo, useRef } from 'react';
@@ -80,6 +81,11 @@ export function AgronomistReportGenerator() {
         };
         
         const addPageHeader = (docInstance: jsPDF) => {
+            const pageNumber = docInstance.internal.getCurrentPageInfo().pageNumber;
+            if (pageNumber !== 2) {
+                return;
+            }
+            
             if (logoPngDataUri) {
               docInstance.addImage(logoPngDataUri, 'PNG', 15, 12, 15, 15);
             }
@@ -98,7 +104,8 @@ export function AgronomistReportGenerator() {
             if (yPos > pageHeight - 25 - requiredHeight) {
                 doc.addPage();
                 addPageHeader(doc);
-                yPos = 40;
+                const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+                yPos = pageNumber === 2 ? 40 : 15;
             }
         };
 
@@ -140,8 +147,9 @@ export function AgronomistReportGenerator() {
                 bodyStyles: { textColor: 80, font: 'helvetica' },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
                 didDrawPage: (data) => {
-                    addPageHeader(doc); // Add header to new pages created by autoTable
-                    yPos = 40; // Reset yPos for the new page
+                    addPageHeader(doc);
+                    const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+                    data.cursor.y = pageNumber === 2 ? 40 : 15;
                 }
             });
             const finalY = doc.lastAutoTable?.finalY ?? yPos;
