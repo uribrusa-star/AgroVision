@@ -22,13 +22,14 @@ const withPWA = require('@ducanh2912/next-pwa').default({
       },
     },
     {
-      urlPattern: ({ url, sameOrigin }) => sameOrigin,
-      handler: 'StaleWhileRevalidate',
+      urlPattern: /^https?.*/i,
+      handler: 'NetworkFirst',
       options: {
-        cacheName: 'pages-and-others',
+        cacheName: 'other-requests-cache',
+        networkTimeoutSeconds: 10,
         expiration: {
-          maxEntries: 150,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+          maxEntries: 50,
+          maxAgeSeconds: 10 * 24 * 60 * 60, // 10 days
         },
         cacheableResponse: {
           statuses: [0, 200],
