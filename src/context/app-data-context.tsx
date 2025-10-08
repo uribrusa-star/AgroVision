@@ -31,7 +31,7 @@ export const AppDataContext = React.createContext<AppData>({
   producerLogs: [],
   transactions: [],
   addHarvest: async () => { throw new Error('Not implemented') },
-  editCollector: async () => { throw new Error('Not implemented') },
+  editCollector: () => { throw new Error('Not implemented') },
   deleteCollector: () => { throw new Error('Not implemented') },
   addAgronomistLog: () => { throw new Error('Not implemented') },
   editAgronomistLog: () => { throw new Error('Not implemented') },
@@ -49,9 +49,9 @@ export const AppDataContext = React.createContext<AppData>({
   addTask: () => { throw new Error('Not implemented') },
   updateTaskStatus: () => { throw new Error('Not implemented') },
   deleteTask: () => { throw new Error('Not implemented') },
-  addCollector: async () => { throw new Error('Not implemented') },
-  editPacker: async () => { throw new Error('Not implemented') },
-  addPacker: async () => { throw new Error('Not implemented') },
+  addCollector: () => { throw new Error('Not implemented') },
+  editPacker: () => { throw new Error('Not implemented') },
+  addPacker: () => { throw new Error('Not implemented') },
   deletePacker: () => { throw new Error('Not implemented') },
   addPackagingLog: () => { throw new Error('Not implemented') },
   deletePackagingLog: async () => { throw new Error('Not implemented') },
@@ -305,7 +305,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const editCollector = async (updatedCollector: Collector) => {
+    const editCollector = (updatedCollector: Collector) => {
         const originalCollectors = [...collectors];
         const originalHarvests = [...harvests];
         const originalCollectorPaymentLogs = [...collectorPaymentLogs];
@@ -317,7 +317,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setCollectorPaymentLogs(prev => prev.map(p => p.collectorId === updatedCollector.id ? { ...p, collectorName: updatedCollector.name } : p));
         setCulturalPracticeLogs(prev => prev.map(l => l.personnelId === updatedCollector.id ? { ...l, personnelName: updatedCollector.name } : l));
 
-        try {
+        const runUpdate = async () => {
             const batch = writeBatch(db);
 
             const collectorRef = doc(db, 'collectors', updatedCollector.id);
@@ -343,7 +343,9 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             });
             
             await batch.commit();
-        } catch (error) {
+        };
+
+        runUpdate().catch(error => {
             console.error("Failed to edit collector and related documents:", error);
             // Rollback optimistic UI on failure
             setCollectors(originalCollectors);
@@ -351,7 +353,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             setCollectorPaymentLogs(originalCollectorPaymentLogs);
             setCulturalPracticeLogs(originalCulturalPracticeLogs);
             toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector. Es posible que no tengas conexión.", variant: "destructive"});
-        }
+        });
     };
 
     const deleteCollector = (collectorId: string) => {
@@ -381,41 +383,36 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const addCollector = async (collector: Omit<Collector, 'id'>) => {
+    const addCollector = (collector: Omit<Collector, 'id'>) => {
         const tempId = `collector_${Date.now()}`;
         // Optimistic UI update
         setCollectors(prev => [...prev, { id: tempId, ...collector }]);
 
-        try {
-            const ref = await addDoc(collection(db, 'collectors'), collector);
+        addDoc(collection(db, 'collectors'), collector).then(ref => {
             // Replace temp ID with real ID from Firestore
             setCollectors(prev => prev.map(c => c.id === tempId ? { ...c, id: ref.id } : c));
-        } catch (error) {
+        }).catch(error => {
             console.error("Failed to add collector:", error);
             // Rollback on failure
             setCollectors(prev => prev.filter(c => c.id !== tempId));
             toast({ title: "Error", description: "No se pudo agregar al recolector. Es posible que no tengas conexión.", variant: "destructive"});
-        }
+        });
     };
 
-    const addPacker = async (packer: Omit<Packer, 'id'>) => {
+    const addPacker = (packer: Omit<Packer, 'id'>) => {
       const tempId = `packer_${Date.now()}`;
-      // Optimistic UI update
       setPackers(prev => [...prev, { id: tempId, ...packer }]);
 
-      try {
-          const ref = await addDoc(collection(db, 'packers'), packer);
-          // Replace temp ID with real ID
+      addDoc(collection(db, 'packers'), packer).then(ref => {
           setPackers(prev => prev.map(p => p.id === tempId ? { ...p, id: ref.id } : p));
-      } catch (error) {
+      }).catch(error => {
           console.error("Failed to add packer:", error);
-          // Rollback on failure
           setPackers(prev => prev.filter(p => p.id !== tempId));
           toast({ title: "Error", description: "No se pudo agregar al embalador. Es posible que no tengas conexión.", variant: "destructive"});
-      }
+      });
     };
     
-    const editPacker = async (updatedPacker: Packer) => {
+    const editPacker = (updatedPacker: Packer) => {
         const originalPackers = [...packers];
         const originalPackagingLogs = [...packagingLogs];
 
@@ -423,7 +420,7 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         setPackers(prev => prev.map(p => p.id === updatedPacker.id ? updatedPacker : p));
         setPackagingLogs(prev => prev.map(l => l.packerId === updatedPacker.id ? { ...l, packerName: updatedPacker.name } : l));
 
-        try {
+        const runUpdate = async () => {
             const batch = writeBatch(db);
 
             const packerRef = doc(db, 'packers', updatedPacker.id);
@@ -437,13 +434,14 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
             });
             
             await batch.commit();
-        } catch (error) {
+        };
+
+        runUpdate().catch(error => {
             console.error("Failed to edit packer and related documents:", error);
-            // Rollback on failure
             setPackers(originalPackers);
             setPackagingLogs(originalPackagingLogs);
             toast({ title: "Error", description: "No se pudo actualizar el nombre del embalador. Es posible que no tengas conexión.", variant: "destructive"});
-        }
+        });
     };
 
     const deletePacker = (packerId: string) => {

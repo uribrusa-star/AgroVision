@@ -60,7 +60,7 @@ export default function CollectorsPage() {
   };
   
   const handleDelete = (collectorId: string) => {
-     startTransition(async () => {
+     startTransition(() => {
         deleteCollector(collectorId);
         toast({ title: "Recolector Eliminado", description: "El recolector y sus datos asociados han sido eliminados." });
     });
@@ -73,7 +73,7 @@ export default function CollectorsPage() {
       return;
     }
     
-    startTransition(async () => {
+    startTransition(() => {
         addCollector({
           name: newName,
           avatar: `${Math.floor(Math.random() * 1000)}`,
@@ -97,8 +97,8 @@ export default function CollectorsPage() {
       return;
     }
 
-    startTransition(async () => {
-      await editCollector({ ...selectedCollector, name: newName });
+    startTransition(() => {
+      editCollector({ ...selectedCollector, name: newName });
       toast({ title: "Recolector Actualizado", description: `El nombre se ha cambiado a ${newName}.` });
       setIsEditDialogOpen(false);
       setSelectedCollector(null);

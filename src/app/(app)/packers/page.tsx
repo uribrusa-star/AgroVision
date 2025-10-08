@@ -59,8 +59,8 @@ export default function PackersPage() {
   };
 
   const handleDelete = (packerId: string) => {
-    startTransition(async () => {
-        await deletePacker(packerId);
+    startTransition(() => {
+        deletePacker(packerId);
         toast({ title: "Embalador Eliminado", description: "El embalador y sus datos asociados han sido eliminados." });
     });
   };
@@ -72,8 +72,8 @@ export default function PackersPage() {
       return;
     }
     
-    startTransition(async () => {
-        await addPacker({
+    startTransition(() => {
+        addPacker({
           name: newName,
           avatar: `${Math.floor(Math.random() * 1000)}`,
           totalPackaged: 0,
@@ -96,8 +96,8 @@ export default function PackersPage() {
       return;
     }
 
-    startTransition(async () => {
-      await editPacker({ ...selectedPacker, name: newName });
+    startTransition(() => {
+      editPacker({ ...selectedPacker, name: newName });
       toast({ title: "Embalador Actualizado", description: `El nombre se ha cambiado a ${newName}.` });
       setIsEditDialogOpen(false);
       setSelectedPacker(null);
