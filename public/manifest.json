@@ -1,46 +1,37 @@
 {
-  "theme_color": "#264653",
-  "background_color": "#f5f5f4",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
   "name": "AgroVision",
   "short_name": "AgroVision",
-  "description": "Gestión Inteligente para su Cultivo de Frutilla",
+  "description": "Gestión inteligente para la producción de frutilla.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#4CAF50",
   "icons": [
     {
       "src": "/logo.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
+      "sizes": "500x500",
+      "type": "image/png"
     }
   ],
   "screenshots": [
     {
-      "src": "/screenshots/screenshot-desktop-1.png",
+      "src": "/screenshots/screenshot-desktop.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide",
-      "label": "Panel de Control Principal"
+      "label": "Vista del Panel de Control en Escritorio"
     },
     {
-      "src": "/screenshots/screenshot-mobile-1.png",
-      "sizes": "360x640",
+      "src": "/screenshots/screenshot-mobile.png",
+      "sizes": "540x720",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Entrada de Datos en Móvil"
+      "label": "Vista de la App en Móvil"
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+agrovision",
+      "url": "/?url=%s"
     }
   ]
 }
