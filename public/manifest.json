@@ -1,7 +1,7 @@
 {
   "name": "AgroVision",
   "short_name": "AgroVision",
-  "description": "Gestión de datos en la producción de frutilla.",
+  "description": "Gestión de datos en la producción de frutillas.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#8FBC8F",
@@ -12,6 +12,22 @@
       "src": "/logo.png",
       "type": "image/png",
       "sizes": "500x500"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Panel de Control en Escritorio"
+    },
+    {
+      "src": "/screenshots/screenshot-mobile.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Vista Móvil de Tareas"
     }
   ],
   "protocol_handlers": [
