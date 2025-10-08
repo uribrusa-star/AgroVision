@@ -1,13 +1,13 @@
 
 import { WifiOff } from 'lucide-react';
-import { AgroVisionLogo } from '@/components/icons';
+import Image from 'next/image';
 
 export default function OfflinePage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
         <div className="flex flex-col items-center gap-4 text-center">
             <div className="relative mb-4">
-                <AgroVisionLogo className="w-24 h-24 text-muted" />
+                <Image src="/logo.png" alt="AgroVision Logo" width={96} height={96} className="opacity-50" />
                 <div className="absolute bottom-0 right-0 bg-destructive text-destructive-foreground rounded-full p-2">
                     <WifiOff className="h-6 w-6" />
                 </div>
