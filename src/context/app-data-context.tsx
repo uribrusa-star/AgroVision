@@ -49,7 +49,7 @@ export const AppDataContext = React.createContext<AppData>({
   addTask: () => { throw new Error('Not implemented') },
   updateTaskStatus: () => { throw new Error('Not implemented') },
   deleteTask: () => { throw new Error('Not implemented') },
-  addCollector: () => { throw new Error('Not implemented') },
+  addCollector: async () => { throw new Error('Not implemented') },
   editPacker: async () => { throw new Error('Not implemented') },
   addPacker: async () => { throw new Error('Not implemented') },
   deletePacker: () => { throw new Error('Not implemented') },
@@ -306,38 +306,52 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const editCollector = async (updatedCollector: Collector) => {
-      try {
-        const batch = writeBatch(db);
-
-        const collectorRef = doc(db, 'collectors', updatedCollector.id);
-        const { id, ...collectorData } = updatedCollector;
-        batch.set(collectorRef, collectorData, { merge: true });
-
-        const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
-        const harvestsSnapshot = await getDocs(harvestsQuery);
-        harvestsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { 'collector.name': updatedCollector.name });
-        });
-
-        const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
-        const paymentsSnapshot = await getDocs(paymentsQuery);
-        paymentsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { collectorName: updatedCollector.name });
-        });
+        const originalCollectors = [...collectors];
+        const originalHarvests = [...harvests];
+        const originalCollectorPaymentLogs = [...collectorPaymentLogs];
+        const originalCulturalPracticeLogs = [...culturalPracticeLogs];
         
-        const culturalPracticesQuery = query(collection(db, 'culturalPracticeLogs'), where('personnelId', '==', updatedCollector.id));
-        const culturalPracticesSnapshot = await getDocs(culturalPracticesQuery);
-        culturalPracticesSnapshot.forEach(doc => {
-            batch.update(doc.ref, { personnelName: updatedCollector.name });
-        });
-        
-        await batch.commit();
-        await fetchAllData();
-      } catch (error) {
-        console.error("Failed to edit collector and related documents:", error);
-        toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector en todos los registros.", variant: "destructive"});
-        await fetchAllData(); 
-      }
+        // Optimistic UI Update
+        setCollectors(prev => prev.map(c => c.id === updatedCollector.id ? updatedCollector : c));
+        setHarvests(prev => prev.map(h => h.collector.id === updatedCollector.id ? { ...h, collector: { ...h.collector, name: updatedCollector.name } } : h));
+        setCollectorPaymentLogs(prev => prev.map(p => p.collectorId === updatedCollector.id ? { ...p, collectorName: updatedCollector.name } : p));
+        setCulturalPracticeLogs(prev => prev.map(l => l.personnelId === updatedCollector.id ? { ...l, personnelName: updatedCollector.name } : l));
+
+        try {
+            const batch = writeBatch(db);
+
+            const collectorRef = doc(db, 'collectors', updatedCollector.id);
+            const { id, ...collectorData } = updatedCollector;
+            batch.set(collectorRef, collectorData, { merge: true });
+    
+            const harvestsQuery = query(collection(db, 'harvests'), where('collector.id', '==', updatedCollector.id));
+            const harvestsSnapshot = await getDocs(harvestsQuery);
+            harvestsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { 'collector.name': updatedCollector.name });
+            });
+    
+            const paymentsQuery = query(collection(db, 'collectorPaymentLogs'), where('collectorId', '==', updatedCollector.id));
+            const paymentsSnapshot = await getDocs(paymentsQuery);
+            paymentsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { collectorName: updatedCollector.name });
+            });
+            
+            const culturalPracticesQuery = query(collection(db, 'culturalPracticeLogs'), where('personnelId', '==', updatedCollector.id));
+            const culturalPracticesSnapshot = await getDocs(culturalPracticesQuery);
+            culturalPracticesSnapshot.forEach(doc => {
+                batch.update(doc.ref, { personnelName: updatedCollector.name });
+            });
+            
+            await batch.commit();
+        } catch (error) {
+            console.error("Failed to edit collector and related documents:", error);
+            // Rollback optimistic UI on failure
+            setCollectors(originalCollectors);
+            setHarvests(originalHarvests);
+            setCollectorPaymentLogs(originalCollectorPaymentLogs);
+            setCulturalPracticeLogs(originalCulturalPracticeLogs);
+            toast({ title: "Error", description: "No se pudo actualizar el nombre del recolector. Es posible que no tengas conexión.", variant: "destructive"});
+        }
     };
 
     const deleteCollector = (collectorId: string) => {
@@ -367,54 +381,69 @@ export const AppContextProvider = ({ children }: { children: ReactNode }) => {
         });
     };
 
-    const addCollector = (collector: Omit<Collector, 'id'>) => {
+    const addCollector = async (collector: Omit<Collector, 'id'>) => {
         const tempId = `collector_${Date.now()}`;
+        // Optimistic UI update
         setCollectors(prev => [...prev, { id: tempId, ...collector }]);
-        
-        addDoc(collection(db, 'collectors'), collector).then(ref => {
+
+        try {
+            const ref = await addDoc(collection(db, 'collectors'), collector);
+            // Replace temp ID with real ID from Firestore
             setCollectors(prev => prev.map(c => c.id === tempId ? { ...c, id: ref.id } : c));
-        }).catch(error => {
+        } catch (error) {
             console.error("Failed to add collector:", error);
+            // Rollback on failure
             setCollectors(prev => prev.filter(c => c.id !== tempId));
-            toast({ title: "Error", description: "No se pudo agregar al recolector.", variant: "destructive"});
-        });
+            toast({ title: "Error", description: "No se pudo agregar al recolector. Es posible que no tengas conexión.", variant: "destructive"});
+        }
     };
 
     const addPacker = async (packer: Omit<Packer, 'id'>) => {
       const tempId = `packer_${Date.now()}`;
+      // Optimistic UI update
       setPackers(prev => [...prev, { id: tempId, ...packer }]);
 
       try {
           const ref = await addDoc(collection(db, 'packers'), packer);
+          // Replace temp ID with real ID
           setPackers(prev => prev.map(p => p.id === tempId ? { ...p, id: ref.id } : p));
       } catch (error) {
           console.error("Failed to add packer:", error);
+          // Rollback on failure
           setPackers(prev => prev.filter(p => p.id !== tempId));
-          toast({ title: "Error", description: "No se pudo agregar al embalador.", variant: "destructive"});
+          toast({ title: "Error", description: "No se pudo agregar al embalador. Es posible que no tengas conexión.", variant: "destructive"});
       }
     };
     
     const editPacker = async (updatedPacker: Packer) => {
-      try {
-        const batch = writeBatch(db);
+        const originalPackers = [...packers];
+        const originalPackagingLogs = [...packagingLogs];
 
-        const packerRef = doc(db, 'packers', updatedPacker.id);
-        const { id, ...packerData } = updatedPacker;
-        batch.set(packerRef, packerData, { merge: true });
+        // Optimistic UI Update
+        setPackers(prev => prev.map(p => p.id === updatedPacker.id ? updatedPacker : p));
+        setPackagingLogs(prev => prev.map(l => l.packerId === updatedPacker.id ? { ...l, packerName: updatedPacker.name } : l));
 
-        const logsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', updatedPacker.id));
-        const logsSnapshot = await getDocs(logsQuery);
-        logsSnapshot.forEach(doc => {
-            batch.update(doc.ref, { packerName: updatedPacker.name });
-        });
-        
-        await batch.commit();
-        await fetchAllData();
-      } catch (error) {
-        console.error("Failed to edit packer and related documents:", error);
-        toast({ title: "Error", description: "No se pudo actualizar el nombre del embalador en todos los registros.", variant: "destructive"});
-        await fetchAllData();
-      }
+        try {
+            const batch = writeBatch(db);
+
+            const packerRef = doc(db, 'packers', updatedPacker.id);
+            const { id, ...packerData } = updatedPacker;
+            batch.set(packerRef, packerData, { merge: true });
+    
+            const logsQuery = query(collection(db, 'packagingLogs'), where('packerId', '==', updatedPacker.id));
+            const logsSnapshot = await getDocs(logsQuery);
+            logsSnapshot.forEach(doc => {
+                batch.update(doc.ref, { packerName: updatedPacker.name });
+            });
+            
+            await batch.commit();
+        } catch (error) {
+            console.error("Failed to edit packer and related documents:", error);
+            // Rollback on failure
+            setPackers(originalPackers);
+            setPackagingLogs(originalPackagingLogs);
+            toast({ title: "Error", description: "No se pudo actualizar el nombre del embalador. Es posible que no tengas conexión.", variant: "destructive"});
+        }
     };
 
     const deletePacker = (packerId: string) => {
