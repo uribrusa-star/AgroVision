@@ -1,37 +1,23 @@
 {
   "name": "AgroVision",
   "short_name": "AgroVision",
-  "description": "Gestión inteligente para la producción de frutilla.",
+  "description": "Gestión de datos en la producción de frutilla.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#4CAF50",
+  "background_color": "#8FBC8F",
+  "theme_color": "#8FBC8F",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/logo.png",
-      "sizes": "500x500",
-      "type": "image/png"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshots/screenshot-desktop.png",
-      "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "wide",
-      "label": "Vista del Panel de Control en Escritorio"
-    },
-    {
-      "src": "/screenshots/screenshot-mobile.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "label": "Vista de la App en Móvil"
+      "sizes": "500x500"
     }
   ],
   "protocol_handlers": [
     {
       "protocol": "web+agrovision",
-      "url": "/?url=%s"
+      "url": "/?q=%s"
     }
   ]
 }
